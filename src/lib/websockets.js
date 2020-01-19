@@ -44,24 +44,24 @@ module.exports = {
       };
 
       socket.onmessage = function(msg) {
-        if (msg.data) {
-          let data = JSON.parse(msg.data);
-          if (data.type && data.payload) {
-            let payload = JSON.parse(data.payload);
-            if (commandHandlers[data.type]) {
-              commandHandlers[data.type].callback.call(
-                commandHandlers[data.type].obj,
-                payload
-              );
-            } else {
-              console.log("couldn't find " + data.type + " registered handler");
-            }
-          } else {
-            console.log("data should have type and payload property", data);
-          }
-        } else {
-          console.log("msg should have data property", msg);
+        if (!msg.data) {
+          throw new Error("msg should have data property");
         }
+
+        let data = JSON.parse(msg.data);
+        if (!data.type || !data.payload) {
+          throw new Error("data should have type and payload property");
+        }
+
+        let payload = JSON.parse(data.payload);
+        if (!commandHandlers[data.type]) {
+          throw new Error("couldn't find " + data.type + " registered handler");
+        }
+
+        commandHandlers[data.type].callback.call(
+          commandHandlers[data.type].obj,
+          payload
+        );
       };
     };
   }

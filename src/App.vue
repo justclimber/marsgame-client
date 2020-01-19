@@ -31,6 +31,10 @@ export default {
   max-width: 1800px;
 }
 
+#app .paper {
+  padding: 10px;
+}
+
 #nav {
   padding: 20px;
 }
