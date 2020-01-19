@@ -8,10 +8,19 @@ import { Viewport } from "pixi-viewport";
 
 let xShift = 1000;
 let yShift = 1000;
+let timeShiftForPrediction = 1500;
+let timer = new Date();
+let currTimeId;
+let changelogToRun = [];
 
 export default {
   name: "GameCanvas",
   props: {},
+  wsCommands: {
+    worldChanges(payload) {
+      this.parseChangelog(payload);
+    }
+  },
   data: function() {
     return {
       app: new PIXI.Application({
@@ -39,11 +48,72 @@ export default {
         this.viewport.addChild(this.terra);
         this.viewport.addChild(this.mech);
 
-        this.app.ticker.add(delta => this.gameLoop(delta));
+        this.app.ticker.add(() => this.gameLoop());
       });
   },
+  computed: {
+    userId() {
+      return this.$store.state.userId;
+    }
+  },
   methods: {
-    gameLoop() {},
+    gameLoop() {
+      this.mech.x += this.mech.vx;
+      this.mech.y += this.mech.vy;
+      this.mech.rotation += this.mech.vr;
+      this.mechWeaponCannon.rotation += this.mechWeaponCannon.vr;
+
+      let now = new Date();
+      let timeDelta = now.getTime() - timer.getTime();
+      timer = now;
+      if (currTimeId) {
+        currTimeId += timeDelta;
+        if (changelogToRun.length) {
+          if (changelogToRun[0].timeId < currTimeId) {
+            let timeId = changelogToRun[0].timeId;
+            let change = changelogToRun.shift();
+            if (change.x) {
+              this.mech.x = change.x;
+            }
+            if (change.y) {
+              this.mech.y = change.y;
+            }
+            if (change.rotation) {
+              this.mech.rotation = change.rotation;
+            }
+            if (change.cannonRotation) {
+              this.mechWeaponCannon.rotation = change.cannonRotation;
+            }
+
+            // prediction for smooth moving
+            if (changelogToRun.length) {
+              let nextChange = changelogToRun[0];
+              let nextTimeIdDelta = nextChange.timeId - timeId;
+              let futureGameTicks = nextTimeIdDelta / timeDelta;
+              this.mech.vx = !nextChange.x
+                ? 0
+                : (nextChange.x - this.mech.x) / futureGameTicks;
+              this.mech.vy = !nextChange.y
+                ? 0
+                : (nextChange.y - this.mech.y) / futureGameTicks;
+              this.mech.vr = !nextChange.rotation
+                ? 0
+                : (nextChange.rotation - this.mech.rotation) / futureGameTicks;
+              this.mechWeaponCannon.vr = !nextChange.cannonRotation
+                ? 0
+                : (nextChange.cannonRotation - this.mechWeaponCannon.rotation) /
+                  futureGameTicks;
+            }
+          }
+        } else {
+          // stop prediction
+          this.mech.vx = 0;
+          this.mech.vy = 0;
+          this.mech.vr = 0;
+          this.mechWeaponCannon.vr = 0;
+        }
+      }
+    },
     viewportSetup() {
       this.viewport = new Viewport({
         screenWidth: 880,
@@ -103,6 +173,32 @@ export default {
         2000
       );
       this.terra.anchor.set(0);
+    },
+    parseChangelog(changelog) {
+      changelog.forEach(function(changeByTime) {
+        let changesByObject = changeByTime.chObjs;
+        changesByObject.forEach(function(changeByObj) {
+          if (changeByObj.id !== this.userId) {
+            return;
+          }
+          let change = { timeId: changeByTime.tId };
+          if (changeByObj.x) {
+            change.x = changeByObj.x + xShift;
+            change.y = changeByObj.y + yShift;
+          }
+          if (changeByObj.a) {
+            change.rotation = changeByObj.a;
+          }
+          if (changeByObj.ca) {
+            change.cannonRotation = changeByObj.ca;
+          }
+          changelogToRun.push(change);
+        }, this);
+        if (!currTimeId) {
+          // use time shift for more smooth prediction: we need changelogToRun always be not empty on run
+          currTimeId = changeByTime.tId - timeShiftForPrediction;
+        }
+      }, this);
     }
   }
 };

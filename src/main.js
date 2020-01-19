@@ -2,10 +2,12 @@ import Vue from "vue";
 import App from "./App.vue";
 import router from "./router";
 import store from "./store";
+import VueWs from "./lib/websockets";
 
 import "papercss/dist/paper.min.css";
 
 Vue.config.productionTip = false;
+Vue.use(VueWs, { connectionStr: "ws://localhost/ws?id=" });
 
 new Vue({
   router,

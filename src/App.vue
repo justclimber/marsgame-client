@@ -11,12 +11,16 @@
 
 <script>
 export default {
-  name: "CodeEditor",
+  name: "App",
   props: {},
   data: function() {
     return {
       showMenu: false
     };
+  },
+  mounted: function() {
+    this.$store.commit("newRandomUser");
+    this.wsConnect(this.$store.state.userId);
   }
 };
 </script>
