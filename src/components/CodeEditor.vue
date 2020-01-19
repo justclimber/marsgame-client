@@ -1,7 +1,7 @@
 <template>
   <div class="paper container">
     <div class="row">
-      <div class="col-7 col">
+      <div class="col-6 col">
         <label for="sourceCode">Type your code here:</label>
         <codemirror
           ref="codemirror"
@@ -37,13 +37,13 @@
           </div>
         </div>
       </div>
-      <div class="col-5 col padding-left-none legend">
+      <div class="col-6 col padding-left-large legend">
         <div class="row">
           <div>Input vars:</div>
           <ul>
-            <li>x (float) - x position</li>
-            <li>y (float) - y position</li>
-            <li>angle (float) - angle in radians</li>
+            <li>mech.x (float) - x position</li>
+            <li>mech.y (float) - y position</li>
+            <li>mech.angle (float) - angle in radians</li>
           </ul>
         </div>
         <div class="row">
