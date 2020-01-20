@@ -14,6 +14,20 @@ let currTimeId;
 let changelogToRun = [];
 let sheet;
 
+const mechChangelogMap = {
+  x: "x",
+  y: "y",
+  a: "rotation"
+};
+const cannonChangelogMap = {
+  ca: "rotation"
+};
+const missileChangelogMap = {
+  x: "x",
+  y: "y",
+  a: "rotation"
+};
+
 export default {
   name: "GameCanvas",
   props: {},
@@ -188,7 +202,7 @@ export default {
         }
       }, this);
     },
-    applyChangeMapToObj(change, obj, map) {
+    applyMapToObj(change, obj, map) {
       for (let k in map) {
         if (change[k]) {
           obj[map[k]] = change[k];
@@ -196,35 +210,19 @@ export default {
       }
     },
     runChange(change) {
-      if (change.t === "player") {
-        this.applyChangeMapToObj(change, this.mech, {
-          x: "x",
-          y: "y",
-          a: "rotation"
-        });
-        this.applyChangeMapToObj(change, this.mechWeaponCannon, {
-          ca: "rotation"
-        });
-      } else if (change.t === "missile") {
-        if (!this.missiles.has(change.id)) {
-          this.newMissile(change.id, change.x, change.y, change.a);
-        } else {
-          let missile = this.missiles.get(change.id);
-          if (change.x) {
-            missile.x = change.x;
+      switch (change.t) {
+        case "player":
+          this.applyMapToObj(change, this.mech, mechChangelogMap);
+          this.applyMapToObj(change, this.mechWeaponCannon, cannonChangelogMap);
+          break;
+        case "missile":
+          if (!this.missiles.has(change.id)) {
+            this.newMissile(change.id, change.x, change.y, change.a);
+          } else {
+            let missile = this.missiles.get(change.id);
+            this.applyMapToObj(change, missile, missileChangelogMap);
           }
-          if (change.y) {
-            missile.y = change.y;
-          }
-          if (change.a) {
-            missile.rotation = change.a;
-          }
-          this.applyChangeMapToObj(change, missile, {
-            x: "x",
-            y: "y",
-            a: "rotation"
-          });
-        }
+          break;
       }
     }
   }
