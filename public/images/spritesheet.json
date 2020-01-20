@@ -2,35 +2,39 @@
 
 "cannon_128.png":
 {
-	"frame": {"x":0,"y":128,"w":128,"h":63},
+	"frame": {"x":2,"y":2,"w":127,"h":63},
 	"rotated": false,
 	"trimmed": false,
-	"spriteSourceSize": {"x":0,"y":0,"w":128,"h":63},
-	"sourceSize": {"w":128,"h":63}
-},
-"land_128.png":
-{
-	"frame": {"x":0,"y":0,"w":128,"h":128},
-	"rotated": false,
-	"trimmed": false,
-	"spriteSourceSize": {"x":0,"y":0,"w":128,"h":128},
-	"sourceSize": {"w":128,"h":128}
+	"spriteSourceSize": {"x":0,"y":0,"w":127,"h":63},
+	"sourceSize": {"w":127,"h":63},
+	"anchor": {"x":0.188976,"y":0.507937}
 },
 "mech_base_128.png":
 {
-	"frame": {"x":128,"y":0,"w":128,"h":77},
+	"frame": {"x":130,"y":2,"w":128,"h":77},
 	"rotated": false,
 	"trimmed": false,
 	"spriteSourceSize": {"x":0,"y":0,"w":128,"h":77},
-	"sourceSize": {"w":128,"h":77}
+	"sourceSize": {"w":128,"h":77},
+	"anchor": {"x":0.5,"y":0.5}
+},
+"missile.png":
+{
+	"frame": {"x":259,"y":2,"w":35,"h":17},
+	"rotated": false,
+	"trimmed": false,
+	"spriteSourceSize": {"x":10,"y":0,"w":35,"h":17},
+	"sourceSize": {"w":35,"h":17},
+	"anchor": {"x":-0.285714,"y":0}
 },
 "terra_256.png":
 {
-	"frame": {"x":0,"y":191,"w":256,"h":256},
+	"frame": {"x":2,"y":80,"w":256,"h":256},
 	"rotated": false,
 	"trimmed": false,
 	"spriteSourceSize": {"x":0,"y":0,"w":256,"h":256},
-	"sourceSize": {"w":256,"h":256}
+	"sourceSize": {"w":256,"h":256},
+	"anchor": {"x":0,"y":0}
 }},
 "animations": {
 },
@@ -39,8 +43,8 @@
 	"version": "1.0",
 	"image": "spritesheet.png",
 	"format": "RGBA8888",
-	"size": {"w":256,"h":447},
+	"size": {"w":296,"h":338},
 	"scale": "1",
-	"smartupdate": "$TexturePacker:SmartUpdate:8c781a28114c84fb628cd92dec0d969c:d18aa778bf387b383791ec920b319da9:729adc6043343cfda41c447ce8f464d6$"
+	"smartupdate": "$TexturePacker:SmartUpdate:e463d9af512398a83b22b474f694cd09:5c4a6bba70bbf9f3a298304355ba61f3:729adc6043343cfda41c447ce8f464d6$"
 }
 }

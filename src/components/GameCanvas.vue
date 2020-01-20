@@ -12,6 +12,7 @@ let timeShiftForPrediction = 1500;
 let timer = new Date();
 let currTimeId;
 let changelogToRun = [];
+let sheet;
 
 export default {
   name: "GameCanvas",
@@ -28,6 +29,7 @@ export default {
         width: 880
       }),
       viewport: undefined,
+      missiles: {},
       mech: undefined,
       mechBase: undefined,
       mechWeaponCannon: undefined,
@@ -40,9 +42,9 @@ export default {
     this.app.loader
       .add("/images/spritesheet.json")
       .load((loader, resources) => {
-        let sheet = resources["/images/spritesheet.json"];
-        this.mapSetup(resources, sheet);
-        this.mechSetup(resources, sheet);
+        sheet = resources["/images/spritesheet.json"];
+        this.mapSetup();
+        this.mechSetup();
 
         this.app.stage.addChild(this.viewport);
         this.viewport.addChild(this.terra);
@@ -57,71 +59,12 @@ export default {
     }
   },
   methods: {
-    gameLoop() {
-      this.mech.x += this.mech.vx;
-      this.mech.y += this.mech.vy;
-      this.mech.rotation += this.mech.vr;
-      this.mechWeaponCannon.rotation += this.mechWeaponCannon.vr;
-
-      let now = new Date();
-      let timeDelta = now.getTime() - timer.getTime();
-      timer = now;
-      if (currTimeId) {
-        currTimeId += timeDelta;
-        if (changelogToRun.length) {
-          if (changelogToRun[0].timeId < currTimeId) {
-            let timeId = changelogToRun[0].timeId;
-            let change = changelogToRun.shift();
-            if (change.x) {
-              this.mech.x = change.x;
-            }
-            if (change.y) {
-              this.mech.y = change.y;
-            }
-            if (change.rotation) {
-              this.mech.rotation = change.rotation;
-            }
-            if (change.cannonRotation) {
-              this.mechWeaponCannon.rotation = change.cannonRotation;
-            }
-
-            // prediction for smooth moving
-            if (changelogToRun.length) {
-              let nextChange = changelogToRun[0];
-              let nextTimeIdDelta = nextChange.timeId - timeId;
-              let futureGameTicks = nextTimeIdDelta / timeDelta;
-              this.mech.vx = !nextChange.x
-                ? 0
-                : (nextChange.x - this.mech.x) / futureGameTicks;
-              this.mech.vy = !nextChange.y
-                ? 0
-                : (nextChange.y - this.mech.y) / futureGameTicks;
-              this.mech.vr = !nextChange.rotation
-                ? 0
-                : (nextChange.rotation - this.mech.rotation) / futureGameTicks;
-              this.mechWeaponCannon.vr = !nextChange.cannonRotation
-                ? 0
-                : (nextChange.cannonRotation - this.mechWeaponCannon.rotation) /
-                  futureGameTicks;
-            }
-          }
-        } else {
-          // stop prediction
-          this.mech.vx = 0;
-          this.mech.vy = 0;
-          this.mech.vr = 0;
-          this.mechWeaponCannon.vr = 0;
-        }
-      }
-    },
     viewportSetup() {
       this.viewport = new Viewport({
         screenWidth: 880,
         screenHeight: 600,
         worldWidth: 3000,
         worldHeight: 2000,
-
-        // the interaction module is important for wheel to work properly when renderer.view is placed or scaled
         interaction: this.app.renderer.plugins.interaction
       });
       this.viewport
@@ -132,25 +75,24 @@ export default {
         .bounce({
           time: 400
         })
+        .zoom(1500)
+        // .zoom(1)
         .moveCenter(xShift, yShift)
         .drag()
         .pinch()
         .wheel()
         .decelerate();
     },
-    mechSetup(resources, sheet) {
+    mechSetup() {
       this.mechBase = new PIXI.Sprite(sheet.textures["mech_base_128.png"]);
       this.mechWeaponCannon = new PIXI.Sprite(sheet.textures["cannon_128.png"]);
 
       this.mechBase.anchor.set(0.5);
 
       // смещаем башню немного, потому что она не по центру меха
-      this.mechWeaponCannon.y = 3;
-      this.mechWeaponCannon.x = 20;
-      this.mechWeaponCannon.anchor.set(0.18, 0.5);
+      this.mechWeaponCannon.x = 10;
 
       this.mech = new PIXI.Container();
-      this.mech.scale.y *= -1;
       this.mech.pivot.set(0.5);
       this.mech.x = xShift;
       this.mech.y = yShift;
@@ -166,7 +108,15 @@ export default {
       this.mech.addChild(this.mechBase);
       this.mech.addChild(this.mechWeaponCannon);
     },
-    mapSetup(resources, sheet) {
+    newMissile(id, x, y, rotation) {
+      let missile = new PIXI.Sprite(sheet.textures["missile.png"]);
+      missile.x = x;
+      missile.y = y;
+      missile.rotation = rotation ? rotation : 0;
+      this.missiles[id] = missile;
+      this.viewport.addChild(missile);
+    },
+    mapSetup() {
       this.terra = new PIXI.TilingSprite(
         sheet.textures["terra_256.png"],
         2800,
@@ -174,31 +124,130 @@ export default {
       );
       this.terra.anchor.set(0);
     },
+    parsePlayer(changeByObj, timeId) {
+      let change = { timeId: timeId };
+      if (changeByObj.x) {
+        change.x = changeByObj.x + xShift;
+        change.y = changeByObj.y + yShift;
+      }
+      if (changeByObj.a) {
+        change.rotation = changeByObj.a;
+      }
+      if (changeByObj.ca) {
+        change.cannonRotation = changeByObj.ca;
+      }
+      changelogToRun.push(change);
+    },
+    parseMissile(changeByObj, timeId) {
+      let change = { timeId: timeId };
+      let missile = { id: changeByObj.id };
+      if (changeByObj.x) {
+        missile.x = changeByObj.x + xShift;
+        missile.y = changeByObj.y + yShift;
+      }
+      if (changeByObj.a) {
+        missile.rotation = changeByObj.a;
+      }
+      change.missile = missile;
+      changelogToRun.push(change);
+    },
     parseChangelog(changelog) {
       changelog.forEach(function(changeByTime) {
         let changesByObject = changeByTime.chObjs;
         changesByObject.forEach(function(changeByObj) {
-          if (changeByObj.id !== this.userId) {
-            return;
+          if (changeByObj.id === this.userId) {
+            this.parsePlayer(changeByObj, changeByTime.tId);
+          } else if (changeByObj.t === "missile") {
+            this.parseMissile(changeByObj, changeByTime.tId);
           }
-          let change = { timeId: changeByTime.tId };
-          if (changeByObj.x) {
-            change.x = changeByObj.x + xShift;
-            change.y = changeByObj.y + yShift;
-          }
-          if (changeByObj.a) {
-            change.rotation = changeByObj.a;
-          }
-          if (changeByObj.ca) {
-            change.cannonRotation = changeByObj.ca;
-          }
-          changelogToRun.push(change);
         }, this);
         if (!currTimeId) {
           // use time shift for more smooth prediction: we need changelogToRun always be not empty on run
           currTimeId = changeByTime.tId - timeShiftForPrediction;
         }
       }, this);
+    },
+    gameLoop() {
+      this.mech.x += this.mech.vx;
+      this.mech.y += this.mech.vy;
+      this.mech.rotation += this.mech.vr;
+      this.mechWeaponCannon.rotation += this.mechWeaponCannon.vr;
+
+      let now = new Date();
+      let timeDelta = now.getTime() - timer.getTime();
+      timer = now;
+      if (currTimeId) {
+        this.runChangelog(timeDelta);
+      }
+    },
+    runChangelog(timeDelta) {
+      currTimeId += timeDelta;
+      if (changelogToRun.length) {
+        if (changelogToRun[0].timeId < currTimeId) {
+          let timeId = changelogToRun[0].timeId;
+          let change = changelogToRun.shift();
+          if (change.x) {
+            this.mech.x = change.x;
+          }
+          if (change.y) {
+            this.mech.y = change.y;
+          }
+          if (change.rotation) {
+            this.mech.rotation = change.rotation;
+          }
+          if (change.cannonRotation) {
+            this.mechWeaponCannon.rotation = change.cannonRotation;
+          }
+          if (change.missile) {
+            let mId = change.missile.id;
+            let missile = this.missiles[mId];
+            if (!missile) {
+              this.newMissile(
+                change.missile.id,
+                change.missile.x,
+                change.missile.y,
+                change.missile.rotation
+              );
+            } else {
+              if (change.missile.x) {
+                missile.x = change.missile.x;
+              }
+              if (change.missile.y) {
+                missile.y = change.missile.y;
+              }
+              if (change.missile.rotation) {
+                missile.rotation = change.missile.rotation;
+              }
+            }
+          }
+
+          // prediction for smooth moving
+          if (changelogToRun.length) {
+            let nextChange = changelogToRun[0];
+            let nextTimeIdDelta = nextChange.timeId - timeId;
+            let futureGameTicks = nextTimeIdDelta / timeDelta;
+            this.mech.vx = !nextChange.x
+              ? 0
+              : (nextChange.x - this.mech.x) / futureGameTicks;
+            this.mech.vy = !nextChange.y
+              ? 0
+              : (nextChange.y - this.mech.y) / futureGameTicks;
+            this.mech.vr = !nextChange.rotation
+              ? 0
+              : (nextChange.rotation - this.mech.rotation) / futureGameTicks;
+            this.mechWeaponCannon.vr = !nextChange.cannonRotation
+              ? 0
+              : (nextChange.cannonRotation - this.mechWeaponCannon.rotation) /
+                futureGameTicks;
+          }
+        }
+      } else {
+        // stop prediction
+        this.mech.vx = 0;
+        this.mech.vy = 0;
+        this.mech.vr = 0;
+        this.mechWeaponCannon.vr = 0;
+      }
     }
   }
 };
