@@ -29,11 +29,12 @@ export default {
         width: 880
       }),
       viewport: undefined,
-      missiles: {},
+      missiles: new Map(),
       mech: undefined,
       mechBase: undefined,
       mechWeaponCannon: undefined,
-      terra: undefined
+      terra: undefined,
+      changelogCurrIndex: 0
     };
   },
   mounted: function() {
@@ -113,7 +114,7 @@ export default {
       missile.x = x;
       missile.y = y;
       missile.rotation = rotation ? rotation : 0;
-      this.missiles[id] = missile;
+      this.missiles.set(id, missile);
       this.viewport.addChild(missile);
     },
     mapSetup() {
@@ -124,48 +125,12 @@ export default {
       );
       this.terra.anchor.set(0);
     },
-    parsePlayer(changeByObj, timeId) {
-      let change = { timeId: timeId };
-      if (changeByObj.x) {
-        change.x = changeByObj.x + xShift;
-        change.y = changeByObj.y + yShift;
-      }
-      if (changeByObj.a) {
-        change.rotation = changeByObj.a;
-      }
-      if (changeByObj.ca) {
-        change.cannonRotation = changeByObj.ca;
-      }
-      changelogToRun.push(change);
-    },
-    parseMissile(changeByObj, timeId) {
-      let change = { timeId: timeId };
-      let missile = { id: changeByObj.id };
-      if (changeByObj.x) {
-        missile.x = changeByObj.x + xShift;
-        missile.y = changeByObj.y + yShift;
-      }
-      if (changeByObj.a) {
-        missile.rotation = changeByObj.a;
-      }
-      change.missile = missile;
-      changelogToRun.push(change);
-    },
     parseChangelog(changelog) {
-      changelog.forEach(function(changeByTime) {
-        let changesByObject = changeByTime.chObjs;
-        changesByObject.forEach(function(changeByObj) {
-          if (changeByObj.id === this.userId) {
-            this.parsePlayer(changeByObj, changeByTime.tId);
-          } else if (changeByObj.t === "missile") {
-            this.parseMissile(changeByObj, changeByTime.tId);
-          }
-        }, this);
-        if (!currTimeId) {
-          // use time shift for more smooth prediction: we need changelogToRun always be not empty on run
-          currTimeId = changeByTime.tId - timeShiftForPrediction;
-        }
-      }, this);
+      if (!currTimeId) {
+        // use time shift for more smooth prediction: we need changelogToRun always be not empty on run
+        currTimeId = changelog[0].tId - timeShiftForPrediction;
+      }
+      changelogToRun = [...changelogToRun, ...changelog];
     },
     gameLoop() {
       this.mech.x += this.mech.vx;
@@ -182,71 +147,84 @@ export default {
     },
     runChangelog(timeDelta) {
       currTimeId += timeDelta;
-      if (changelogToRun.length) {
-        if (changelogToRun[0].timeId < currTimeId) {
-          let timeId = changelogToRun[0].timeId;
-          let change = changelogToRun.shift();
-          if (change.x) {
-            this.mech.x = change.x;
-          }
-          if (change.y) {
-            this.mech.y = change.y;
-          }
-          if (change.rotation) {
-            this.mech.rotation = change.rotation;
-          }
-          if (change.cannonRotation) {
-            this.mechWeaponCannon.rotation = change.cannonRotation;
-          }
-          if (change.missile) {
-            let mId = change.missile.id;
-            let missile = this.missiles[mId];
-            if (!missile) {
-              this.newMissile(
-                change.missile.id,
-                change.missile.x,
-                change.missile.y,
-                change.missile.rotation
-              );
-            } else {
-              if (change.missile.x) {
-                missile.x = change.missile.x;
-              }
-              if (change.missile.y) {
-                missile.y = change.missile.y;
-              }
-              if (change.missile.rotation) {
-                missile.rotation = change.missile.rotation;
-              }
-            }
-          }
-
-          // prediction for smooth moving
-          if (changelogToRun.length) {
-            let nextChange = changelogToRun[0];
-            let nextTimeIdDelta = nextChange.timeId - timeId;
-            let futureGameTicks = nextTimeIdDelta / timeDelta;
-            this.mech.vx = !nextChange.x
-              ? 0
-              : (nextChange.x - this.mech.x) / futureGameTicks;
-            this.mech.vy = !nextChange.y
-              ? 0
-              : (nextChange.y - this.mech.y) / futureGameTicks;
-            this.mech.vr = !nextChange.rotation
-              ? 0
-              : (nextChange.rotation - this.mech.rotation) / futureGameTicks;
-            this.mechWeaponCannon.vr = !nextChange.cannonRotation
-              ? 0
-              : (nextChange.cannonRotation - this.mechWeaponCannon.rotation) /
-                futureGameTicks;
-          }
-        }
-      } else {
+      if (this.changelogCurrIndex >= changelogToRun.length) {
         // stop prediction
         this.mech.vx = 0;
         this.mech.vy = 0;
         this.mech.vr = 0;
         this.mechWeaponCannon.vr = 0;
+        return;
+      }
+
+      if (changelogToRun[this.changelogCurrIndex].tId > currTimeId) {
+        return;
+      }
+
+      changelogToRun[this.changelogCurrIndex].chObjs.forEach(
+        this.runChange,
+        this
+      );
+
+      this.changelogCurrIndex++;
+
+      // prediction for smooth moving
+      if (this.changelogCurrIndex >= changelogToRun.length) {
+        return;
+      }
+
+      let nextChange = changelogToRun[this.changelogCurrIndex];
+      let nextTimeIdDelta = nextChange.tId - currTimeId;
+      // f - proposed future game ticks
+      let f = nextTimeIdDelta / timeDelta;
+
+      changelogToRun[this.changelogCurrIndex].chObjs.forEach(function(change) {
+        if (change.t === "player" && change.id === this.userId) {
+          this.mech.vx = !change.x ? 0 : (change.x - this.mech.x) / f;
+          this.mech.vy = !change.y ? 0 : (change.y - this.mech.y) / f;
+          this.mech.vr = !change.a ? 0 : (change.a - this.mech.rotation) / f;
+          this.mechWeaponCannon.vr = !change.ca
+            ? 0
+            : (change.ca - this.mechWeaponCannon.rotation) / f;
+        }
+      }, this);
+    },
+    applyChangeMapToObj(change, obj, map) {
+      for (let k in map) {
+        if (change[k]) {
+          obj[map[k]] = change[k];
+        }
+      }
+    },
+    runChange(change) {
+      if (change.t === "player") {
+        this.applyChangeMapToObj(change, this.mech, {
+          x: "x",
+          y: "y",
+          a: "rotation"
+        });
+        this.applyChangeMapToObj(change, this.mechWeaponCannon, {
+          ca: "rotation"
+        });
+      } else if (change.t === "missile") {
+        if (!this.missiles.has(change.id)) {
+          this.newMissile(change.id, change.x, change.y, change.a);
+        } else {
+          let missile = this.missiles.get(change.id);
+          if (change.x) {
+            missile.x = change.x;
+          }
+          if (change.y) {
+            missile.y = change.y;
+          }
+          if (change.a) {
+            missile.rotation = change.a;
+          }
+          this.applyChangeMapToObj(change, missile, {
+            x: "x",
+            y: "y",
+            a: "rotation"
+          });
+        }
       }
     }
   }
