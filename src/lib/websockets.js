@@ -58,10 +58,7 @@ module.exports = {
           throw new Error("couldn't find " + data.type + " registered handler");
         }
 
-        commandHandlers[data.type].callback.call(
-          commandHandlers[data.type].obj,
-          payload
-        );
+        commandHandlers[data.type].callback.call(commandHandlers[data.type].obj, payload);
       };
     };
   }

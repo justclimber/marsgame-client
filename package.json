@@ -39,7 +39,10 @@
       "@vue/prettier"
     ],
     "rules": {
-      "no-console": "off"
+      "no-console": "off",
+      "camelcase": "error",
+      "max-len": ["error", { "code": 120 }],
+      "prettier/prettier": ["warn", { "printWidth": 120 }]
     },
     "parserOptions": {
       "parser": "babel-eslint"

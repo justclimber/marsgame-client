@@ -54,19 +54,17 @@ export default {
   mounted: function() {
     this.$el.appendChild(this.app.view);
     this.viewportSetup();
-    this.app.loader
-      .add("/images/spritesheet.json")
-      .load((loader, resources) => {
-        sheet = resources["/images/spritesheet.json"];
-        this.mapSetup();
-        this.mechSetup();
+    this.app.loader.add("/images/spritesheet.json").load((loader, resources) => {
+      sheet = resources["/images/spritesheet.json"];
+      this.mapSetup();
+      this.mechSetup();
 
-        this.app.stage.addChild(this.viewport);
-        this.viewport.addChild(this.terra);
-        this.viewport.addChild(this.mech);
+      this.app.stage.addChild(this.viewport);
+      this.viewport.addChild(this.terra);
+      this.viewport.addChild(this.mech);
 
-        this.app.ticker.add(() => this.gameLoop());
-      });
+      this.app.ticker.add(() => this.gameLoop());
+    });
   },
   computed: {
     userId() {
@@ -132,11 +130,7 @@ export default {
       this.viewport.addChild(missile);
     },
     mapSetup() {
-      this.terra = new PIXI.TilingSprite(
-        sheet.textures["terra_256.png"],
-        2800,
-        2000
-      );
+      this.terra = new PIXI.TilingSprite(sheet.textures["terra_256.png"], 2800, 2000);
       this.terra.anchor.set(0);
     },
     parseChangelog(changelog) {
@@ -162,11 +156,7 @@ export default {
     runChangelog(timeDelta) {
       currTimeId += timeDelta;
       if (this.changelogCurrIndex >= changelogToRun.length) {
-        // stop prediction
-        this.mech.vx = 0;
-        this.mech.vy = 0;
-        this.mech.vr = 0;
-        this.mechWeaponCannon.vr = 0;
+        this.clearPredictions();
         return;
       }
 
@@ -174,18 +164,16 @@ export default {
         return;
       }
 
-      changelogToRun[this.changelogCurrIndex].chObjs.forEach(
-        this.runChange,
-        this
-      );
+      changelogToRun[this.changelogCurrIndex].chObjs.forEach(this.runChange, this);
 
       this.changelogCurrIndex++;
 
-      // prediction for smooth moving
-      if (this.changelogCurrIndex >= changelogToRun.length) {
-        return;
+      if (this.changelogCurrIndex < changelogToRun.length) {
+        this.makePredictions(timeDelta);
       }
-
+    },
+    // smoothing movements of objects
+    makePredictions(timeDelta) {
       let nextChange = changelogToRun[this.changelogCurrIndex];
       let nextTimeIdDelta = nextChange.tId - currTimeId;
       // f - proposed future game ticks
@@ -196,11 +184,15 @@ export default {
           this.mech.vx = !change.x ? 0 : (change.x - this.mech.x) / f;
           this.mech.vy = !change.y ? 0 : (change.y - this.mech.y) / f;
           this.mech.vr = !change.a ? 0 : (change.a - this.mech.rotation) / f;
-          this.mechWeaponCannon.vr = !change.ca
-            ? 0
-            : (change.ca - this.mechWeaponCannon.rotation) / f;
+          this.mechWeaponCannon.vr = !change.ca ? 0 : (change.ca - this.mechWeaponCannon.rotation) / f;
         }
       }, this);
+    },
+    clearPredictions() {
+      this.mech.vx = 0;
+      this.mech.vy = 0;
+      this.mech.vr = 0;
+      this.mechWeaponCannon.vr = 0;
     },
     applyMapToObj(change, obj, map) {
       for (let k in map) {
@@ -219,8 +211,7 @@ export default {
           if (!this.missiles.has(change.id)) {
             this.newMissile(change.id, change.x, change.y, change.a);
           } else {
-            let missile = this.missiles.get(change.id);
-            this.applyMapToObj(change, missile, missileChangelogMap);
+            this.applyMapToObj(change, this.missiles.get(change.id), missileChangelogMap);
           }
           break;
       }
