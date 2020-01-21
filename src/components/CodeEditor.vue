@@ -3,12 +3,7 @@
     <div class="row">
       <div class="col-6 col">
         <label for="sourceCode">Type your code here:</label>
-        <codemirror
-          ref="codemirror"
-          id="sourceCode"
-          v-model="sourceCode"
-          :options="codemirrorOptions"
-        />
+        <codemirror ref="codemirror" id="sourceCode" v-model="sourceCode" :options="codemirrorOptions" />
         <div v-show="showError" class="row text-danger margin-none">
           <div>Errors:</div>
           <div v-html="errorText"></div>
@@ -21,17 +16,8 @@
             </label>
           </div>
           <div class="col-6 col">
-            <label
-              for="autoStartCheckbox"
-              class="paper-radio"
-              :class="{ disabled: !autoSave }"
-            >
-              <input
-                type="checkbox"
-                id="autoStartCheckbox"
-                v-model="autoStart"
-                :disabled="!autoSave"
-              />
+            <label for="autoStartCheckbox" class="paper-radio" :class="{ disabled: !autoSave }">
+              <input type="checkbox" id="autoStartCheckbox" v-model="autoStart" :disabled="!autoSave" />
               <span>Auto start</span>
             </label>
           </div>
@@ -161,11 +147,7 @@ crThr = 0.2
         if (cm.somethingSelected()) {
           let sel = cdm.getSelection("\n");
           // Indent only if there are multiple lines selected, or if the selection spans a full line
-          if (
-            sel.length > 0 &&
-            (sel.indexOf("\n") > -1 ||
-              sel.length === cm.getLine(cm.getCursor().line).length)
-          ) {
+          if (sel.length > 0 && (sel.indexOf("\n") > -1 || sel.length === cm.getLine(cm.getCursor().line).length)) {
             cm.indentSelection("add");
             return;
           }
