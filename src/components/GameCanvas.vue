@@ -236,6 +236,9 @@ export default {
         case "missile":
           if (!this.missiles.has(change.id)) {
             this.newMissile(change.id, change.x, change.y, change.a);
+          } else if (change.d) {
+            this.missiles.get(change.id).destroy();
+            this.missiles.delete(change.id);
           } else {
             this.applyMapToObj(change, this.missiles.get(change.id), missileChangelogMap);
           }
