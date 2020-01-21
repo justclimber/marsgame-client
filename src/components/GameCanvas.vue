@@ -123,8 +123,14 @@ export default {
     },
     newMissile(id, x, y, rotation) {
       let missile = new PIXI.Sprite(sheet.textures["missile.png"]);
+
       missile.x = x;
       missile.y = y;
+
+      missile.vx = 0;
+      missile.vy = 0;
+      missile.vr = 0;
+
       missile.rotation = rotation ? rotation : 0;
       this.missiles.set(id, missile);
       this.viewport.addChild(missile);
@@ -145,6 +151,11 @@ export default {
       this.mech.y += this.mech.vy;
       this.mech.rotation += this.mech.vr;
       this.mechWeaponCannon.rotation += this.mechWeaponCannon.vr;
+      for (let m of this.missiles.values()) {
+        m.x += m.vx;
+        m.y += m.vy;
+        m.rotation += m.vr;
+      }
 
       let now = new Date();
       let timeDelta = now.getTime() - timer.getTime();
@@ -180,11 +191,21 @@ export default {
       let f = nextTimeIdDelta / timeDelta;
 
       changelogToRun[this.changelogCurrIndex].chObjs.forEach(function(change) {
-        if (change.t === "player" && change.id === this.userId) {
-          this.mech.vx = !change.x ? 0 : (change.x - this.mech.x) / f;
-          this.mech.vy = !change.y ? 0 : (change.y - this.mech.y) / f;
-          this.mech.vr = !change.a ? 0 : (change.a - this.mech.rotation) / f;
-          this.mechWeaponCannon.vr = !change.ca ? 0 : (change.ca - this.mechWeaponCannon.rotation) / f;
+        switch (change.t) {
+          case "player":
+            this.mech.vx = !change.x ? 0 : (change.x - this.mech.x) / f;
+            this.mech.vy = !change.y ? 0 : (change.y - this.mech.y) / f;
+            this.mech.vr = !change.a ? 0 : (change.a - this.mech.rotation) / f;
+            this.mechWeaponCannon.vr = !change.ca ? 0 : (change.ca - this.mechWeaponCannon.rotation) / f;
+            break;
+          case "missile":
+            if (this.missiles.has(change.id)) {
+              let missile = this.missiles.get(change.id);
+              missile.vx = !change.x ? 0 : (change.x - missile.x) / f;
+              missile.vy = !change.y ? 0 : (change.y - missile.y) / f;
+              missile.vr = !change.a ? 0 : (change.a - missile.rotation) / f;
+            }
+            break;
         }
       }, this);
     },
@@ -193,6 +214,11 @@ export default {
       this.mech.vy = 0;
       this.mech.vr = 0;
       this.mechWeaponCannon.vr = 0;
+      for (let m of this.missiles.values()) {
+        m.vx = 0;
+        m.vy = 0;
+        m.vr = 0;
+      }
     },
     applyMapToObj(change, obj, map) {
       for (let k in map) {
