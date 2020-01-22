@@ -28,12 +28,26 @@ const missileChangelogMap = {
   a: "rotation"
 };
 
+function getRandomInt(min, max) {
+  return Math.floor(Math.random() * Math.floor(max)) + min;
+}
+
 export default {
   name: "GameCanvas",
   props: {},
   wsCommands: {
-    worldChanges(payload) {
-      this.parseChangelog(payload);
+    worldChanges(changelog) {
+      if (!currTimeId) {
+        // use time shift for more smooth prediction: we need changelogToRun always be not empty on run
+        currTimeId = changelog[0].tId - timeShiftForPrediction;
+      }
+      changelogToRun = [...changelogToRun, ...changelog];
+    },
+    worldInit(changelog) {
+      console.log("worldInit", changelog);
+      changelog[0].chObjs.forEach(function(obj) {
+        this.newMapObj(obj.id, obj.x, obj.y);
+      }, this);
     }
   },
   data: function() {
@@ -44,6 +58,7 @@ export default {
       }),
       viewport: undefined,
       missiles: new Map(),
+      objects: new Map(),
       mech: undefined,
       mechBase: undefined,
       mechWeaponCannon: undefined,
@@ -55,6 +70,9 @@ export default {
     this.$el.appendChild(this.app.view);
     this.viewportSetup();
     this.app.loader.add("/images/spritesheet.json").load((loader, resources) => {
+      this.$store.commit("newRandomUser");
+      this.wsConnect(this.$store.state.userId);
+
       sheet = resources["/images/spritesheet.json"];
       this.mapSetup();
       this.mechSetup();
@@ -121,6 +139,16 @@ export default {
       this.mech.addChild(this.mechBase);
       this.mech.addChild(this.mechWeaponCannon);
     },
+    newMapObj(id, x, y) {
+      let spriteName = "rock" + getRandomInt(1, 3) + ".png";
+      let obj = new PIXI.Sprite(sheet.textures[spriteName]);
+
+      obj.x = x;
+      obj.y = y;
+
+      this.objects.set(id, obj);
+      this.viewport.addChild(obj);
+    },
     newMissile(id, x, y, rotation) {
       let missile = new PIXI.Sprite(sheet.textures["missile.png"]);
 
@@ -138,13 +166,6 @@ export default {
     mapSetup() {
       this.terra = new PIXI.TilingSprite(sheet.textures["terra_256.png"], 2800, 2000);
       this.terra.anchor.set(0);
-    },
-    parseChangelog(changelog) {
-      if (!currTimeId) {
-        // use time shift for more smooth prediction: we need changelogToRun always be not empty on run
-        currTimeId = changelog[0].tId - timeShiftForPrediction;
-      }
-      changelogToRun = [...changelogToRun, ...changelog];
     },
     gameLoop() {
       this.mech.x += this.mech.vx;

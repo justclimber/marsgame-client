@@ -1,8 +1,7 @@
 <template>
   <div id="app">
     <div id="nav" class="row paper" v-show="this.showMenu">
-      <router-link to="/">Game</router-link> |
-      <router-link to="/home">Home</router-link> |
+      <router-link to="/">Game</router-link> | <router-link to="/home">Home</router-link> |
       <router-link to="/about">About</router-link>
     </div>
     <router-view />
@@ -17,10 +16,6 @@ export default {
     return {
       showMenu: false
     };
-  },
-  mounted: function() {
-    this.$store.commit("newRandomUser");
-    this.wsConnect(this.$store.state.userId);
   }
 };
 </script>

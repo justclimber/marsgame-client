@@ -2,7 +2,7 @@
 
 "cannon_128.png":
 {
-	"frame": {"x":2,"y":2,"w":127,"h":63},
+	"frame": {"x":38,"y":2,"w":127,"h":63},
 	"rotated": false,
 	"trimmed": false,
 	"spriteSourceSize": {"x":0,"y":0,"w":127,"h":63},
@@ -11,7 +11,7 @@
 },
 "mech_base_128.png":
 {
-	"frame": {"x":130,"y":2,"w":128,"h":77},
+	"frame": {"x":166,"y":2,"w":128,"h":77},
 	"rotated": false,
 	"trimmed": false,
 	"spriteSourceSize": {"x":0,"y":0,"w":128,"h":77},
@@ -20,16 +20,43 @@
 },
 "missile.png":
 {
-	"frame": {"x":259,"y":2,"w":35,"h":17},
+	"frame": {"x":2,"y":2,"w":35,"h":17},
 	"rotated": false,
 	"trimmed": false,
 	"spriteSourceSize": {"x":10,"y":0,"w":35,"h":17},
 	"sourceSize": {"w":35,"h":17},
 	"anchor": {"x":0.502857,"y":0.5}
 },
+"rock1.png":
+{
+	"frame": {"x":236,"y":80,"w":233,"h":124},
+	"rotated": false,
+	"trimmed": false,
+	"spriteSourceSize": {"x":5,"y":7,"w":233,"h":124},
+	"sourceSize": {"w":233,"h":124},
+	"anchor": {"x":-0.0214592,"y":-0.0564516}
+},
+"rock2.png":
+{
+	"frame": {"x":2,"y":205,"w":185,"h":141},
+	"rotated": false,
+	"trimmed": false,
+	"spriteSourceSize": {"x":0,"y":1,"w":185,"h":141},
+	"sourceSize": {"w":185,"h":141},
+	"anchor": {"x":0,"y":-0.0070922}
+},
+"rock3.png":
+{
+	"frame": {"x":2,"y":80,"w":233,"h":116},
+	"rotated": false,
+	"trimmed": false,
+	"spriteSourceSize": {"x":0,"y":5,"w":233,"h":116},
+	"sourceSize": {"w":233,"h":116},
+	"anchor": {"x":0,"y":-0.0431034}
+},
 "terra_256.png":
 {
-	"frame": {"x":2,"y":80,"w":256,"h":256},
+	"frame": {"x":188,"y":205,"w":256,"h":256},
 	"rotated": false,
 	"trimmed": false,
 	"spriteSourceSize": {"x":0,"y":0,"w":256,"h":256},
@@ -37,14 +64,15 @@
 	"anchor": {"x":0,"y":0}
 }},
 "animations": {
+	"rock": ["rock1.png","rock2.png","rock3.png"]
 },
 "meta": {
 	"app": "https://www.codeandweb.com/texturepacker",
 	"version": "1.0",
 	"image": "spritesheet.png",
 	"format": "RGBA8888",
-	"size": {"w":296,"h":338},
+	"size": {"w":471,"h":463},
 	"scale": "1",
-	"smartupdate": "$TexturePacker:SmartUpdate:11a23150dcab78242307c028343a4f07:5c4a6bba70bbf9f3a298304355ba61f3:729adc6043343cfda41c447ce8f464d6$"
+	"smartupdate": "$TexturePacker:SmartUpdate:a6558c350eb016d5ed18328fd5810ec9:8ba12f08e6b9dac070df15a0107de8ef:729adc6043343cfda41c447ce8f464d6$"
 }
 }
