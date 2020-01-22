@@ -44,7 +44,6 @@ export default {
       changelogToRun = [...changelogToRun, ...changelog];
     },
     worldInit(changelog) {
-      console.log("worldInit", changelog);
       changelog[0].chObjs.forEach(function(obj) {
         this.newMapObj(obj.id, obj.x, obj.y);
       }, this);
@@ -164,7 +163,7 @@ export default {
       this.viewport.addChild(missile);
     },
     mapSetup() {
-      this.terra = new PIXI.TilingSprite(sheet.textures["terra_256.png"], 2800, 2000);
+      this.terra = new PIXI.extras.TilingSprite(sheet.textures["terra_256.png"], 2800, 2000);
       this.terra.anchor.set(0);
     },
     gameLoop() {
