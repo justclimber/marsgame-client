@@ -32,6 +32,8 @@ function getRandomInt(min, max) {
   return Math.floor(Math.random() * Math.floor(max)) + min;
 }
 
+PIXI.utils.skipHello();
+
 export default {
   name: "GameCanvas",
   props: {},
