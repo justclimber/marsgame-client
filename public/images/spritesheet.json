@@ -2,34 +2,97 @@
 
 "cannon_128.png":
 {
-	"frame": {"x":38,"y":2,"w":127,"h":63},
+	"frame": {"x":313,"y":2,"w":127,"h":63},
 	"rotated": false,
 	"trimmed": false,
 	"spriteSourceSize": {"x":0,"y":0,"w":127,"h":63},
 	"sourceSize": {"w":127,"h":63},
 	"anchor": {"x":0.188976,"y":0.507937}
 },
+"m_1.png":
+{
+	"frame": {"x":277,"y":2,"w":35,"h":17},
+	"rotated": false,
+	"trimmed": false,
+	"spriteSourceSize": {"x":10,"y":0,"w":35,"h":17},
+	"sourceSize": {"w":35,"h":17},
+	"anchor": {"x":0.357143,"y":0.5}
+},
+"m_2.png":
+{
+	"frame": {"x":239,"y":2,"w":37,"h":17},
+	"rotated": false,
+	"trimmed": false,
+	"spriteSourceSize": {"x":8,"y":0,"w":37,"h":17},
+	"sourceSize": {"w":37,"h":17},
+	"anchor": {"x":0.391892,"y":0.5}
+},
+"m_3.png":
+{
+	"frame": {"x":162,"y":2,"w":37,"h":17},
+	"rotated": false,
+	"trimmed": false,
+	"spriteSourceSize": {"x":8,"y":0,"w":37,"h":17},
+	"sourceSize": {"w":37,"h":17},
+	"anchor": {"x":0.391892,"y":0.5}
+},
+"m_4.png":
+{
+	"frame": {"x":122,"y":2,"w":39,"h":17},
+	"rotated": false,
+	"trimmed": false,
+	"spriteSourceSize": {"x":6,"y":0,"w":39,"h":17},
+	"sourceSize": {"w":39,"h":17},
+	"anchor": {"x":0.423077,"y":0.5}
+},
+"m_5.png":
+{
+	"frame": {"x":42,"y":2,"w":39,"h":17},
+	"rotated": false,
+	"trimmed": false,
+	"spriteSourceSize": {"x":5,"y":0,"w":39,"h":17},
+	"sourceSize": {"w":39,"h":17},
+	"anchor": {"x":0.448718,"y":0.5}
+},
+"m_6.png":
+{
+	"frame": {"x":2,"y":2,"w":39,"h":17},
+	"rotated": false,
+	"trimmed": false,
+	"spriteSourceSize": {"x":6,"y":0,"w":39,"h":17},
+	"sourceSize": {"w":39,"h":17},
+	"anchor": {"x":0.423077,"y":0.5}
+},
+"m_7.png":
+{
+	"frame": {"x":200,"y":2,"w":38,"h":17},
+	"rotated": false,
+	"trimmed": false,
+	"spriteSourceSize": {"x":6,"y":0,"w":38,"h":17},
+	"sourceSize": {"w":38,"h":17},
+	"anchor": {"x":0.434211,"y":0.5}
+},
+"m_8.png":
+{
+	"frame": {"x":82,"y":2,"w":39,"h":17},
+	"rotated": false,
+	"trimmed": false,
+	"spriteSourceSize": {"x":6,"y":0,"w":39,"h":17},
+	"sourceSize": {"w":39,"h":17},
+	"anchor": {"x":0.423077,"y":0.5}
+},
 "mech_base_128.png":
 {
-	"frame": {"x":166,"y":2,"w":128,"h":77},
+	"frame": {"x":2,"y":66,"w":128,"h":77},
 	"rotated": false,
 	"trimmed": false,
 	"spriteSourceSize": {"x":0,"y":0,"w":128,"h":77},
 	"sourceSize": {"w":128,"h":77},
 	"anchor": {"x":0.5,"y":0.5}
 },
-"missile.png":
-{
-	"frame": {"x":2,"y":2,"w":35,"h":17},
-	"rotated": false,
-	"trimmed": false,
-	"spriteSourceSize": {"x":10,"y":0,"w":35,"h":17},
-	"sourceSize": {"w":35,"h":17},
-	"anchor": {"x":0.502857,"y":0.5}
-},
 "rock1.png":
 {
-	"frame": {"x":236,"y":80,"w":233,"h":124},
+	"frame": {"x":2,"y":183,"w":233,"h":124},
 	"rotated": false,
 	"trimmed": false,
 	"spriteSourceSize": {"x":5,"y":7,"w":233,"h":124},
@@ -38,7 +101,7 @@
 },
 "rock2.png":
 {
-	"frame": {"x":2,"y":205,"w":185,"h":141},
+	"frame": {"x":236,"y":183,"w":185,"h":141},
 	"rotated": false,
 	"trimmed": false,
 	"spriteSourceSize": {"x":0,"y":1,"w":185,"h":141},
@@ -47,7 +110,7 @@
 },
 "rock3.png":
 {
-	"frame": {"x":2,"y":80,"w":233,"h":116},
+	"frame": {"x":131,"y":66,"w":233,"h":116},
 	"rotated": false,
 	"trimmed": false,
 	"spriteSourceSize": {"x":0,"y":5,"w":233,"h":116},
@@ -56,7 +119,7 @@
 },
 "terra_256.png":
 {
-	"frame": {"x":188,"y":205,"w":256,"h":256},
+	"frame": {"x":2,"y":325,"w":256,"h":256},
 	"rotated": false,
 	"trimmed": false,
 	"spriteSourceSize": {"x":0,"y":0,"w":256,"h":256},
@@ -64,6 +127,7 @@
 	"anchor": {"x":0,"y":0}
 }},
 "animations": {
+	"m": ["m_1.png","m_2.png","m_3.png","m_4.png","m_5.png","m_6.png","m_7.png","m_8.png"],
 	"rock": ["rock1.png","rock2.png","rock3.png"]
 },
 "meta": {
@@ -71,8 +135,8 @@
 	"version": "1.0",
 	"image": "spritesheet.png",
 	"format": "RGBA8888",
-	"size": {"w":471,"h":463},
+	"size": {"w":442,"h":583},
 	"scale": "1",
-	"smartupdate": "$TexturePacker:SmartUpdate:a6558c350eb016d5ed18328fd5810ec9:8ba12f08e6b9dac070df15a0107de8ef:729adc6043343cfda41c447ce8f464d6$"
+	"smartupdate": "$TexturePacker:SmartUpdate:4d878386275958a8855ba238f3109a85:765261da05238462e76d159e4e9ab19d:729adc6043343cfda41c447ce8f464d6$"
 }
 }

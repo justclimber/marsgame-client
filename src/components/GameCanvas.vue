@@ -151,7 +151,12 @@ export default {
       this.viewport.addChild(obj);
     },
     newMissile(id, x, y, rotation) {
-      let missile = new PIXI.Sprite(sheet.textures["missile.png"]);
+      const missileTextures = [];
+      for (let i = 1; i <= 8; i++) {
+        const texture = PIXI.Texture.from(sheet.textures[`m_${i}.png`]);
+        missileTextures.push(texture);
+      }
+      let missile = new PIXI.extras.AnimatedSprite(missileTextures);
 
       missile.x = x;
       missile.y = y;
@@ -161,6 +166,9 @@ export default {
       missile.vr = 0;
 
       missile.rotation = rotation ? rotation : 0;
+
+      missile.animationSpeed = 0.167;
+      missile.play();
       this.missiles.set(id, missile);
       this.viewport.addChild(missile);
     },
