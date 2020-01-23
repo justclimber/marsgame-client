@@ -1,7 +1,7 @@
 <template>
   <div class="paper container">
-    <div class="row">
-      <div class="col-6 col">
+    <div class="row margin-bottom-none">
+      <div class="col-6 col padding-bottom-none">
         <label for="sourceCode">Type your code here:</label>
         <codemirror ref="codemirror" id="sourceCode" v-model="sourceCode" :options="codemirrorOptions" />
         <div v-show="showError" class="row text-danger margin-none">
@@ -9,13 +9,13 @@
           <div v-html="errorText"></div>
         </div>
         <div class="row form-group margin-none">
-          <div class="col-6 col">
+          <div class="col-6 col padding-bottom-none">
             <label for="autoSaveCheckbox" class="paper-radio">
               <input type="checkbox" id="autoSaveCheckbox" v-model="autoSave" />
               <span>Auto save</span>
             </label>
           </div>
-          <div class="col-6 col">
+          <div class="col-6 col padding-bottom-none">
             <label for="autoStartCheckbox" class="paper-radio" :class="{ disabled: !autoSave }">
               <input type="checkbox" id="autoStartCheckbox" v-model="autoStart" :disabled="!autoSave" />
               <span>Auto start</span>
@@ -42,10 +42,14 @@
         </div>
       </div>
     </div>
+    <div class="row">
+      <Console />
+    </div>
   </div>
 </template>
 
 <script>
+import Console from "@/components/Console.vue";
 import { codemirror } from "vue-codemirror";
 import "codemirror/addon/display/panel";
 import "@/lib/codemirror/buttons";
@@ -53,7 +57,7 @@ import "codemirror/lib/codemirror.css";
 import "codemirror/mode/go/go";
 
 export default {
-  components: { codemirror },
+  components: { codemirror, Console },
   name: "CodeEditor",
   props: {},
   wsCommands: {
