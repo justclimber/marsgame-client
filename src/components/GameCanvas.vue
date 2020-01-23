@@ -63,7 +63,8 @@ export default {
       mech: undefined,
       mechBase: undefined,
       mechWeaponCannon: undefined,
-      changelogCurrIndex: 0
+      changelogCurrIndex: 0,
+      debug: false
     };
   },
   mounted: function() {
@@ -136,6 +137,9 @@ export default {
 
       this.mech.addChild(this.mechBase);
       this.mech.addChild(this.mechWeaponCannon);
+
+      this.drawBoundsForObj(this.mech);
+      this.drawCollisionCircleForObj(this.mech, 100);
     },
     newMapObj(id, x, y) {
       let spriteName = "rock" + getRandomInt(1, 3) + ".png";
@@ -144,8 +148,29 @@ export default {
       obj.x = x;
       obj.y = y;
 
+      this.drawBoundsForObj(obj);
+      this.drawCollisionCircleForObj(obj, 100);
+
       this.objects.set(id, obj);
       this.viewport.addChild(obj);
+    },
+    drawBoundsForObj(obj) {
+      if (!this.debug) {
+        return;
+      }
+      let spriteBound = new PIXI.Graphics();
+      spriteBound.lineStyle(4, 0xfeeb77, 1);
+      spriteBound.drawRect(0 - obj.width / 2, 0 - obj.height / 2, obj.width, obj.height);
+      obj.addChild(spriteBound);
+    },
+    drawCollisionCircleForObj(obj, radius) {
+      if (!this.debug) {
+        return;
+      }
+      let collisionCircle = new PIXI.Graphics();
+      collisionCircle.lineStyle(4, 0x00eb77, 1);
+      collisionCircle.drawCircle(0, 0, radius);
+      obj.addChild(collisionCircle);
     },
     newMissile(id, x, y, rotation) {
       const missileTextures = [];
@@ -166,6 +191,10 @@ export default {
 
       missile.animationSpeed = 0.167;
       missile.play();
+
+      this.drawBoundsForObj(missile);
+      this.drawCollisionCircleForObj(missile, 20);
+
       this.missiles.set(id, missile);
       this.viewport.addChild(missile);
     },
