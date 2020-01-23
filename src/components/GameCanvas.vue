@@ -63,7 +63,6 @@ export default {
       mech: undefined,
       mechBase: undefined,
       mechWeaponCannon: undefined,
-      terra: undefined,
       changelogCurrIndex: 0
     };
   },
@@ -75,11 +74,10 @@ export default {
       this.wsConnect(this.$store.state.userId);
 
       sheet = resources["/images/spritesheet.json"];
-      this.mapSetup();
       this.mechSetup();
 
       this.app.stage.addChild(this.viewport);
-      this.viewport.addChild(this.terra);
+      this.viewport.addChild(this.mapSetup());
       this.viewport.addChild(this.mech);
 
       this.app.ticker.add(() => this.gameLoop());
@@ -131,7 +129,6 @@ export default {
       this.mech.vx = 0;
       this.mech.vy = 0;
       this.mech.vr = 0;
-      this.mech.throttle = 0;
       this.mech.rotation = 0;
 
       this.mechWeaponCannon.vr = 0;
@@ -173,8 +170,9 @@ export default {
       this.viewport.addChild(missile);
     },
     mapSetup() {
-      this.terra = new PIXI.extras.TilingSprite(sheet.textures["terra_256.png"], 2800, 2000);
-      this.terra.anchor.set(0);
+      const terra = new PIXI.extras.TilingSprite(sheet.textures["terra_256.png"], 2800, 2000);
+      terra.anchor.set(0);
+      return terra;
     },
     gameLoop() {
       this.mech.x += this.mech.vx;

@@ -97,7 +97,7 @@
 	"trimmed": false,
 	"spriteSourceSize": {"x":5,"y":7,"w":233,"h":124},
 	"sourceSize": {"w":233,"h":124},
-	"anchor": {"x":-0.0214592,"y":-0.0564516}
+	"anchor": {"x":0.5,"y":0.487903}
 },
 "rock2.png":
 {
@@ -106,7 +106,7 @@
 	"trimmed": false,
 	"spriteSourceSize": {"x":0,"y":1,"w":185,"h":141},
 	"sourceSize": {"w":185,"h":141},
-	"anchor": {"x":0,"y":-0.0070922}
+	"anchor": {"x":0.510811,"y":0.496454}
 },
 "rock3.png":
 {
@@ -115,7 +115,7 @@
 	"trimmed": false,
 	"spriteSourceSize": {"x":0,"y":5,"w":233,"h":116},
 	"sourceSize": {"w":233,"h":116},
-	"anchor": {"x":0,"y":-0.0431034}
+	"anchor": {"x":0.5,"y":0.487069}
 },
 "terra_256.png":
 {
@@ -137,6 +137,6 @@
 	"format": "RGBA8888",
 	"size": {"w":442,"h":583},
 	"scale": "1",
-	"smartupdate": "$TexturePacker:SmartUpdate:4d878386275958a8855ba238f3109a85:765261da05238462e76d159e4e9ab19d:729adc6043343cfda41c447ce8f464d6$"
+	"smartupdate": "$TexturePacker:SmartUpdate:339340373fbfd6a7fe3bf7bff435c09d:765261da05238462e76d159e4e9ab19d:729adc6043343cfda41c447ce8f464d6$"
 }
 }
