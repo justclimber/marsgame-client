@@ -13,23 +13,27 @@ import { mapState } from "vuex";
 
 export default Vue.extend({
   name: "Console",
-  wsCommands: {
-    codeError(errorPayload) {
-      let msg;
-      switch (errorPayload.errorType) {
-        case 0:
-          msg = "Lexing";
-          break;
-        case 1:
-          msg = "Parsing";
-          break;
-        case 2:
-          msg = "Runtime";
-          break;
+  data: function() {
+    return {
+      wsCommands: {
+        codeError(errorPayload) {
+          let msg;
+          switch (errorPayload.errorType) {
+            case 0:
+              msg = "Lexing";
+              break;
+            case 1:
+              msg = "Parsing";
+              break;
+            case 2:
+              msg = "Runtime";
+              break;
+          }
+          msg = msg + " error: " + errorPayload.message.replace(/\n/g, "<br/>");
+          this.$store.commit("addConsoleError", msg);
+        }
       }
-      msg = msg + " error: " + errorPayload.message.replace(/\n/g, "<br/>");
-      this.$store.commit("addConsoleError", msg);
-    }
+    };
   },
   computed: mapState(["console"])
 });

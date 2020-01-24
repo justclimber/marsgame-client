@@ -8,18 +8,17 @@
   </div>
 </template>
 
-<script>
-import Vue from "vue";
+<script lang="ts">
+import { Component, Vue } from "vue-property-decorator";
 
-export default Vue.extend({
-  name: "App",
-  props: {},
+@Component({
   data: function() {
     return {
       showMenu: false
     };
   }
-});
+})
+export default class App extends Vue {}
 </script>
 
 <style>

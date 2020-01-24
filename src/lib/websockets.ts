@@ -11,15 +11,14 @@ export default {
 
     let commandHandlers: any = {};
     Vue.mixin({
-      beforeCreate() {
-        if (this.$options["wsCommands"]) {
-          let conf = this.$options["wsCommands"];
-          Object.keys(conf).forEach(key => {
+      beforeMount() {
+        if (this.wsCommands) {
+          for (let key in this.wsCommands) {
             commandHandlers[key] = {
-              callback: conf[key],
+              callback: this.wsCommands[key],
               obj: this
             };
-          });
+          }
         }
       }
     });
