@@ -1,4 +1,5 @@
 import _Vue from "vue";
+import { PluginObject } from "vue/types/umd";
 
 declare module "vue/types/vue" {
   // 3. Объявите расширение для Vue
@@ -8,8 +9,8 @@ declare module "vue/types/vue" {
 }
 
 declare module "vue/types/options" {
-  interface ComponentOptions<V extends Vue> {
-    wsCommands?: string;
+  interface ComponentOptions<V extends _Vue> {
+    wsCommands?: any;
   }
 }
 
@@ -26,7 +27,7 @@ export default {
       beforeCreate() {
         if (this.$options["wsCommands"]) {
           let conf = this.$options["wsCommands"];
-          Object.keys(conf).forEach((key: number): void => {
+          Object.keys(conf).forEach(key => {
             commandHandlers[key] = {
               callback: conf[key],
               obj: this
@@ -73,4 +74,4 @@ export default {
       };
     };
   }
-};
+} as PluginObject<any>;

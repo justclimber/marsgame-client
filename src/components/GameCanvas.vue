@@ -3,6 +3,7 @@
 </template>
 
 <script>
+import Vue from "vue";
 import * as PIXI from "pixi.js";
 import { Viewport } from "pixi-viewport";
 
@@ -199,7 +200,7 @@ export default Vue.extend({
       this.viewport.addChild(missile);
     },
     mapSetup() {
-      const terra = new PIXI.extras.TilingSprite(sheet.textures["terra_256.png"], 2800, 2000);
+      const terra = new PIXI.TilingSprite(sheet.textures["terra_256.png"], 2800, 2000);
       terra.anchor.set(0);
       return terra;
     },

@@ -45,6 +45,7 @@
 </template>
 
 <script>
+import Vue from "vue";
 import Console from "@/components/Console.vue";
 import { codemirror } from "vue-codemirror";
 import "codemirror/addon/display/panel";
