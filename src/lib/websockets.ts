@@ -26,7 +26,7 @@ export default {
       beforeCreate() {
         if (this.$options["wsCommands"]) {
           let conf = this.$options["wsCommands"];
-          Object.keys(conf).forEach(key => {
+          Object.keys(conf).forEach((key: number): void => {
             commandHandlers[key] = {
               callback: conf[key],
               obj: this
