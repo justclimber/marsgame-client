@@ -1,9 +1,5 @@
 import CodeMirror from "codemirror";
 
-declare module "codemirror" {
-  function normalizeKeyMap(map: any): any;
-}
-
 const PANEL_ELEMENT_CLASS = "CodeMirror-buttonsPanel";
 
 CodeMirror.defineOption("buttons", [], function(cm: any, value: any) {

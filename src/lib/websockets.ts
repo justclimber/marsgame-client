@@ -1,19 +1,6 @@
 import _Vue from "vue";
 import { PluginObject } from "vue/types/umd";
 
-declare module "vue/types/vue" {
-  // 3. Объявите расширение для Vue
-  interface Vue {
-    $socket: string;
-  }
-}
-
-declare module "vue/types/options" {
-  interface ComponentOptions<V extends _Vue> {
-    wsCommands?: any;
-  }
-}
-
 export default {
   install(Vue: typeof _Vue, options: any = {}, store: any) {
     let socket: any;
