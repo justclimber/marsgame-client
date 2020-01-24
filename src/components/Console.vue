@@ -7,36 +7,33 @@
   </div>
 </template>
 
-<script>
-import Vue from "vue";
+<script lang="ts">
+import { Component, Vue } from "vue-property-decorator";
 import { mapState } from "vuex";
 
-export default Vue.extend({
-  name: "Console",
-  data: function() {
-    return {
-      wsCommands: {
-        codeError(errorPayload) {
-          let msg;
-          switch (errorPayload.errorType) {
-            case 0:
-              msg = "Lexing";
-              break;
-            case 1:
-              msg = "Parsing";
-              break;
-            case 2:
-              msg = "Runtime";
-              break;
-          }
-          msg = msg + " error: " + errorPayload.message.replace(/\n/g, "<br/>");
-          this.$store.commit("addConsoleError", msg);
-        }
-      }
-    };
-  },
+@Component({
   computed: mapState(["console"])
-});
+})
+export default class Console extends Vue {
+  wsCommands = {
+    codeError(this: any, errorPayload: any) {
+      let msg;
+      switch (errorPayload.errorType) {
+        case 0:
+          msg = "Lexing";
+          break;
+        case 1:
+          msg = "Parsing";
+          break;
+        case 2:
+          msg = "Runtime";
+          break;
+      }
+      msg = msg + " error: " + errorPayload.message.replace(/\n/g, "<br/>");
+      this.$store.commit("addConsoleError", msg);
+    }
+  };
+}
 </script>
 
 <style scoped>
