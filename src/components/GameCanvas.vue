@@ -81,7 +81,6 @@ export default Vue.extend({
       this.app.stage.addChild(this.viewport);
       this.viewport.addChild(this.mapSetup());
       this.viewport.addChild(this.mech);
-
       this.app.ticker.add(() => this.gameLoop());
     });
   },
@@ -174,13 +173,7 @@ export default Vue.extend({
       obj.addChild(collisionCircle);
     },
     newMissile(id, x, y, rotation) {
-      const missileTextures = [];
-      for (let i = 1; i <= 8; i++) {
-        const texture = PIXI.Texture.from(sheet.textures[`m_${i}.png`]);
-        missileTextures.push(texture);
-      }
-      let missile = new PIXI.extras.AnimatedSprite(missileTextures);
-
+      let missile = new PIXI.AnimatedSprite(sheet.spritesheet.animations["m"]);
       missile.x = x;
       missile.y = y;
 
