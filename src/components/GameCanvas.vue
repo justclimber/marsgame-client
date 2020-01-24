@@ -34,7 +34,7 @@ function getRandomInt(min, max) {
 
 PIXI.utils.skipHello();
 
-export default {
+export default Vue.extend({
   name: "GameCanvas",
   props: {},
   wsCommands: {
@@ -303,7 +303,7 @@ export default {
       }
     }
   }
-};
+});
 </script>
 
 <style scoped></style>

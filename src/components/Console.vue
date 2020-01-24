@@ -10,7 +10,7 @@
 <script>
 import { mapState } from "vuex";
 
-export default {
+export default Vue.extend({
   name: "Console",
   wsCommands: {
     codeError(errorPayload) {
@@ -31,7 +31,7 @@ export default {
     }
   },
   computed: mapState(["console"])
-};
+});
 </script>
 
 <style scoped>

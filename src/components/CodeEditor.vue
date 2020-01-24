@@ -52,7 +52,7 @@ import "@/lib/codemirror/buttons";
 import "codemirror/lib/codemirror.css";
 import "codemirror/mode/go/go";
 
-export default {
+export default Vue.extend({
   components: { codemirror, Console },
   name: "CodeEditor",
   props: {},
@@ -156,7 +156,7 @@ crThr = 0.2
       localStorage.autoStart = newAutoStart;
     }
   }
-};
+});
 </script>
 
 <style>

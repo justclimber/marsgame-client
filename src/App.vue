@@ -9,7 +9,7 @@
 </template>
 
 <script>
-export default {
+export default Vue.extend({
   name: "App",
   props: {},
   data: function() {
@@ -17,7 +17,7 @@ export default {
       showMenu: false
     };
   }
-};
+});
 </script>
 
 <style>
