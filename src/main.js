@@ -7,7 +7,7 @@ import VueWs from "./lib/websockets";
 import "papercss/dist/paper.min.css";
 
 Vue.config.productionTip = false;
-Vue.use(VueWs, { connectionStr: "ws://localhost/ws?id=" });
+Vue.use(VueWs, { connectionStr: "ws://localhost/ws?id=" }, store);
 
 new Vue({
   router,

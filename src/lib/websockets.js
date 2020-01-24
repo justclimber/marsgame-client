@@ -1,5 +1,5 @@
 module.exports = {
-  install(Vue, options = {}) {
+  install(Vue, options = {}, store) {
     let socket;
     if (!options.connectionStr) {
       throw new Error("[websocket plugin] should have connectionStr option!");
@@ -26,18 +26,14 @@ module.exports = {
     };
 
     Vue.prototype.wsConnect = function(userId) {
+      store.commit("addConsoleInfo", "Connecting to server...");
       socket = new WebSocket(options.connectionStr + userId);
       socket.onopen = () => {
-        console.log("Connection success");
-        let command = {
-          type: "greetings",
-          payload: "Hi from the client!"
-        };
-        socket.send(JSON.stringify(command));
+        store.commit("addConsoleInfo", "Connected!");
       };
 
-      socket.onclose = event => {
-        console.log("Socket connection closed: ", event);
+      socket.onclose = () => {
+        store.commit("addConsoleInfo", "Server closed connection");
       };
       socket.onerror = error => {
         console.log("Socket error: ", error);

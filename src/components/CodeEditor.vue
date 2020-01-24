@@ -4,10 +4,6 @@
       <div class="col-6 col padding-bottom-none">
         <label for="sourceCode">Type your code here:</label>
         <codemirror ref="codemirror" id="sourceCode" v-model="sourceCode" :options="codemirrorOptions" />
-        <div v-show="showError" class="row text-danger margin-none">
-          <div>Errors:</div>
-          <div v-html="errorText"></div>
-        </div>
         <div class="row form-group margin-none">
           <div class="col-6 col padding-bottom-none">
             <label for="autoSaveCheckbox" class="paper-radio">
@@ -60,22 +56,12 @@ export default {
   components: { codemirror, Console },
   name: "CodeEditor",
   props: {},
-  wsCommands: {
-    register(payload) {
-      console.log("REGISTER!!!", payload);
-    },
-    error(payload) {
-      this.parseError(payload);
-    }
-  },
   data: function() {
     return {
       sourceCode: `mThr = 1.
 mrThr = 0.2
 crThr = 0.2
 `,
-      showError: false,
-      errorText: "",
       autoSave: false,
       autoStart: false,
       codemirrorOptions: {
@@ -106,14 +92,12 @@ crThr = 0.2
   },
   methods: {
     saveCode() {
-      this.showError = false;
       this.wsSendCommand({
         type: "saveCode",
         payload: this.sourceCode
       });
     },
     runProgram() {
-      this.showError = false;
       this.programFlow("1");
     },
 
@@ -126,10 +110,6 @@ crThr = 0.2
         type: "programFlow",
         payload: flowCmd
       });
-    },
-    parseError(payload) {
-      this.showError = true;
-      this.errorText = payload.message.replace(/\n/g, "<br/>");
     }
   },
   mounted: function() {
