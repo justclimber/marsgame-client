@@ -14,8 +14,8 @@ export default new Vuex.Store({
           date: new Date()
         }
       ],
-      env: [],
-      output: []
+      input: ["a = 5"],
+      output: ["mThr = 1.0"]
     }
   },
   mutations: {
@@ -47,6 +47,10 @@ export default new Vuex.Store({
         date: new Date()
       };
       console.rows.push(row);
+    },
+    setConsoleInputOutput({ console }, inputOutput: any) {
+      console.input = inputOutput.Input;
+      console.output = inputOutput.Output;
     }
   },
   modules: {},
