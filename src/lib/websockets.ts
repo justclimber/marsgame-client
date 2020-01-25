@@ -1,23 +1,41 @@
 import _Vue from "vue";
 import { PluginObject } from "vue/types/umd";
+import { Store } from "vuex";
 
 export default {
-  install(Vue: typeof _Vue, options: any = {}, store: any) {
+  install(Vue: typeof _Vue, options: any = {}, store: Store<any>) {
     let socket: any;
     if (!options.connectionStr) {
       throw new Error("[websocket plugin] should have connectionStr option!");
     }
     Vue.prototype.$socket = socket;
 
-    let commandHandlers: any = {};
+    interface WsCallback {
+      (payload: any): void;
+    }
+    interface WsCallbackObj {
+      callback: WsCallback;
+      obj: any;
+    }
+
+    interface Command {
+      type: string;
+      payload: string;
+    }
+
+    interface CommandWrapper {
+      data: string;
+    }
+
+    let commandHandlers: Map<string, WsCallbackObj> = new Map();
     Vue.mixin({
       beforeMount() {
         if (this.wsCommands) {
           for (let key in this.wsCommands) {
-            commandHandlers[key] = {
+            commandHandlers.set(key, {
               callback: this.wsCommands[key],
               obj: this
-            };
+            });
           }
         }
       }
@@ -41,22 +59,16 @@ export default {
         console.log("Socket error: ", error);
       };
 
-      socket.onmessage = function(msg: any) {
-        if (!msg.data) {
-          throw new Error("msg should have data property");
-        }
-
-        let data = JSON.parse(msg.data);
-        if (!data.type || !data.payload) {
-          throw new Error("data should have type and payload property");
-        }
-
+      socket.onmessage = function(msg: CommandWrapper) {
+        let data: Command = JSON.parse(msg.data);
         let payload = JSON.parse(data.payload);
-        if (!commandHandlers[data.type]) {
+
+        const wsCallback = commandHandlers.get(data.type);
+        if (!wsCallback) {
           throw new Error("couldn't find " + data.type + " registered handler");
         }
 
-        commandHandlers[data.type].callback.call(commandHandlers[data.type].obj, payload);
+        wsCallback.callback.call(wsCallback.obj, payload);
       };
     };
   }

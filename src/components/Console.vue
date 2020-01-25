@@ -11,12 +11,17 @@
 import { Component, Vue } from "vue-property-decorator";
 import { mapState } from "vuex";
 
+type ErrorCommand = {
+  errorType: number;
+  message: string;
+};
+
 @Component({
   computed: mapState(["console"])
 })
 export default class Console extends Vue {
   wsCommands = {
-    codeError(this: any, errorPayload: any) {
+    codeError(this: Console, errorPayload: ErrorCommand) {
       let msg;
       switch (errorPayload.errorType) {
         case 0:

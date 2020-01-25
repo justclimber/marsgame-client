@@ -43,8 +43,8 @@ function getRandomInt(min: number, max: number) {
 type GameSpriteObj = Sprite | AnimatedSprite | Container;
 
 interface ChangeMap {
-  x: string;
-  y: string;
+  x?: string;
+  y?: string;
   a?: string;
   ca?: string;
 
@@ -57,6 +57,7 @@ interface ChangelogByObject {
   x?: number;
   y?: number;
   a?: number;
+  ca?: number;
   d?: boolean;
 
   [propName: string]: string | number | boolean | undefined;
@@ -281,7 +282,7 @@ export default class GameCanvas extends Vue {
     let f = nextTimeIdDelta / timeDelta;
     let missile: GameSpriteObj | undefined;
 
-    changelogToRun[this.changelogCurrIndex].chObjs.forEach((change: any) => {
+    changelogToRun[this.changelogCurrIndex].chObjs.forEach((change: ChangelogByObject) => {
       switch (change.t) {
         case "player":
           if (!this.mech || !this.mechWeaponCannon) {
@@ -324,11 +325,13 @@ export default class GameCanvas extends Vue {
     }
     let k: string;
     for (k in map) {
-      if (change[k]) {
-        obj[map[k]] = change[k];
+      const fieldName = map[k];
+      if (change[k] && fieldName) {
+        obj[fieldName] = change[k];
       }
     }
   }
+
   runChange(change: ChangelogByObject): void {
     let missile: GameSpriteObj | undefined;
     switch (change.t) {
