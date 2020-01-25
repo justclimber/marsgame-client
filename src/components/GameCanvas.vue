@@ -40,6 +40,17 @@ function getRandomInt(min: number, max: number) {
   return Math.floor(Math.random() * Math.floor(max)) + min;
 }
 
+type GameSpriteObj = Sprite | AnimatedSprite | Container;
+
+interface ChangeMap {
+  x: string;
+  y: string;
+  a?: string;
+  ca?: string;
+
+  [propName: string]: string | undefined;
+}
+
 interface ChangelogByObject {
   t: string;
   id: string;
@@ -47,6 +58,8 @@ interface ChangelogByObject {
   y?: number;
   a?: number;
   d?: boolean;
+
+  [propName: string]: string | number | boolean;
 }
 
 interface ChangelogByTime {
@@ -68,8 +81,8 @@ export default class GameCanvas extends Vue {
     worldHeight: 2000,
     interaction: this.app.renderer.plugins.interaction
   });
-  missiles: Map<string, AnimatedSprite> = new Map();
-  objects: Map<string, Sprite> = new Map();
+  missiles: Map<string, GameSpriteObj> = new Map();
+  objects: Map<string, GameSpriteObj> = new Map();
   mech: Container | undefined = undefined;
   mechBase: Sprite | undefined = undefined;
   mechWeaponCannon: Sprite | undefined = undefined;
@@ -173,7 +186,7 @@ export default class GameCanvas extends Vue {
     this.viewport.addChild(obj);
   }
 
-  drawBoundsForObj(obj: any): void {
+  drawBoundsForObj(obj: GameSpriteObj): void {
     if (!this.debug) {
       return;
     }
@@ -183,7 +196,7 @@ export default class GameCanvas extends Vue {
     obj.addChild(spriteBound);
   }
 
-  drawCollisionCircleForObj(obj: any, radius: number): void {
+  drawCollisionCircleForObj(obj: GameSpriteObj, radius: number): void {
     if (!this.debug) {
       return;
     }
@@ -266,7 +279,7 @@ export default class GameCanvas extends Vue {
     let nextTimeIdDelta = nextChange.tId - currTimeId;
     // f - proposed future game ticks
     let f = nextTimeIdDelta / timeDelta;
-    let missile: AnimatedSprite | undefined;
+    let missile: GameSpriteObj | undefined;
 
     changelogToRun[this.changelogCurrIndex].chObjs.forEach((change: any) => {
       switch (change.t) {
@@ -304,15 +317,20 @@ export default class GameCanvas extends Vue {
       m.vr = 0;
     }
   }
-  applyMapToObj(change: any, obj: any, map: any): void {
-    for (let k in map) {
+  applyMapToObj(change: ChangelogByObject, obj: GameSpriteObj | undefined, map: ChangeMap): void {
+    if (!obj) {
+      console.error("Attempt to apply change to a non-object");
+      return;
+    }
+    let k: string;
+    for (k in map) {
       if (change[k]) {
         obj[map[k]] = change[k];
       }
     }
   }
   runChange(change: ChangelogByObject): void {
-    let missile: AnimatedSprite | undefined;
+    let missile: GameSpriteObj | undefined;
     switch (change.t) {
       case "player":
         this.applyMapToObj(change, this.mech, mechChangelogMap);
