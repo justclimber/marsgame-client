@@ -59,7 +59,7 @@ interface ChangelogByObject {
   a?: number;
   d?: boolean;
 
-  [propName: string]: string | number | boolean;
+  [propName: string]: string | number | boolean | undefined;
 }
 
 interface ChangelogByTime {
