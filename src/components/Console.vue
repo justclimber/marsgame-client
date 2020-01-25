@@ -7,13 +7,16 @@
   </div>
 </template>
 
-<script>
+<script lang="ts">
+import { Component, Vue } from "vue-property-decorator";
 import { mapState } from "vuex";
 
-export default {
-  name: "Console",
-  wsCommands: {
-    codeError(errorPayload) {
+@Component({
+  computed: mapState(["console"])
+})
+export default class Console extends Vue {
+  wsCommands = {
+    codeError(this: any, errorPayload: any) {
       let msg;
       switch (errorPayload.errorType) {
         case 0:
@@ -29,9 +32,8 @@ export default {
       msg = msg + " error: " + errorPayload.message.replace(/\n/g, "<br/>");
       this.$store.commit("addConsoleError", msg);
     }
-  },
-  computed: mapState(["console"])
-};
+  };
+}
 </script>
 
 <style scoped>
