@@ -208,7 +208,7 @@ export default class GameCanvas extends Vue {
     obj.addChild(collisionCircle);
   }
 
-  newMissile(id: string, x: number = 0, y: number = 0, rotation: number = 0): void {
+  newMissile(id: string, x: number = 0, y: number = 0, rotation: number = 0): GameSpriteObj {
     const missile = new PIXI.AnimatedSprite(sheet.animations["m"]);
 
     missile.x = x;
@@ -227,6 +227,7 @@ export default class GameCanvas extends Vue {
 
     this.missiles.set(id, missile);
     this.viewport.addChild(missile);
+    return missile;
   }
 
   mapSetup(): TilingSprite {
@@ -354,18 +355,19 @@ export default class GameCanvas extends Vue {
         this.applyMapToObj(change, this.mechWeaponCannon, cannonChangelogMap);
         break;
       case "missile":
+        if (change.did) {
+          const obj = this.objects.get(change.did);
+          if (obj) {
+            obj.destroy();
+          }
+        }
         missile = this.missiles.get(change.id);
         if (!missile) {
-          this.newMissile(change.id, change.x, change.y, change.a);
-        } else if (change.d) {
+          missile = this.newMissile(change.id, change.x, change.y, change.a);
+        }
+        if (change.d) {
           missile.destroy();
           this.missiles.delete(change.id);
-          if (change.did) {
-            const obj = this.objects.get(change.did);
-            if (obj) {
-              obj.destroy();
-            }
-          }
         } else {
           this.applyMapToObj(change, missile, missileChangelogMap);
         }
