@@ -1,7 +1,7 @@
 <template>
   <div class="paper container">
     <div class="row margin-bottom-none">
-      <div class="col-6 col padding-bottom-none">
+      <div class="col-12 col padding-bottom-none">
         <label for="sourceCode">Type your code here:</label>
         <codemirror ref="codemirror" id="sourceCode" v-model="sourceCode" :options="codemirrorOptions" />
         <div class="row form-group margin-none">
@@ -19,7 +19,7 @@
           </div>
         </div>
       </div>
-      <div class="col-6 col padding-left-large legend">
+      <div class="col-6 col padding-left-large legend" v-show="showLegend">
         <div class="row">
           <div>Input vars:</div>
           <ul>
@@ -65,6 +65,7 @@ crThr = 0.2
 `,
       autoSave: false,
       autoStart: false,
+      showLegend: false,
       codemirrorOptions: {
         lineNumbers: true,
         tabSize: 3,
@@ -162,7 +163,7 @@ crThr = 0.2
 
 <style>
 #sourceCode {
-  width: 350px;
+  width: 690px;
   height: 343px;
   border: 1px solid #c1c0bd;
   box-shadow: -1px 5px 35px -9px rgba(0, 0, 0, 0.2);

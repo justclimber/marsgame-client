@@ -1,6 +1,6 @@
 <template>
   <div class="row">
-    <CodeEditor class="col-5" />
+    <CodeEditor class="col-7" />
     <GameCanvas class="col-5" />
   </div>
 </template>

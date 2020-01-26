@@ -1,7 +1,7 @@
 <template>
   <div>
     <div id="console" class="row">
-      <div class="col-7">
+      <div class="col-6">
         <div class="row margin-none" v-for="row in console.rows" :key="row.id">
           <div class="time">{{ row.date.toLocaleTimeString("ru") }}</div>
           <div class="text" :class="row.type" v-html="row.text"></div>
@@ -13,7 +13,7 @@
           <div class="text" v-html="inputVar" @mouseenter="hoverVar" @mouseleave="hoverVarEnd"></div>
         </div>
       </div>
-      <div class="col-2 console-col">
+      <div class="col-3 console-col">
         <div class="row margin-none">Result:</div>
         <div class="row margin-none" v-for="(outputVar, i) in console.output" :key="`output-${i}`">
           <div class="text" v-html="outputVar"></div>
@@ -86,7 +86,7 @@ export default class Console extends Vue {
 <style scoped>
 #console {
   border: 3px solid #98662e;
-  width: 720px;
+  width: 900px;
   height: 300px;
   background-color: #251006;
   color: #c08a70;

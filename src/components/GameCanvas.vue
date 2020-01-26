@@ -73,10 +73,10 @@ PIXI.utils.skipHello();
 @Component
 export default class GameCanvas extends Vue {
   app = new PIXI.Application({
-    width: 880
+    width: 700
   });
   viewport = new Viewport({
-    screenWidth: 880,
+    screenWidth: 700,
     screenHeight: 600,
     worldWidth: 3000,
     worldHeight: 2000,
@@ -274,6 +274,7 @@ export default class GameCanvas extends Vue {
       this.makePredictions(timeDelta);
     }
   }
+
   // smoothing movements of objects
   makePredictions(timeDelta: number): void {
     let nextChange = changelogToRun[this.changelogCurrIndex];
@@ -281,6 +282,7 @@ export default class GameCanvas extends Vue {
     // f - proposed future game ticks
     let f = nextTimeIdDelta / timeDelta;
     let missile: GameSpriteObj | undefined;
+    let wasPlayerPrediction = false;
 
     changelogToRun[this.changelogCurrIndex].chObjs.forEach((change: ChangelogByObject) => {
       switch (change.t) {
@@ -292,6 +294,7 @@ export default class GameCanvas extends Vue {
           this.mech.vy = !change.y ? 0 : (change.y - this.mech.y) / f;
           this.mech.vr = !change.a ? 0 : (change.a - this.mech.rotation) / f;
           this.mechWeaponCannon.vr = !change.ca ? 0 : (change.ca - this.mechWeaponCannon.rotation) / f;
+          wasPlayerPrediction = true;
           break;
         case "missile":
           missile = this.missiles.get(change.id);
@@ -303,8 +306,22 @@ export default class GameCanvas extends Vue {
           break;
       }
     });
+
+    if (!wasPlayerPrediction) {
+      this.clearMechPredictions();
+    }
   }
+
   clearPredictions(): void {
+    this.clearMechPredictions();
+    for (let m of this.missiles.values()) {
+      m.vx = 0;
+      m.vy = 0;
+      m.vr = 0;
+    }
+  }
+
+  clearMechPredictions(): void {
     if (!this.mech || !this.mechWeaponCannon) {
       return;
     }
@@ -312,12 +329,8 @@ export default class GameCanvas extends Vue {
     this.mech.vy = 0;
     this.mech.vr = 0;
     this.mechWeaponCannon.vr = 0;
-    for (let m of this.missiles.values()) {
-      m.vx = 0;
-      m.vy = 0;
-      m.vr = 0;
-    }
   }
+
   applyMapToObj(change: ChangelogByObject, obj: GameSpriteObj | undefined, map: ChangeMap): void {
     if (!obj) {
       console.error("Attempt to apply change to a non-object");
