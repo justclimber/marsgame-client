@@ -59,6 +59,7 @@ interface ChangelogByObject {
   a?: number;
   ca?: number;
   d?: boolean;
+  did?: string;
 
   [propName: string]: string | number | boolean | undefined;
 }
@@ -359,6 +360,12 @@ export default class GameCanvas extends Vue {
         } else if (change.d) {
           missile.destroy();
           this.missiles.delete(change.id);
+          if (change.did) {
+            const obj = this.objects.get(change.did);
+            if (obj) {
+              obj.destroy();
+            }
+          }
         } else {
           this.applyMapToObj(change, missile, missileChangelogMap);
         }
