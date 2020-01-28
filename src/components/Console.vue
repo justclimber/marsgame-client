@@ -13,10 +13,18 @@
           <div class="text" v-html="inputVar" @mouseenter="hoverVar" @mouseleave="hoverVarEnd"></div>
         </div>
       </div>
-      <div class="col-3 console-col">
+      <div class="col-3 console-col result">
         <div class="row margin-none">Result:</div>
-        <div class="row margin-none" v-for="(outputVar, i) in console.output" :key="`output-${i}`">
-          <div class="text" v-html="outputVar"></div>
+        <div class="row margin-none pre-cost" v-for="(outputVar, i) in console.output" :key="`output-${i}`">
+          <div class="text" v-html="outputVar" @mouseenter="hoverVar" @mouseleave="hoverVarEnd"></div>
+        </div>
+        <div class="row cost">
+          <div class="col-7">
+            <div class="block">Energy: {{ console.energy }}</div>
+          </div>
+          <div class="col-5">
+            <div class="block">Cost: {{ console.cost }}</div>
+          </div>
         </div>
       </div>
     </div>
@@ -34,8 +42,10 @@ type ErrorCommand = {
 };
 
 type CodeInputOutput = {
-  input: string[];
-  output: string[];
+  Input: string[];
+  Output: string[];
+  Cost: number;
+  Energy: number;
 };
 
 @Component({
@@ -118,5 +128,19 @@ export default class Console extends Vue {
   padding: 5px;
   background-color: white;
   z-index: 9999;
+}
+
+.result {
+  display: flex;
+  height: 100%;
+  flex-direction: column;
+}
+.pre-cost {
+  flex-grow: 1;
+}
+
+.cost {
+  margin: 0;
+  padding: 0;
 }
 </style>

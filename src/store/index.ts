@@ -15,7 +15,9 @@ export default new Vuex.Store({
         }
       ],
       input: ["a = 5"],
-      output: ["mThr = 1.0"]
+      output: ["mThr = 1.0"],
+      cost: 0,
+      energy: 0
     }
   },
   mutations: {
@@ -51,6 +53,8 @@ export default new Vuex.Store({
     setConsoleInputOutput({ console }, inputOutput: any) {
       console.input = inputOutput.Input;
       console.output = inputOutput.Output;
+      console.energy = inputOutput.Energy;
+      console.cost = inputOutput.Cost;
     }
   },
   modules: {},
