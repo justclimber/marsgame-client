@@ -47,23 +47,14 @@
     ],
     "rules": {
       "no-console": "off",
-      "camelcase": "error",
-      "max-len": [
-        "error",
-        {
-          "code": 120
-        }
-      ],
-      "prettier/prettier": [
-        "warn",
-        {
-          "printWidth": 120
-        }
-      ]
+      "camelcase": "error"
     },
     "parserOptions": {
       "parser": "@typescript-eslint/parser"
     }
+  },
+  "prettier": {
+    "printWidth": 120
   },
   "browserslist": [
     "> 1%",
