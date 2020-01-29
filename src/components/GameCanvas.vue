@@ -6,13 +6,6 @@
 import { Component, Vue } from "vue-property-decorator";
 import * as PIXI from "pixi.js";
 import { Viewport } from "pixi-viewport";
-import Sprite = PIXI.Sprite;
-import Container = PIXI.Container;
-import AnimatedSprite = PIXI.AnimatedSprite;
-import Spritesheet = PIXI.Spritesheet;
-import TilingSprite = PIXI.TilingSprite;
-import LoaderResource = PIXI.LoaderResource;
-import Loader = PIXI.Loader;
 
 let xShift = 1000;
 let yShift = 1000;
@@ -20,7 +13,7 @@ let timeShiftForPrediction = 1500;
 let timer = new Date();
 let currTimeId: number;
 let changelogToRun: ChangelogByTime[] = [];
-let sheet: Spritesheet;
+let sheet: PIXI.Spritesheet;
 
 const mechChangelogMap = {
   x: "x",
@@ -40,7 +33,7 @@ function getRandomInt(min: number, max: number) {
   return Math.floor(Math.random() * Math.floor(max)) + min;
 }
 
-type GameSpriteObj = Sprite | AnimatedSprite | Container;
+type GameSpriteObj = PIXI.Sprite | PIXI.AnimatedSprite | PIXI.Container;
 
 interface ChangeMap {
   x?: string;
@@ -85,9 +78,9 @@ export default class GameCanvas extends Vue {
   });
   missiles: Map<string, GameSpriteObj> = new Map();
   objects: Map<string, GameSpriteObj> = new Map();
-  mech: Container | undefined = undefined;
-  mechBase: Sprite | undefined = undefined;
-  mechWeaponCannon: Sprite | undefined = undefined;
+  mech?: PIXI.Container = undefined;
+  mechBase?: PIXI.Sprite = undefined;
+  mechWeaponCannon?: PIXI.Sprite = undefined;
   changelogCurrIndex: number = 0;
   debug: boolean = false;
   wsCommands = {
@@ -109,7 +102,7 @@ export default class GameCanvas extends Vue {
     this.viewportSetup();
     this.app.loader
       .add("/images/spritesheet.json")
-      .load((loader: Loader, resources: Partial<Record<string, LoaderResource>>) => {
+      .load((loader: PIXI.Loader, resources: Partial<Record<string, PIXI.LoaderResource>>) => {
         this.$store.commit("newRandomUser");
         this.wsConnect(this.$store.state.userId);
         if (resources["/images/spritesheet.json"]!.spritesheet) {
@@ -145,7 +138,7 @@ export default class GameCanvas extends Vue {
       .decelerate();
   }
 
-  mechSetup(): Container {
+  mechSetup(): PIXI.Container {
     this.mechBase = new PIXI.Sprite(sheet.textures["mech_base_128.png"]);
     this.mechWeaponCannon = new PIXI.Sprite(sheet.textures["cannon_128.png"]);
 
@@ -175,7 +168,7 @@ export default class GameCanvas extends Vue {
   }
 
   newMapObj(id: string, x: number = 0, y: number = 0): void {
-    let spriteName = "rock" + getRandomInt(1, 3) + ".png";
+    let spriteName = `rock${getRandomInt(1, 3)}.png`;
     let obj = new PIXI.Sprite(sheet.textures[spriteName]);
 
     obj.x = x;
@@ -230,7 +223,7 @@ export default class GameCanvas extends Vue {
     return missile;
   }
 
-  mapSetup(): TilingSprite {
+  mapSetup(): PIXI.TilingSprite {
     const terra = new PIXI.TilingSprite(sheet.textures["terra_256.png"], 2800, 2000);
     terra.anchor.set(0);
     return terra;
