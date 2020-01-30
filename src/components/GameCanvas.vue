@@ -57,6 +57,8 @@ interface ChangelogByObject {
   [propName: string]: string | number | boolean | undefined;
 }
 
+type MapGameSpriteObj = Map<string, GameSpriteObj>;
+
 interface ChangelogByTime {
   tId: number;
   chObjs: ChangelogByObject[];
@@ -76,8 +78,8 @@ export default class GameCanvas extends Vue {
     worldHeight: 2000,
     interaction: this.app.renderer.plugins.interaction
   });
-  missiles: Map<string, GameSpriteObj> = new Map();
-  objects: Map<string, GameSpriteObj> = new Map();
+  missiles: MapGameSpriteObj = new Map();
+  objects: MapGameSpriteObj = new Map();
   mech?: PIXI.Container = undefined;
   mechBase?: PIXI.Sprite = undefined;
   mechWeaponCannon?: PIXI.Sprite = undefined;
@@ -199,6 +201,24 @@ export default class GameCanvas extends Vue {
     collisionCircle.lineStyle(4, 0x00eb77, 1);
     collisionCircle.drawCircle(0, 0, radius);
     obj.addChild(collisionCircle);
+  }
+
+  explode(x: number = 0, y: number = 0): void {
+    const explosion = new PIXI.AnimatedSprite(sheet.animations["e"]);
+    explosion.x = x;
+    explosion.y = y;
+    explosion.loop = false;
+    explosion.onComplete = function() {
+      this.destroy();
+    };
+    explosion.animationSpeed = 0.167;
+    explosion.play();
+    this.viewport.addChild(explosion);
+  }
+
+  destroyMissile(missile: GameSpriteObj) {
+    this.explode(missile.x, missile.y);
+    missile.destroy();
   }
 
   newMissile(id: string, x: number = 0, y: number = 0, rotation: number = 0): GameSpriteObj {
@@ -359,7 +379,7 @@ export default class GameCanvas extends Vue {
           missile = this.newMissile(change.id, change.x, change.y, change.a);
         }
         if (change.d) {
-          missile.destroy();
+          this.destroyMissile(missile);
           this.missiles.delete(change.id);
         } else {
           this.applyMapToObj(change, missile, missileChangelogMap);
