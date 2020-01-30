@@ -3,9 +3,13 @@ import Vuex from "vuex";
 
 Vue.use(Vuex);
 
+function getRandomInt(min: number, max: number): number {
+  return Math.floor(Math.random() * Math.floor(max)) + min;
+}
+
 export default new Vuex.Store({
   state: {
-    userId: "asd",
+    userId: 123,
     console: {
       rows: [
         {
@@ -22,10 +26,7 @@ export default new Vuex.Store({
   },
   mutations: {
     newRandomUser(state) {
-      state.userId = Math.random()
-        .toString(36)
-        .replace(/[^a-z]+/g, "")
-        .substr(0, 5);
+      state.userId = getRandomInt(1000, 9999);
     },
     addConsoleRow({ console }, row) {
       row.id = console.rows.length + 1;

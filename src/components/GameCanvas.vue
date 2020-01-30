@@ -46,18 +46,18 @@ interface ChangeMap {
 
 interface ChangelogByObject {
   t: string;
-  id: string;
+  id: number;
   x?: number;
   y?: number;
   a?: number;
   ca?: number;
   d?: boolean;
-  did?: string;
+  did?: number;
 
   [propName: string]: string | number | boolean | undefined;
 }
 
-type MapGameSpriteObj = Map<string, GameSpriteObj>;
+type MapGameSpriteObj = Map<number, GameSpriteObj>;
 
 interface ChangelogByTime {
   tId: number;
@@ -169,7 +169,7 @@ export default class GameCanvas extends Vue {
     return this.mech;
   }
 
-  newMapObj(id: string, x: number = 0, y: number = 0): void {
+  newMapObj(id: number, x: number = 0, y: number = 0): void {
     let spriteName = `rock${getRandomInt(1, 3)}.png`;
     let obj = new PIXI.Sprite(sheet.textures[spriteName]);
 
@@ -221,7 +221,7 @@ export default class GameCanvas extends Vue {
     missile.destroy();
   }
 
-  newMissile(id: string, x: number = 0, y: number = 0, rotation: number = 0): GameSpriteObj {
+  newMissile(id: number, x: number = 0, y: number = 0, rotation: number = 0): GameSpriteObj {
     const missile = new PIXI.AnimatedSprite(sheet.animations["m"]);
 
     missile.x = x;
