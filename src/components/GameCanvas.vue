@@ -307,7 +307,17 @@ export default class GameCanvas extends Vue {
           }
           this.mech.vx = !change.x ? 0 : (change.x - this.mech.x) / f;
           this.mech.vy = !change.y ? 0 : (change.y - this.mech.y) / f;
-          this.mech.vr = !change.a ? 0 : (change.a - this.mech.rotation) / f;
+          if (change.a) {
+            let da = change.a - this.mech.rotation;
+            if (da > 1.5 * Math.PI) {
+              da = da - 2 * Math.PI;
+            } else if (da < -1.5 * Math.PI) {
+              da = da + 2 * Math.PI;
+            }
+            this.mech.vr = da / f;
+          } else {
+            this.mech.vr = 0;
+          }
           this.mechWeaponCannon.vr = !change.ca ? 0 : (change.ca - this.mechWeaponCannon.rotation) / f;
           wasPlayerPrediction = true;
           break;
