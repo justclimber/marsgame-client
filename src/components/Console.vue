@@ -15,9 +15,10 @@
       </div>
       <div class="col-3 console-col result">
         <div class="row margin-none">Result:</div>
-        <div class="row margin-none pre-cost" v-for="(outputVar, i) in console.output" :key="`output-${i}`">
+        <div class="row margin-none" v-for="(outputVar, i) in console.output" :key="`output-${i}`">
           <div class="text" v-html="outputVar" @mouseenter="hoverVar" @mouseleave="hoverVarEnd"></div>
         </div>
+        <div class="row pre-cost"></div>
         <div class="row cost">
           <div class="col-7">
             <div class="block">Energy: {{ console.energy }}</div>
