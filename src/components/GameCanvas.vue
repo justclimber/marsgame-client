@@ -9,7 +9,7 @@ import { Viewport } from "pixi-viewport";
 
 let xShift = 1000;
 let yShift = 1000;
-let timeShiftForPrediction = 1500;
+let timeShiftForPrediction = 500;
 let timer = new Date();
 let currTimeId: number;
 let changelogToRun: ChangelogByTime[] = [];
