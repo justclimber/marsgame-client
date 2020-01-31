@@ -1,17 +1,17 @@
 {"frames": {
 
-"cannon_128.png":
+"cannon.png":
 {
-	"frame": {"x":313,"y":2,"w":127,"h":63},
+	"frame": {"x":2,"y":153,"w":177,"h":81},
 	"rotated": false,
 	"trimmed": false,
-	"spriteSourceSize": {"x":0,"y":0,"w":127,"h":63},
-	"sourceSize": {"w":127,"h":63},
-	"anchor": {"x":0.188976,"y":0.507937}
+	"spriteSourceSize": {"x":0,"y":0,"w":177,"h":81},
+	"sourceSize": {"w":177,"h":81},
+	"anchor": {"x":0.327684,"y":0.506173}
 },
 "e_1.png":
 {
-	"frame": {"x":170,"y":146,"w":84,"h":84},
+	"frame": {"x":348,"y":153,"w":84,"h":84},
 	"rotated": false,
 	"trimmed": false,
 	"spriteSourceSize": {"x":0,"y":0,"w":84,"h":84},
@@ -20,7 +20,7 @@
 },
 "e_2.png":
 {
-	"frame": {"x":348,"y":66,"w":79,"h":79},
+	"frame": {"x":270,"y":73,"w":79,"h":79},
 	"rotated": false,
 	"trimmed": false,
 	"spriteSourceSize": {"x":0,"y":5,"w":79,"h":79},
@@ -29,7 +29,7 @@
 },
 "e_3.png":
 {
-	"frame": {"x":255,"y":146,"w":83,"h":84},
+	"frame": {"x":2,"y":238,"w":83,"h":84},
 	"rotated": false,
 	"trimmed": false,
 	"spriteSourceSize": {"x":0,"y":0,"w":83,"h":84},
@@ -38,7 +38,7 @@
 },
 "e_4.png":
 {
-	"frame": {"x":2,"y":146,"w":83,"h":83},
+	"frame": {"x":180,"y":153,"w":83,"h":83},
 	"rotated": false,
 	"trimmed": false,
 	"spriteSourceSize": {"x":0,"y":1,"w":83,"h":83},
@@ -47,7 +47,7 @@
 },
 "e_5.png":
 {
-	"frame": {"x":86,"y":146,"w":83,"h":83},
+	"frame": {"x":264,"y":153,"w":83,"h":83},
 	"rotated": false,
 	"trimmed": false,
 	"spriteSourceSize": {"x":0,"y":1,"w":83,"h":83},
@@ -56,7 +56,7 @@
 },
 "e_6.png":
 {
-	"frame": {"x":339,"y":146,"w":83,"h":84},
+	"frame": {"x":86,"y":238,"w":83,"h":84},
 	"rotated": false,
 	"trimmed": false,
 	"spriteSourceSize": {"x":0,"y":0,"w":83,"h":84},
@@ -65,7 +65,7 @@
 },
 "e_7.png":
 {
-	"frame": {"x":273,"y":66,"w":74,"h":78},
+	"frame": {"x":195,"y":73,"w":74,"h":78},
 	"rotated": false,
 	"trimmed": false,
 	"spriteSourceSize": {"x":9,"y":5,"w":74,"h":78},
@@ -74,7 +74,7 @@
 },
 "e_8.png":
 {
-	"frame": {"x":2,"y":66,"w":70,"h":70},
+	"frame": {"x":313,"y":2,"w":70,"h":70},
 	"rotated": false,
 	"trimmed": false,
 	"spriteSourceSize": {"x":9,"y":9,"w":70,"h":70},
@@ -83,12 +83,30 @@
 },
 "e_9.png":
 {
-	"frame": {"x":73,"y":66,"w":70,"h":74},
+	"frame": {"x":124,"y":73,"w":70,"h":74},
 	"rotated": false,
 	"trimmed": false,
 	"spriteSourceSize": {"x":5,"y":9,"w":70,"h":74},
 	"sourceSize": {"w":70,"h":74},
 	"anchor": {"x":0.528571,"y":0.445946}
+},
+"enemy_base.png":
+{
+	"frame": {"x":2,"y":73,"w":121,"h":72},
+	"rotated": false,
+	"trimmed": false,
+	"spriteSourceSize": {"x":8,"y":41,"w":121,"h":72},
+	"sourceSize": {"w":121,"h":72},
+	"anchor": {"x":0.505617,"y":0.5}
+},
+"enemy_cannon.png":
+{
+	"frame": {"x":170,"y":238,"w":122,"h":86},
+	"rotated": false,
+	"trimmed": false,
+	"spriteSourceSize": {"x":0,"y":0,"w":122,"h":86},
+	"sourceSize": {"w":122,"h":86},
+	"anchor": {"x":0.344262,"y":0.5}
 },
 "m_1.png":
 {
@@ -162,18 +180,18 @@
 	"sourceSize": {"w":39,"h":17},
 	"anchor": {"x":0.423077,"y":0.5}
 },
-"mech_base_128.png":
+"mech_base.png":
 {
-	"frame": {"x":144,"y":66,"w":128,"h":77},
+	"frame": {"x":293,"y":238,"w":178,"h":113},
 	"rotated": false,
 	"trimmed": false,
-	"spriteSourceSize": {"x":0,"y":0,"w":128,"h":77},
-	"sourceSize": {"w":128,"h":77},
-	"anchor": {"x":0.5,"y":0.5}
+	"spriteSourceSize": {"x":1,"y":33,"w":178,"h":113},
+	"sourceSize": {"w":178,"h":113},
+	"anchor": {"x":0.497191,"y":0.5}
 },
 "rock1.png":
 {
-	"frame": {"x":236,"y":231,"w":233,"h":124},
+	"frame": {"x":236,"y":352,"w":233,"h":124},
 	"rotated": false,
 	"trimmed": false,
 	"spriteSourceSize": {"x":5,"y":7,"w":233,"h":124},
@@ -182,7 +200,7 @@
 },
 "rock2.png":
 {
-	"frame": {"x":2,"y":356,"w":185,"h":141},
+	"frame": {"x":2,"y":477,"w":185,"h":141},
 	"rotated": false,
 	"trimmed": false,
 	"spriteSourceSize": {"x":0,"y":1,"w":185,"h":141},
@@ -191,7 +209,7 @@
 },
 "rock3.png":
 {
-	"frame": {"x":2,"y":231,"w":233,"h":116},
+	"frame": {"x":2,"y":352,"w":233,"h":116},
 	"rotated": false,
 	"trimmed": false,
 	"spriteSourceSize": {"x":0,"y":5,"w":233,"h":116},
@@ -200,7 +218,7 @@
 },
 "terra_256.png":
 {
-	"frame": {"x":188,"y":356,"w":256,"h":256},
+	"frame": {"x":188,"y":477,"w":256,"h":256},
 	"rotated": false,
 	"trimmed": false,
 	"spriteSourceSize": {"x":0,"y":0,"w":256,"h":256},
@@ -217,8 +235,8 @@
 	"version": "1.0",
 	"image": "spritesheet.png",
 	"format": "RGBA8888",
-	"size": {"w":471,"h":614},
+	"size": {"w":473,"h":735},
 	"scale": "1",
-	"smartupdate": "$TexturePacker:SmartUpdate:ae2438f1d5c7a5e557b61bc3bf7b9e44:27417322737b1f26805f263824be7ce3:729adc6043343cfda41c447ce8f464d6$"
+	"smartupdate": "$TexturePacker:SmartUpdate:2f64c025b535ec0d2f7e082ace995a93:204529a16662fe1ad0ec256b263ad533:729adc6043343cfda41c447ce8f464d6$"
 }
 }

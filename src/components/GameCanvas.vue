@@ -95,7 +95,7 @@ export default class GameCanvas extends Vue {
     },
     worldInit(changelog: ChangelogByTime[]) {
       changelog[0].chObjs.forEach(function(this: GameCanvas, obj: ChangelogByObject): void {
-        this.newMapObj(obj.id, obj.x, obj.y);
+        this.newMapObj(obj.id, obj.t, obj.x, obj.y);
       }, this);
     }
   };
@@ -141,13 +141,10 @@ export default class GameCanvas extends Vue {
   }
 
   mechSetup(): PIXI.Container {
-    this.mechBase = new PIXI.Sprite(sheet.textures["mech_base_128.png"]);
-    this.mechWeaponCannon = new PIXI.Sprite(sheet.textures["cannon_128.png"]);
+    this.mechBase = new PIXI.Sprite(sheet.textures["mech_base.png"]);
+    this.mechWeaponCannon = new PIXI.Sprite(sheet.textures["cannon.png"]);
 
     this.mechBase.anchor.set(0.5);
-
-    // смещаем башню немного, потому что она не по центру меха
-    this.mechWeaponCannon.x = 10;
 
     this.mech = new PIXI.Container();
     this.mech.pivot.set(0.5);
@@ -160,6 +157,8 @@ export default class GameCanvas extends Vue {
 
     this.mechWeaponCannon.vr = 0;
     this.mechWeaponCannon.rotation = 0;
+    // смещаем башню немного, потому что она не по центру меха
+    this.mechWeaponCannon.x = -10;
 
     this.mech.addChild(this.mechBase);
     this.mech.addChild(this.mechWeaponCannon);
@@ -169,9 +168,18 @@ export default class GameCanvas extends Vue {
     return this.mech;
   }
 
-  newMapObj(id: number, x: number = 0, y: number = 0): void {
-    let spriteName = `rock${getRandomInt(1, 3)}.png`;
-    let obj = new PIXI.Sprite(sheet.textures[spriteName]);
+  newMapObj(id: number, type: string, x: number = 0, y: number = 0): void {
+    let obj: GameSpriteObj;
+    if (type == "rock") {
+      obj = new PIXI.Sprite(sheet.textures[`rock${getRandomInt(1, 3)}.png`]);
+    } else {
+      let base = new PIXI.Sprite(sheet.textures[`enemy_base.png`]);
+      let cannon = new PIXI.Sprite(sheet.textures[`enemy_cannon.png`]);
+      obj = new PIXI.Container();
+      obj.pivot.set(0.5);
+      obj.addChild(base);
+      obj.addChild(cannon);
+    }
 
     obj.x = x;
     obj.y = y;
@@ -372,6 +380,7 @@ export default class GameCanvas extends Vue {
 
   runChange(change: ChangelogByObject): void {
     let missile: GameSpriteObj | undefined;
+    let enemyMech: GameSpriteObj | undefined;
     switch (change.t) {
       case "player":
         this.applyMapToObj(change, this.mech, mechChangelogMap);
@@ -394,6 +403,13 @@ export default class GameCanvas extends Vue {
         } else {
           this.applyMapToObj(change, missile, missileChangelogMap);
         }
+        break;
+      case "enemy_mech":
+        enemyMech = this.objects.get(change.id);
+        if (!enemyMech) {
+          console.log("change on non existed obj:", change);
+        }
+        this.applyMapToObj(change, enemyMech, missileChangelogMap);
         break;
     }
   }
