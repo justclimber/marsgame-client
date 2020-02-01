@@ -7,9 +7,11 @@ import { Component, Vue } from "vue-property-decorator";
 import * as PIXI from "pixi.js";
 import { Viewport } from "pixi-viewport";
 
-let xShift = 1000;
-let yShift = 1000;
-let timeShiftForPrediction = 500;
+const worldWide = 30000;
+const xShift = 10000;
+const yShift = 10000;
+const timeShiftForPrediction = 500;
+
 let timer = new Date();
 let currTimeId: number;
 let changelogToRun: ChangelogByTime[] = [];
@@ -69,13 +71,15 @@ PIXI.utils.skipHello();
 @Component
 export default class GameCanvas extends Vue {
   app = new PIXI.Application({
-    width: 700
+    width: 700,
+    height: 800,
+    backgroundColor: 0xffffff
   });
   viewport = new Viewport({
     screenWidth: 700,
-    screenHeight: 600,
-    worldWidth: 3000,
-    worldHeight: 2000,
+    screenHeight: 800,
+    worldWidth: worldWide,
+    worldHeight: worldWide,
     interaction: this.app.renderer.plugins.interaction
   });
   missiles: MapGameSpriteObj = new Map();
@@ -128,10 +132,9 @@ export default class GameCanvas extends Vue {
     this.viewport
       .clampZoom({
         minWidth: 300,
-        maxWidth: 3000
+        maxWidth: worldWide
       })
-      .bounce({ time: 400, underflow: "center" })
-      .zoom(1500)
+      .zoom(2000)
       // .zoom(1)
       .moveCenter(xShift, yShift)
       .drag()
@@ -252,7 +255,7 @@ export default class GameCanvas extends Vue {
   }
 
   mapSetup(): PIXI.TilingSprite {
-    const terra = new PIXI.TilingSprite(sheet.textures["terra_256.png"], 2800, 2000);
+    const terra = new PIXI.TilingSprite(sheet.textures["terra_256.png"], worldWide, worldWide);
     terra.anchor.set(0);
     return terra;
   }
@@ -263,6 +266,7 @@ export default class GameCanvas extends Vue {
     }
     this.mech.x += this.mech.vx;
     this.mech.y += this.mech.vy;
+    this.viewport.moveCenter(this.mech.x, this.mech.y);
     this.mech.rotation += this.mech.vr;
     this.mechWeaponCannon.rotation += this.mechWeaponCannon.vr;
     for (let m of this.missiles.values()) {
