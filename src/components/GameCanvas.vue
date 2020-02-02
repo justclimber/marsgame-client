@@ -97,10 +97,20 @@ export default class GameCanvas extends Vue {
       }
       changelogToRun = [...changelogToRun, ...changelog];
     },
-    worldInit(changelog: ChangelogByTime[]) {
+    worldInit(this: GameCanvas, changelog: ChangelogByTime[]) {
       changelog[0].chObjs.forEach(function(this: GameCanvas, obj: ChangelogByObject): void {
-        this.newMapObj(obj.id, obj.t, obj.x, obj.y);
+        if (obj.t == "player" && this.mech && obj.x && obj.y) {
+          // мы должны пересоздать спрайт, чтобы он всегда был на верхнем слое
+          this.mech.destroy();
+          this.mechSetup(obj.x, obj.y);
+        } else {
+          this.newMapObj(obj.id, obj.t, obj.x, obj.y);
+        }
       }, this);
+      if (this.mech) {
+        // добавляем пересозданный спрайт в последнюю очередь
+        this.viewport.addChild(this.mech);
+      }
     }
   };
   mounted() {
@@ -117,7 +127,7 @@ export default class GameCanvas extends Vue {
           console.error("Can't load spritesheet");
           return;
         }
-        const mech = this.mechSetup();
+        const mech = this.mechSetup(xShift, yShift);
 
         this.app.stage.addChild(this.viewport);
         this.viewport.addChild(this.mapSetup());
@@ -143,7 +153,7 @@ export default class GameCanvas extends Vue {
       .decelerate();
   }
 
-  mechSetup(): PIXI.Container {
+  mechSetup(x: number, y: number): PIXI.Container {
     this.mechBase = new PIXI.Sprite(sheet.textures["mech_base.png"]);
     this.mechWeaponCannon = new PIXI.Sprite(sheet.textures["cannon.png"]);
 
@@ -151,8 +161,8 @@ export default class GameCanvas extends Vue {
 
     this.mech = new PIXI.Container();
     this.mech.pivot.set(0.5);
-    this.mech.x = xShift;
-    this.mech.y = yShift;
+    this.mech.x = x;
+    this.mech.y = y;
     this.mech.vx = 0;
     this.mech.vy = 0;
     this.mech.vr = 0;
