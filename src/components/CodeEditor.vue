@@ -1,65 +1,52 @@
 <template>
-  <div class="paper container" id="code-editor">
-    <div class="row margin-bottom-none">
-      <div class="col-12 col padding-bottom-none">
-        <label for="sourceCode">Type your code here:</label>
-        <div class="row tabs">
-          <div
-            class="tab"
-            v-for="(tab, i) in tabs"
-            :key="`tab-${i}`"
-            :class="{ active: i === activeTab }"
-            @click="changeTab(i)"
-          >
-            {{ tab.name }}
-            <span class="delete" @click="deleteTab(i)" v-if="i !== 0">х</span>
+  <div>
+    <div class="paper container" id="code-editor">
+      <div class="row margin-bottom-none">
+        <div class="col-12 col padding-bottom-none">
+          <label for="sourceCode">Type your code here:</label>
+          <span id="helpButton" @click="showHelp = true">?</span>
+          <div class="row tabs">
+            <div
+              class="tab"
+              v-for="(tab, i) in tabs"
+              :key="`tab-${i}`"
+              :class="{ active: i === activeTab }"
+              @click="changeTab(i)"
+            >
+              {{ tab.name }}
+              <span class="delete" @click="deleteTab(i)" v-if="i !== 0">х</span>
+            </div>
+            <div class="tab" @click="addTab">+</div>
           </div>
-          <div class="tab" @click="addTab">+</div>
-        </div>
-        <codemirror ref="codemirror" id="sourceCode" v-model="sourceCode" :options="codemirrorOptions" />
-        <div class="row form-group margin-none">
-          <div class="col-6 col padding-bottom-none">
-            <label for="autoSaveCheckbox" class="paper-radio">
-              <input type="checkbox" id="autoSaveCheckbox" v-model="autoSave" />
-              <span>Auto save</span>
-            </label>
-          </div>
-          <div class="col-6 col padding-bottom-none">
-            <label for="autoStartCheckbox" class="paper-radio" :class="{ disabled: !autoSave }">
-              <input type="checkbox" id="autoStartCheckbox" v-model="autoStart" :disabled="!autoSave" />
-              <span>Auto start</span>
-            </label>
+          <codemirror ref="codemirror" id="sourceCode" v-model="sourceCode" :options="codemirrorOptions" />
+          <div class="row form-group margin-none">
+            <div class="col-6 col padding-bottom-none">
+              <label for="autoSaveCheckbox" class="paper-radio">
+                <input type="checkbox" id="autoSaveCheckbox" v-model="autoSave" />
+                <span>Auto save</span>
+              </label>
+            </div>
+            <div class="col-6 col padding-bottom-none">
+              <label for="autoStartCheckbox" class="paper-radio" :class="{ disabled: !autoSave }">
+                <input type="checkbox" id="autoStartCheckbox" v-model="autoStart" :disabled="!autoSave" />
+                <span>Auto start</span>
+              </label>
+            </div>
           </div>
         </div>
       </div>
-      <div class="col-6 col padding-left-large legend" v-show="showLegend">
-        <div class="row">
-          <div>Input vars:</div>
-          <ul>
-            <li>mech.x (float) - x position</li>
-            <li>mech.y (float) - y position</li>
-            <li>mech.angle (float) - angle in radians</li>
-          </ul>
-        </div>
-        <div class="row">
-          <div>Output vars used:</div>
-          <ul>
-            <li>mThr - mech throttle => movement (-1.0 .. 1.0)</li>
-            <li>mrThr - mech rotation throttle => rotation (-1.0 .. 1.0)</li>
-            <li>сrThr - cannon rotation throttle => rotation (-1.0 .. 1.0)</li>
-          </ul>
-        </div>
+      <div class="row">
+        <Console />
       </div>
     </div>
-    <div class="row">
-      <Console />
-    </div>
+    <Help v-show="showHelp" @help-close="showHelp = false" />
   </div>
 </template>
 
 <script lang="ts">
 import { Component, Vue, Watch } from "vue-property-decorator";
 import Console from "@/components/Console.vue";
+import Help from "@/components/Help.vue";
 import { codemirror } from "vue-codemirror";
 import "codemirror/addon/display/panel";
 import "@/lib/codemirror/buttons";
@@ -77,14 +64,14 @@ type Tab = {
 };
 
 @Component({
-  components: { codemirror, Console }
+  components: { codemirror, Console, Help }
 })
 export default class CodeEditor extends Vue {
   $refs!: { codemirror: any };
   sourceCode: string = sourceCode;
   autoSave: boolean = false;
   autoStart: boolean = false;
-  showLegend: boolean = false;
+  showHelp: boolean = false;
   tabs: Tab[] = [
     {
       name: "main",
@@ -191,30 +178,25 @@ export default class CodeEditor extends Vue {
     });
   }
 
-  @Watch("tabs")
-  watchTabs(newTabs: Tab[]): void {
+  @Watch("tabs") watchTabs(newTabs: Tab[]): void {
     localStorage.tabs = JSON.stringify(newTabs);
   }
 
-  @Watch("sourceCode")
-  watchSourceCode(newSourceCode: string): void {
+  @Watch("sourceCode") watchSourceCode(newSourceCode: string): void {
     this.tabs[this.activeTab].code = newSourceCode;
     localStorage.tabs = JSON.stringify(this.tabs);
   }
 
-  @Watch("activeTab")
-  watchActiveTab(newActiveTab: number): void {
+  @Watch("activeTab") watchActiveTab(newActiveTab: number): void {
     localStorage.activeTab = newActiveTab;
     this.sourceCode = this.tabs[this.activeTab].code;
   }
 
-  @Watch("autoSave")
-  watchAutoSave(newAutoSave: boolean): void {
+  @Watch("autoSave") watchAutoSave(newAutoSave: boolean): void {
     localStorage.autoSave = newAutoSave;
   }
 
-  @Watch("autoStart")
-  watchAutoStart(newAutoStart: boolean): void {
+  @Watch("autoStart") watchAutoStart(newAutoStart: boolean): void {
     localStorage.autoStart = newAutoStart;
   }
 }
@@ -262,5 +244,13 @@ export default class CodeEditor extends Vue {
 #code-editor .tabs .tab .delete {
   color: #c1c0bd;
   font-size: medium;
+}
+
+#helpButton {
+  margin-left: 10px;
+  padding: 2px 5px;
+  border: 1px solid #c1c0bd;
+  border-radius: 20px;
+  cursor: pointer;
 }
 </style>
