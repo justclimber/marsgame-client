@@ -1,8 +1,21 @@
 <template>
-  <div class="paper container">
+  <div class="paper container" id="code-editor">
     <div class="row margin-bottom-none">
       <div class="col-12 col padding-bottom-none">
         <label for="sourceCode">Type your code here:</label>
+        <div class="row tabs">
+          <div
+            class="tab"
+            v-for="(tab, i) in tabs"
+            :key="`tab-${i}`"
+            :class="{ active: i === activeTab }"
+            @click="changeTab(i)"
+          >
+            {{ tab.name }}
+            <span class="delete" @click="deleteTab(i)" v-if="i !== 0">х</span>
+          </div>
+          <div class="tab" @click="addTab">+</div>
+        </div>
         <codemirror ref="codemirror" id="sourceCode" v-model="sourceCode" :options="codemirrorOptions" />
         <div class="row form-group margin-none">
           <div class="col-6 col padding-bottom-none">
@@ -58,14 +71,23 @@ export default Vue.extend({
   name: "CodeEditor",
   props: {},
   data: function() {
-    return {
-      sourceCode: `mThr = 1.
+    const sourceCode = `mThr = 1.
 mrThr = 0.2
 crThr = 0.2
-`,
+`;
+    return {
+      sourceCode: sourceCode,
       autoSave: false,
       autoStart: false,
       showLegend: false,
+      tabs: [
+        {
+          name: "main",
+          code: sourceCode
+        }
+      ],
+      codeByTab: new Map(),
+      activeTab: 0,
       codemirrorOptions: {
         lineNumbers: true,
         tabSize: 3,
@@ -99,6 +121,24 @@ crThr = 0.2
         payload: this.sourceCode
       });
     },
+
+    changeTab(i) {
+      this.activeTab = i;
+    },
+
+    addTab(i) {
+      this.tabs.push({
+        name: "tab" + this.tabs.length,
+        code: ""
+      });
+      this.activeTab = this.tabs.length - 1;
+    },
+
+    deleteTab(i) {
+      this.activeTab = i - 2;
+      this.tabs.splice(i, 1);
+    },
+
     runProgram() {
       this.programFlow("1");
     },
@@ -115,8 +155,9 @@ crThr = 0.2
     }
   },
   mounted: function() {
-    if (localStorage.sourceCode) {
-      this.sourceCode = localStorage.sourceCode;
+    if (localStorage.tabs) {
+      this.tabs = JSON.parse(localStorage.tabs);
+      this.activeTab = localStorage.activeTab ? parseInt(localStorage.activeTab) : 0;
     }
     if (localStorage.autoSave === "true") {
       this.autoSave = localStorage.autoSave;
@@ -148,8 +189,16 @@ crThr = 0.2
     });
   },
   watch: {
+    tabs(newTabs) {
+      localStorage.tabs = JSON.stringify(newTabs);
+    },
     sourceCode(newSourceCode) {
-      localStorage.sourceCode = newSourceCode;
+      this.tabs[this.activeTab].code = newSourceCode;
+      localStorage.tabs = JSON.stringify(this.tabs);
+    },
+    activeTab(newActiveTab) {
+      localStorage.activeTab = newActiveTab;
+      this.sourceCode = this.tabs[this.activeTab].code;
     },
     autoSave(newAutoSave) {
       localStorage.autoSave = newAutoSave;
@@ -182,5 +231,26 @@ crThr = 0.2
   padding: 2px;
   min-width: 40px;
   margin-right: 3px;
+}
+
+#code-editor .tabs {
+  margin: 10px 0 0 0;
+  cursor: pointer;
+}
+#code-editor .tabs .tab {
+  background: #eeeeee;
+  padding: 5px 5px 1px 5px;
+  border: 1px solid #c1c0bd;
+  border-bottom: none;
+}
+
+#code-editor .tabs .tab.active {
+  background: #ffffff;
+  font-weight: bold;
+  font-size: larger;
+}
+#code-editor .tabs .tab .delete {
+  color: #c1c0bd;
+  font-size: medium;
 }
 </style>
