@@ -5,6 +5,7 @@ declare module "vue/types/vue" {
     $socket: any;
     wsConnect: any;
     wsCommands?: any;
+    wsSendCommand?: any;
   }
   interface VueConstructor<V extends Vue> {
     wsCommands?: any;

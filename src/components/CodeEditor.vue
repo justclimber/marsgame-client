@@ -57,8 +57,8 @@
   </div>
 </template>
 
-<script>
-import Vue from "vue";
+<script lang="ts">
+import { Component, Vue, Watch } from "vue-property-decorator";
 import Console from "@/components/Console.vue";
 import { codemirror } from "vue-codemirror";
 import "codemirror/addon/display/panel";
@@ -66,95 +66,97 @@ import "@/lib/codemirror/buttons";
 import "codemirror/lib/codemirror.css";
 import "codemirror/mode/go/go";
 
-export default Vue.extend({
-  components: { codemirror, Console },
-  name: "CodeEditor",
-  props: {},
-  data: function() {
-    const sourceCode = `mThr = 1.
+const sourceCode = `mThr = 1.
 mrThr = 0.2
 crThr = 0.2
 `;
-    return {
-      sourceCode: sourceCode,
-      autoSave: false,
-      autoStart: false,
-      showLegend: false,
-      tabs: [
-        {
-          name: "main",
-          code: sourceCode
-        }
-      ],
-      codeByTab: new Map(),
-      activeTab: 0,
-      codemirrorOptions: {
-        lineNumbers: true,
-        tabSize: 3,
-        indentUnit: 3,
-        indentWithTabs: false,
-        mode: "text/x-go",
-        buttons: [
-          {
-            hotkey: "Ctrl-S",
-            label: "Save",
-            callback: this.saveCode
-          },
-          {
-            hotkey: "Ctrl-R",
-            label: "Run",
-            callback: this.runProgram
-          },
-          {
-            hotkey: "Ctrl-D",
-            label: "Stop",
-            callback: this.stopProgram
-          }
-        ]
-      }
-    };
-  },
-  methods: {
-    saveCode() {
-      this.wsSendCommand({
-        type: "saveCode",
-        payload: this.sourceCode
-      });
-    },
 
-    changeTab(i) {
-      this.activeTab = i;
-    },
+type Tab = {
+  name: string;
+  code: string;
+};
 
-    addTab(i) {
-      this.tabs.push({
-        name: "tab" + this.tabs.length,
-        code: ""
-      });
-      this.activeTab = this.tabs.length - 1;
-    },
-
-    deleteTab(i) {
-      this.activeTab = i - 2;
-      this.tabs.splice(i, 1);
-    },
-
-    runProgram() {
-      this.programFlow("1");
-    },
-
-    stopProgram() {
-      this.programFlow("0");
-    },
-
-    programFlow(flowCmd) {
-      this.wsSendCommand({
-        type: "programFlow",
-        payload: flowCmd
-      });
+@Component({
+  components: { codemirror, Console }
+})
+export default class CodeEditor extends Vue {
+  $refs!: { codemirror: any };
+  sourceCode: string = sourceCode;
+  autoSave: boolean = false;
+  autoStart: boolean = false;
+  showLegend: boolean = false;
+  tabs: Tab[] = [
+    {
+      name: "main",
+      code: sourceCode
     }
-  },
-  mounted: function() {
+  ];
+  activeTab: number = 0;
+  codemirrorOptions = {
+    lineNumbers: true,
+    tabSize: 3,
+    indentUnit: 3,
+    indentWithTabs: false,
+    mode: "text/x-go",
+    buttons: [
+      {
+        hotkey: "Ctrl-S",
+        label: "Save",
+        callback: this.saveCode
+      },
+      {
+        hotkey: "Ctrl-R",
+        label: "Run",
+        callback: this.runProgram
+      },
+      {
+        hotkey: "Ctrl-D",
+        label: "Stop",
+        callback: this.stopProgram
+      }
+    ]
+  };
+
+  saveCode(): void {
+    this.wsSendCommand({
+      type: "saveCode",
+      payload: this.sourceCode
+    });
+  }
+
+  changeTab(i: number): void {
+    this.activeTab = i;
+  }
+
+  addTab(i: number): void {
+    this.tabs.push({
+      name: "tab" + this.tabs.length,
+      code: ""
+    });
+    this.activeTab = this.tabs.length - 1;
+  }
+
+  deleteTab(i: number): void {
+    this.activeTab = i - 2;
+    this.tabs.splice(i, 1);
+  }
+
+  runProgram(): void {
+    this.programFlow("1");
+  }
+
+  stopProgram(): void {
+    this.programFlow("0");
+  }
+
+  programFlow(flowCmd: string): void {
+    this.wsSendCommand({
+      type: "programFlow",
+      payload: flowCmd
+    });
+  }
+
+  mounted(): void {
     if (localStorage.tabs) {
       this.tabs = JSON.parse(localStorage.tabs);
       this.activeTab = localStorage.activeTab ? parseInt(localStorage.activeTab) : 0;
@@ -170,7 +172,7 @@ crThr = 0.2
 
     let cdm = this.$refs.codemirror.codemirror;
     cdm.addKeyMap({
-      Tab: function(cm) {
+      Tab: function(cm: any) {
         if (cm.somethingSelected()) {
           let sel = cdm.getSelection("\n");
           // Indent only if there are multiple lines selected, or if the selection spans a full line
@@ -183,31 +185,39 @@ crThr = 0.2
         if (cm.options.indentWithTabs) cm.execCommand("insertTab");
         else cm.execCommand("insertSoftTab");
       },
-      "Shift-Tab": function(cm) {
+      "Shift-Tab": function(cm: any) {
         cm.indentSelection("subtract");
       }
     });
-  },
-  watch: {
-    tabs(newTabs) {
-      localStorage.tabs = JSON.stringify(newTabs);
-    },
-    sourceCode(newSourceCode) {
-      this.tabs[this.activeTab].code = newSourceCode;
-      localStorage.tabs = JSON.stringify(this.tabs);
-    },
-    activeTab(newActiveTab) {
-      localStorage.activeTab = newActiveTab;
-      this.sourceCode = this.tabs[this.activeTab].code;
-    },
-    autoSave(newAutoSave) {
-      localStorage.autoSave = newAutoSave;
-    },
-    autoStart(newAutoStart) {
-      localStorage.autoStart = newAutoStart;
-    }
   }
-});
+
+  @Watch("tabs")
+  watchTabs(newTabs: Tab[]): void {
+    localStorage.tabs = JSON.stringify(newTabs);
+  }
+
+  @Watch("sourceCode")
+  watchSourceCode(newSourceCode: string): void {
+    this.tabs[this.activeTab].code = newSourceCode;
+    localStorage.tabs = JSON.stringify(this.tabs);
+  }
+
+  @Watch("activeTab")
+  watchActiveTab(newActiveTab: number): void {
+    localStorage.activeTab = newActiveTab;
+    this.sourceCode = this.tabs[this.activeTab].code;
+  }
+
+  @Watch("autoSave")
+  watchAutoSave(newAutoSave: boolean): void {
+    localStorage.autoSave = newAutoSave;
+  }
+
+  @Watch("autoStart")
+  watchAutoStart(newAutoStart: boolean): void {
+    localStorage.autoStart = newAutoStart;
+  }
+}
 </script>
 
 <style>
