@@ -2,7 +2,7 @@
   <div>
     <div class="paper container" id="code-editor">
       <div class="row margin-bottom-none">
-        <div class="col-12 col padding-bottom-none">
+        <div>
           <label for="sourceCode">Type your code here:</label>
           <span id="helpButton" @click="showHelp = true">?</span>
           <div class="row tabs">
@@ -204,8 +204,8 @@ export default class CodeEditor extends Vue {
 
 <style>
 #sourceCode {
-  width: 690px;
-  height: 343px;
+  width: 900px;
+  height: 377px;
   border: 1px solid #c1c0bd;
   box-shadow: -1px 5px 35px -9px rgba(0, 0, 0, 0.2);
   font-size: 12pt;
@@ -224,10 +224,15 @@ export default class CodeEditor extends Vue {
   min-width: 40px;
   margin-right: 3px;
 }
-
+#code-editor {
+  margin: 0;
+}
 #code-editor .tabs {
-  margin: 10px 0 0 0;
+  margin: 0;
   cursor: pointer;
+}
+#code-editor .CodeMirror {
+  height: 330px;
 }
 #code-editor .tabs .tab {
   background: #eeeeee;

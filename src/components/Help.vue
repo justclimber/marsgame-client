@@ -19,8 +19,8 @@
       <div class="h1">На вход программе каждый раз будут загружаться следующие переменные:</div>
       <div><span class="code">PI</span> - число π, оно полезно при работе с углами</div>
       <div>
-        <span class="code">mech</span> - структура с данными о вашем мехе: <span class="code">x</span>, <span class="code">y</span>,
-        <span class="code">angle</span> (в радианах!)
+        <span class="code">mech</span> - структура с данными о вашем мехе: <span class="code">x</span>,
+        <span class="code">y</span>, <span class="code">angle</span> (в радианах!)
       </div>
       <div>
         <span class="code">objects</span> - массив структур остальных объектов с параметрами:

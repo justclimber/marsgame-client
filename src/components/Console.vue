@@ -104,6 +104,7 @@ export default class Console extends Vue {
   font-family: monospace;
   font-size: 10pt;
   padding: 10px;
+  margin: 0;
 }
 #console .time {
   width: 75px;
