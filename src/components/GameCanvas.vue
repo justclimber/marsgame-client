@@ -405,18 +405,18 @@ export default class GameCanvas extends Vue {
   runChange(change: ChangelogByObject): void {
     let missile: GameSpriteObj | undefined;
     let enemyMech: GameSpriteObj | undefined;
+    if (change.did) {
+      const obj = this.objects.get(change.did);
+      if (obj) {
+        obj.destroy();
+      }
+    }
     switch (change.t) {
       case "player":
         this.applyMapToObj(change, this.mech, mechChangelogMap);
         this.applyMapToObj(change, this.mechWeaponCannon, cannonChangelogMap);
         break;
       case "missile":
-        if (change.did) {
-          const obj = this.objects.get(change.did);
-          if (obj) {
-            obj.destroy();
-          }
-        }
         missile = this.missiles.get(change.id);
         if (!missile) {
           missile = this.newMissile(change.id, change.x, change.y, change.a);
