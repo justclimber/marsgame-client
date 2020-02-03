@@ -1,5 +1,10 @@
 # marsgame-client
 
+Клиент игры Marsgame.
+Игра для програмистов
+
+![скриншот](https://https://github.com/justclimber/marsgame-client/tree/master/docs/images/screenshot1.png)
+
 ## Project setup
 ```
 npm install
