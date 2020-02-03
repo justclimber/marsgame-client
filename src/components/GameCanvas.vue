@@ -183,15 +183,25 @@ export default class GameCanvas extends Vue {
 
   newMapObj(id: number, type: string, x: number = 0, y: number = 0): void {
     let obj: GameSpriteObj;
-    if (type == "rock") {
-      obj = new PIXI.Sprite(sheet.textures[`rock${getRandomInt(1, 3)}.png`]);
-    } else {
-      let base = new PIXI.Sprite(sheet.textures[`enemy_base.png`]);
-      let cannon = new PIXI.Sprite(sheet.textures[`enemy_cannon.png`]);
-      obj = new PIXI.Container();
-      obj.pivot.set(0.5);
-      obj.addChild(base);
-      obj.addChild(cannon);
+    let xelon: PIXI.AnimatedSprite;
+    switch (type) {
+      case "rock":
+        obj = new PIXI.Sprite(sheet.textures[`rock${getRandomInt(1, 3)}.png`]);
+        break;
+      case "xelon":
+        xelon = new PIXI.AnimatedSprite(sheet.animations["k"]);
+        xelon.animationSpeed = 0.167;
+        xelon.play();
+        obj = xelon;
+        break;
+      case "enemy_mech":
+        obj = new PIXI.Container();
+        obj.pivot.set(0.5);
+        obj.addChild(new PIXI.Sprite(sheet.textures[`enemy_base.png`]));
+        obj.addChild(new PIXI.Sprite(sheet.textures[`enemy_cannon.png`]));
+        break;
+      default:
+        throw new Error("Unsupported object type: " + type);
     }
 
     obj.x = x;
