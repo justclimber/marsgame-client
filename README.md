@@ -3,7 +3,7 @@
 Клиент игры Marsgame.
 Игра для програмистов
 
-![скриншот](https://https://github.com/justclimber/marsgame-client/tree/master/docs/images/screenshot1.png)
+![скриншот](https://github.com/justclimber/marsgame-client/tree/master/docs/images/screenshot1.png)
 
 ## Project setup
 ```
