@@ -1,31 +1,29 @@
 <template>
-  <div>
-    <div id="console" class="row">
-      <div class="col-6">
-        <div class="row margin-none" v-for="row in console.rows" :key="row.id">
-          <div class="time">{{ row.date.toLocaleTimeString("ru") }}</div>
-          <div class="text" :class="row.type" v-html="row.text"></div>
-        </div>
+  <div id="console" class="row">
+    <div class="col-6">
+      <div class="row margin-none" v-for="row in console.rows" :key="row.id">
+        <div class="time">{{ row.date.toLocaleTimeString("ru") }}</div>
+        <div class="text" :class="row.type" v-html="row.text"></div>
       </div>
-      <div class="col-3 console-col">
-        <div class="row margin-none">Input:</div>
-        <div class="row margin-none" v-for="(inputVar, i) in console.input" :key="`input-${i}`">
-          <div class="text" v-html="inputVar" @mouseenter="hoverVar" @mouseleave="hoverVarEnd"></div>
-        </div>
+    </div>
+    <div class="col-3 console-col">
+      <div class="row margin-none">Input:</div>
+      <div class="row margin-none" v-for="(inputVar, i) in console.input" :key="`input-${i}`">
+        <div class="text" v-html="inputVar" @mouseenter="hoverVar" @mouseleave="hoverVarEnd"></div>
       </div>
-      <div class="col-3 console-col result">
-        <div class="row margin-none">Result:</div>
-        <div class="row margin-none" v-for="(outputVar, i) in console.output" :key="`output-${i}`">
-          <div class="text" v-html="outputVar" @mouseenter="hoverVar" @mouseleave="hoverVarEnd"></div>
+    </div>
+    <div class="col-3 console-col result">
+      <div class="row margin-none">Result:</div>
+      <div class="row margin-none" v-for="(outputVar, i) in console.output" :key="`output-${i}`">
+        <div class="text" v-html="outputVar" @mouseenter="hoverVar" @mouseleave="hoverVarEnd"></div>
+      </div>
+      <div class="row pre-cost"></div>
+      <div class="row cost">
+        <div class="col-7">
+          <div class="block">Energy: {{ console.energy }}</div>
         </div>
-        <div class="row pre-cost"></div>
-        <div class="row cost">
-          <div class="col-7">
-            <div class="block">Energy: {{ console.energy }}</div>
-          </div>
-          <div class="col-5">
-            <div class="block">Cost: {{ console.cost }}</div>
-          </div>
+        <div class="col-5">
+          <div class="block">Cost: {{ console.cost }}</div>
         </div>
       </div>
     </div>
@@ -97,8 +95,7 @@ export default class Console extends Vue {
 <style scoped>
 #console {
   border: 3px solid #98662e;
-  width: 900px;
-  height: 300px;
+  height: 100%;
   background-color: #251006;
   color: #c08a70;
   font-family: monospace;
