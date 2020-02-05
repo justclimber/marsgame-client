@@ -104,7 +104,7 @@ export default class Help extends Vue {
 #help {
   position: absolute;
   width: 800px;
-  height: 860px;
+  height: calc(100vh - 20px);
   overflow: auto;
   background: rgba(255, 255, 255, 0.95);
   z-index: 9999;

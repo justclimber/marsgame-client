@@ -440,4 +440,8 @@ export default class GameCanvas extends Vue {
 }
 </script>
 
-<style scoped></style>
+<style scoped>
+#pixiDiv {
+  height: 100%;
+}
+</style>

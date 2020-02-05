@@ -1,42 +1,35 @@
 <template>
   <div>
-    <div class="paper container" id="code-editor">
-      <div class="row margin-bottom-none">
-        <div>
-          <label for="sourceCode">Type your code here:</label>
-          <span id="helpButton" @click="showHelp = true">?</span>
-          <div class="row tabs">
-            <div
-              class="tab"
-              v-for="(tab, i) in tabs"
-              :key="`tab-${i}`"
-              :class="{ active: i === activeTab }"
-              @click="changeTab(i)"
-            >
-              {{ tab.name }}
-              <span class="delete" @click="deleteTab(i)" v-if="i !== 0">х</span>
-            </div>
-            <div class="tab" @click="addTab">+</div>
-          </div>
-          <codemirror ref="codemirror" id="sourceCode" v-model="sourceCode" :options="codemirrorOptions" />
-          <div class="row form-group margin-none">
-            <div class="col-6 col padding-bottom-none">
-              <label for="autoSaveCheckbox" class="paper-radio">
-                <input type="checkbox" id="autoSaveCheckbox" v-model="autoSave" />
-                <span>Auto save</span>
-              </label>
-            </div>
-            <div class="col-6 col padding-bottom-none">
-              <label for="autoStartCheckbox" class="paper-radio" :class="{ disabled: !autoSave }">
-                <input type="checkbox" id="autoStartCheckbox" v-model="autoStart" :disabled="!autoSave" />
-                <span>Auto start</span>
-              </label>
-            </div>
-          </div>
+    <div class="container" id="code-editor">
+      <label for="sourceCode">Type your code here:</label>
+      <span id="helpButton" @click="showHelp = true">?</span>
+      <div class="row tabs">
+        <div
+          class="tab"
+          v-for="(tab, i) in tabs"
+          :key="`tab-${i}`"
+          :class="{ active: i === activeTab }"
+          @click="changeTab(i)"
+        >
+          {{ tab.name }}
+          <span class="delete" @click="deleteTab(i)" v-if="i !== 0">х</span>
         </div>
+        <div class="tab" @click="addTab">+</div>
       </div>
-      <div class="row">
-        <Console />
+      <codemirror ref="codemirror" id="sourceCode" v-model="sourceCode" :options="codemirrorOptions" />
+      <div class="row form-group margin-none">
+        <div class="col-6 col padding-bottom-none">
+          <label for="autoSaveCheckbox" class="paper-radio">
+            <input type="checkbox" id="autoSaveCheckbox" v-model="autoSave" />
+            <span>Auto save</span>
+          </label>
+        </div>
+        <div class="col-6 col padding-bottom-none">
+          <label for="autoStartCheckbox" class="paper-radio" :class="{ disabled: !autoSave }">
+            <input type="checkbox" id="autoStartCheckbox" v-model="autoStart" :disabled="!autoSave" />
+            <span>Auto start</span>
+          </label>
+        </div>
       </div>
     </div>
     <Help v-show="showHelp" @help-close="showHelp = false" />
@@ -45,7 +38,6 @@
 
 <script lang="ts">
 import { Component, Vue, Watch } from "vue-property-decorator";
-import Console from "@/components/Console.vue";
 import Help from "@/components/Help.vue";
 import { codemirror } from "vue-codemirror";
 import "codemirror/addon/display/panel";
@@ -64,7 +56,7 @@ type Tab = {
 };
 
 @Component({
-  components: { codemirror, Console, Help }
+  components: { codemirror, Help }
 })
 export default class CodeEditor extends Vue {
   $refs!: { codemirror: any };
@@ -204,8 +196,6 @@ export default class CodeEditor extends Vue {
 
 <style>
 #sourceCode {
-  width: 900px;
-  height: 377px;
   border: 1px solid #c1c0bd;
   box-shadow: -1px 5px 35px -9px rgba(0, 0, 0, 0.2);
   font-size: 12pt;
@@ -224,15 +214,9 @@ export default class CodeEditor extends Vue {
   min-width: 40px;
   margin-right: 3px;
 }
-#code-editor {
-  margin: 0;
-}
 #code-editor .tabs {
   margin: 0;
   cursor: pointer;
-}
-#code-editor .CodeMirror {
-  height: 330px;
 }
 #code-editor .tabs .tab {
   background: #eeeeee;

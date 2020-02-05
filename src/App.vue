@@ -22,7 +22,15 @@ export default class App extends Vue {}
 </script>
 
 <style>
+html,
+body {
+  height: 100%;
+}
+html {
+  overflow: hidden;
+}
 #app {
+  height: 100%;
   padding: 20px;
   max-width: 1800px;
 }
