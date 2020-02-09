@@ -1,33 +1,28 @@
 <template>
-  <div id="console" class="row">
-    <div class="col-6">
-      <div class="row margin-none" v-for="row in console.rows" :key="row.id">
+  <div class="console-root">
+    <div class="console-messages">
+      <div v-for="row in console.rows" :key="row.id" class="console-messages-row">
         <div class="time">{{ row.date.toLocaleTimeString("ru") }}</div>
         <div class="text" :class="row.type" v-html="row.text"></div>
       </div>
     </div>
-    <div class="col-3 console-col">
-      <div class="row margin-none">Input:</div>
-      <div class="row margin-none" v-for="(inputVar, i) in console.input" :key="`input-${i}`">
+    <div class="console-col console-input">
+      <div>Input:</div>
+      <div v-for="(inputVar, i) in console.input" :key="`input-${i}`">
         <div class="text" v-html="inputVar" @mouseenter="hoverVar" @mouseleave="hoverVarEnd"></div>
       </div>
     </div>
-    <div class="col-3 console-col result">
-      <div class="row margin-none">Result:</div>
-      <div class="row margin-none" v-for="(outputVar, i) in console.output" :key="`output-${i}`">
+    <div class="console-col console-output">
+      <div>Result:</div>
+      <div v-for="(outputVar, i) in console.output" :key="`output-${i}`">
         <div class="text" v-html="outputVar" @mouseenter="hoverVar" @mouseleave="hoverVarEnd"></div>
       </div>
-      <div class="row pre-cost"></div>
-      <div class="row cost">
-        <div class="col-7">
-          <div class="block">Energy: {{ console.energy }}</div>
-        </div>
-        <div class="col-5">
-          <div class="block">Cost: {{ console.cost }}</div>
-        </div>
-      </div>
     </div>
-    <div id="popup" v-show="showPopup" v-html="popupText" :style="popupStyle"></div>
+    <div class="console-cost">
+      <div class="cost-block">Energy: {{ console.energy }}</div>
+      <div class="cost-block">Cost: {{ console.cost }}</div>
+    </div>
+    <div class="popup" v-show="showPopup" v-html="popupText" :style="popupStyle"></div>
   </div>
 </template>
 
@@ -92,54 +87,56 @@ export default class Console extends Vue {
 }
 </script>
 
-<style scoped>
-#console {
-  border: 3px solid #98662e;
-  height: 100%;
-  background-color: #251006;
-  color: #c08a70;
-  font-family: monospace;
-  font-size: 10pt;
-  padding: 10px;
-  margin: 0;
-}
-#console .time {
-  width: 75px;
-}
+<style scoped lang="stylus">
+.console-root
+  display grid
+  grid-template-areas "console-messages console-input console-output"\
+                      "console-messages console-cost console-cost"
+  grid-template-columns 3fr 1fr 1fr
+  grid-template-rows 1fr 15px
+  grid-gap 10px
+  border 3px solid #98662e
+  background-color #251006
+  color #c08a70
+  font-family monospace
+  font-size 10pt
+  padding 10px
+  margin 0
+  max-height 300px
+  overflow hidden
+  .time
+    width 75px
 
-.error {
-  color: #cb575d;
-}
-.console-col {
-  border-left: 2px solid #c08a70;
-  padding-left: 4px;
-}
-.console-col .row .text {
-  text-overflow: ellipsis;
-  overflow: hidden;
-  white-space: nowrap;
-}
+.error
+  color #cb575d
 
-#popup {
-  position: absolute;
-  min-width: 400px;
-  border: 2px solid black;
-  padding: 5px;
-  background-color: white;
-  z-index: 9999;
-}
+.console-cost
+  display flex
+  flex-direction row
+  .cost-block
+    padding-left 10px
 
-.result {
-  display: flex;
-  height: 100%;
-  flex-direction: column;
-}
-.pre-cost {
-  flex-grow: 1;
-}
+.console-messages-row
+  display flex
+  flex-direction row
+  .time
+    width 80px
 
-.cost {
-  margin: 0;
-  padding: 0;
-}
+.console-col
+  border-left 2px solid #c08a70
+  padding-left 4px
+  overflow auto
+  .row
+    .text
+      text-overflow ellipsis
+      overflow hidden
+      white-space nowrap
+
+.popup
+  position absolute
+  min-width 400px
+  border 2px solid black
+  padding 5px
+  background-color white
+  z-index 9999
 </style>

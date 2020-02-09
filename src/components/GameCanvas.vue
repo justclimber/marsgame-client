@@ -1,5 +1,5 @@
 <template>
-  <div class="paper container" id="pixiDiv"></div>
+  <div id="pixiDiv"></div>
 </template>
 
 <script lang="ts">
@@ -440,8 +440,4 @@ export default class GameCanvas extends Vue {
 }
 </script>
 
-<style scoped>
-#pixiDiv {
-  height: 100%;
-}
-</style>
+<style scoped></style>

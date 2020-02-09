@@ -1,16 +1,8 @@
 <template>
   <div class="game-root">
-    <div class="game-control">
-      <div class="game-editor paper margin-none">
-        <CodeEditor />
-      </div>
-      <div class="game-console paper margin-none">
-        <Console />
-      </div>
-    </div>
-    <div class="game-canvas">
-      <GameCanvas />
-    </div>
+    <CodeEditor class="game-editor" />
+    <Console class="game-console" />
+    <GameCanvas class="game-canvas" />
   </div>
 </template>
 
@@ -30,20 +22,19 @@ export default {
 };
 </script>
 
-<style>
-.game-root {
-  display: flex;
-  height: 100%;
-}
-.game-control {
-  width: 60%;
-  display: flex;
-  flex-direction: column;
-}
-.game-console {
-  height: 100%;
-}
-.game-canvas {
-  width: 40%;
-}
+<style lang="stylus">
+.game-root
+  display grid
+  grid-template-areas "game-editor game-canvas"\
+                      "game-console game-canvas"
+  grid-template-columns 1fr 680px
+  grid-template-rows 2fr 1fr
+  grid-gap 10px
+  max-height 656px
+.game-editor
+  grid-area game-editor
+.game-canvas
+  grid-area game-canvas
+.game-console
+  grid-area game-console
 </style>
