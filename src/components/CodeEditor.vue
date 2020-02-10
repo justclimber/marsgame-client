@@ -22,6 +22,9 @@
         <textarea class="source-code" v-model="sourceCode" />
       </div>
       <div class="buttons">
+        <button @click="saveCode">Save</button>
+        <button @click="runProgram">Run</button>
+        <button @click="stopProgram">Stop</button>
         <div>
           <label for="autoSaveCheckbox">
             <input type="checkbox" id="autoSaveCheckbox" v-model="autoSave" />
@@ -192,6 +195,12 @@ export default class CodeEditor extends Vue {
     display flex
     flex-direction row
     align-content left
+    padding-top 5px
+    font-size 14px
+    button
+      font-size 14px
+      border 1px solid #c1c0bd
+      margin-right  5px
 
 .help-button
   margin-left 10px

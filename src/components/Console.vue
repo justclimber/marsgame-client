@@ -110,11 +110,19 @@ export default class Console extends Vue {
 .error
   color #cb575d
 
+.console-messages
+  grid-area console-messages
+.console-input
+  grid-area console-input
+.console-output
+  grid-area console-output
+
 .console-cost
+  grid-area console-cost
   display flex
   flex-direction row
   .cost-block
-    padding-left 10px
+    padding-right 10px
 
 .console-messages-row
   display flex
