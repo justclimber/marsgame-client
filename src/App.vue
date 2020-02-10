@@ -1,6 +1,6 @@
 <template>
   <div id="app">
-    <div id="nav" class="row paper" v-show="this.showMenu">
+    <div id="nav" v-show="this.showMenu">
       <router-link to="/">Game</router-link> | <router-link to="/home">Home</router-link> |
       <router-link to="/about">About</router-link>
     </div>
@@ -21,34 +21,24 @@ import { Component, Vue } from "vue-property-decorator";
 export default class App extends Vue {}
 </script>
 
-<style>
+<style lang="stylus">
 html,
-body {
-  height: 100%;
-}
-html {
-  overflow: hidden;
-}
-#app {
-  height: 100%;
-  padding: 20px;
-  max-width: 1800px;
-}
+body
+  height 100%
+  font-family Verdana
 
-#app .paper {
-  padding: 10px;
-}
+html
+  overflow hidden
 
-#nav {
-  padding: 20px;
-}
+#app
+  max-width 1800px
+  overflow hidden
 
-#nav a {
-  font-weight: bold;
-  color: #2c3e50;
-}
-
-#nav a.router-link-exact-active {
-  color: #42b983;
-}
+#nav
+  padding 20px
+  a
+    font-weight bold
+    color #2c3e50
+    &.router-link-exact-active
+      color #42b983
 </style>

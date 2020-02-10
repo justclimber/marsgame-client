@@ -1,7 +1,7 @@
 <template>
   <div id="helpContainer">
     <div id="helpCloseButton" @click="close">X</div>
-    <div id="help" class="paper asd">
+    <div id="help">
       <div class="h1">Что это?</div>
       <div>Это прототип игры Marsgame</div>
       <div class="h1">Что тут делать?</div>
@@ -93,42 +93,39 @@ export default class Help extends Vue {
 }
 </script>
 
-<style scoped>
-#helpContainer {
-  position: absolute;
-  width: 800px;
-  height: 860px;
-  top: 10px;
-  left: 400px;
-}
-#help {
-  position: absolute;
-  width: 800px;
-  height: calc(100vh - 20px);
-  overflow: auto;
-  background: rgba(255, 255, 255, 0.95);
-  z-index: 9999;
-  margin: 0;
-}
-#help .h1 {
-  margin-top: 10px;
-  font-size: 25px;
-  font-weight: bold;
-}
-#help .code {
-  font-family: monospace;
-  color: #c08a70;
-  background: #fff9fc;
-  border: 1px solid #d3adab;
-  padding: 0 2px;
-}
-#helpCloseButton {
-  cursor: pointer;
-  position: absolute;
-  right: 25px;
-  top: 15px;
-  font-weight: bold;
-  font-size: 35px;
-  z-index: 999999;
-}
+<style scoped lang="stylus">
+#helpContainer
+  position absolute
+  width 800px
+  height 860px
+  top 10px
+  left 400px
+  border 1px solid gray
+
+#help
+  position absolute
+  height calc(100vh - 100px)
+  overflow auto
+  background rgba(255, 255, 255, 0.95)
+  z-index 9999
+  padding 20px
+  .h1
+    margin-top 10px
+    font-size 25px
+    font-weight bold
+  .code
+    font-family monospace
+    color #c08a70
+    background #fff9fc
+    border 1px solid #d3adab
+    padding 0 2px
+
+#helpCloseButton
+  cursor pointer
+  position absolute
+  right 25px
+  top 15px
+  font-weight bold
+  font-size 35px
+  z-index 999999
 </style>

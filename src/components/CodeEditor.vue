@@ -1,9 +1,11 @@
 <template>
   <div>
-    <div class="container" id="code-editor">
-      <label for="sourceCode">Type your code here:</label>
-      <span id="helpButton" @click="showHelp = true">?</span>
-      <div class="row tabs">
+    <div class="code-editor-root">
+      <div>
+        <span>Type your code here:</span>
+        <span class="help-button" @click="showHelp = true">?</span>
+      </div>
+      <div class="tabs">
         <div
           class="tab"
           v-for="(tab, i) in tabs"
@@ -16,16 +18,21 @@
         </div>
         <div class="tab" @click="addTab">+</div>
       </div>
-      <codemirror ref="codemirror" id="sourceCode" v-model="sourceCode" :options="codemirrorOptions" />
-      <div class="row form-group margin-none">
-        <div class="col-6 col padding-bottom-none">
-          <label for="autoSaveCheckbox" class="paper-radio">
+      <div class="source-code-wrapper">
+        <textarea class="source-code" v-model="sourceCode" />
+      </div>
+      <div class="buttons">
+        <button @click="saveCode">Save</button>
+        <button @click="runProgram">Run</button>
+        <button @click="stopProgram">Stop</button>
+        <div>
+          <label for="autoSaveCheckbox">
             <input type="checkbox" id="autoSaveCheckbox" v-model="autoSave" />
             <span>Auto save</span>
           </label>
         </div>
-        <div class="col-6 col padding-bottom-none">
-          <label for="autoStartCheckbox" class="paper-radio" :class="{ disabled: !autoSave }">
+        <div>
+          <label for="autoStartCheckbox" :class="{ disabled: !autoSave }">
             <input type="checkbox" id="autoStartCheckbox" v-model="autoStart" :disabled="!autoSave" />
             <span>Auto start</span>
           </label>
@@ -39,11 +46,6 @@
 <script lang="ts">
 import { Component, Vue, Watch } from "vue-property-decorator";
 import Help from "@/components/Help.vue";
-import { codemirror } from "vue-codemirror";
-import "codemirror/addon/display/panel";
-import "@/lib/codemirror/buttons";
-import "codemirror/lib/codemirror.css";
-import "codemirror/mode/go/go";
 
 const sourceCode = `mThr = 1.
 mrThr = 0.2
@@ -56,10 +58,9 @@ type Tab = {
 };
 
 @Component({
-  components: { codemirror, Help }
+  components: { Help }
 })
 export default class CodeEditor extends Vue {
-  $refs!: { codemirror: any };
   sourceCode: string = sourceCode;
   autoSave: boolean = false;
   autoStart: boolean = false;
@@ -71,31 +72,6 @@ export default class CodeEditor extends Vue {
     }
   ];
   activeTab: number = 0;
-  codemirrorOptions = {
-    lineNumbers: true,
-    tabSize: 3,
-    indentUnit: 3,
-    indentWithTabs: false,
-    mode: "text/x-go",
-    buttons: [
-      {
-        hotkey: "Ctrl-S",
-        label: "Save",
-        callback: this.saveCode
-      },
-      {
-        hotkey: "Ctrl-R",
-        label: "Run",
-        callback: this.runProgram
-      },
-      {
-        hotkey: "Ctrl-D",
-        label: "Stop",
-        callback: this.stopProgram
-      }
-    ]
-  };
-
   saveCode(): void {
     this.wsSendCommand({
       type: "saveCode",
@@ -148,26 +124,6 @@ export default class CodeEditor extends Vue {
       this.autoStart = localStorage.autoStart;
       setTimeout(this.runProgram, 1000);
     }
-
-    let cdm = this.$refs.codemirror.codemirror;
-    cdm.addKeyMap({
-      Tab: function(cm: any) {
-        if (cm.somethingSelected()) {
-          let sel = cdm.getSelection("\n");
-          // Indent only if there are multiple lines selected, or if the selection spans a full line
-          if (sel.length > 0 && (sel.indexOf("\n") > -1 || sel.length === cm.getLine(cm.getCursor().line).length)) {
-            cm.indentSelection("add");
-            return;
-          }
-        }
-
-        if (cm.options.indentWithTabs) cm.execCommand("insertTab");
-        else cm.execCommand("insertSoftTab");
-      },
-      "Shift-Tab": function(cm: any) {
-        cm.indentSelection("subtract");
-      }
-    });
   }
 
   @Watch("tabs") watchTabs(newTabs: Tab[]): void {
@@ -194,52 +150,62 @@ export default class CodeEditor extends Vue {
 }
 </script>
 
-<style>
-#sourceCode {
-  border: 1px solid #c1c0bd;
-  box-shadow: -1px 5px 35px -9px rgba(0, 0, 0, 0.2);
-  font-size: 12pt;
-}
+<style lang="stylus">
+.source-code
+  border 1px solid #c1c0bd
+  font-size 12pt
+  width 99%
+  margin 0
+  padding 0
+  font-weight normal
+  font-family monospace
+  color black
+  overflow auto
+  resize none
+  line-height 18px
+  height 100%
+  max-height 700px
 
-.legend {
-  font-size: 13pt;
-}
+.code-editor-root
+  display flex
+  flex-direction column
+  align-items stretch
+  height 100%
+  overflow hidden
+  .source-code-wrapper
+    flex-grow 1
+  .tabs
+    margin 0
+    cursor pointer
+    display flex
+    flex-direction row
+    .tab
+      background #eeeeee
+      padding 5px 5px 1px 5px
+      border 1px solid #c1c0bd
+      border-bottom none
+      &.active
+        background #ffffff
+        font-weight bold
+        font-size larger
+      .delete
+        color #c1c0bd
+        font-size medium
+  .buttons
+    display flex
+    flex-direction row
+    align-content left
+    padding-top 5px
+    font-size 14px
+    button
+      font-size 14px
+      border 1px solid #c1c0bd
+      margin-right  5px
 
-.CodeMirror-buttonsPanel {
-  margin: 5px;
-}
-
-.CodeMirror-buttonsPanel button {
-  padding: 2px;
-  min-width: 40px;
-  margin-right: 3px;
-}
-#code-editor .tabs {
-  margin: 0;
-  cursor: pointer;
-}
-#code-editor .tabs .tab {
-  background: #eeeeee;
-  padding: 5px 5px 1px 5px;
-  border: 1px solid #c1c0bd;
-  border-bottom: none;
-}
-
-#code-editor .tabs .tab.active {
-  background: #ffffff;
-  font-weight: bold;
-  font-size: larger;
-}
-#code-editor .tabs .tab .delete {
-  color: #c1c0bd;
-  font-size: medium;
-}
-
-#helpButton {
-  margin-left: 10px;
-  padding: 2px 5px;
-  border: 1px solid #c1c0bd;
-  border-radius: 20px;
-  cursor: pointer;
-}
+.help-button
+  margin-left 10px
+  padding 2px 5px
+  border 1px solid #c1c0bd
+  border-radius 20px
+  cursor pointer
 </style>
