@@ -19,7 +19,15 @@
         <div class="tab" @click="addTab">+</div>
       </div>
       <div class="source-code-wrapper">
-        <textarea class="source-code" v-model="sourceCode" />
+        <textarea
+          class="source-code original"
+          v-model="sourceCode"
+          @input="onSourceInput"
+          spellcheck="false"
+          ref="source"
+          @scroll="onSourceScroll"
+        />
+        <pre><code class="source-code visualizer" v-html="sourceCodeHighlighted" ref="sourceVisor" /></pre>
       </div>
       <div class="buttons">
         <button @click="saveCode">Save</button>
@@ -57,10 +65,18 @@ type Tab = {
   code: string;
 };
 
+function injectString(source: string, inject: string, pos: number): string {
+  return source.substring(0, pos) + inject + source.substring(pos, source.length);
+}
+
 @Component({
   components: { Help }
 })
 export default class CodeEditor extends Vue {
+  $refs!: {
+    source: HTMLTextAreaElement;
+    sourceVisor: HTMLDivElement;
+  };
   sourceCode: string = sourceCode;
   autoSave: boolean = false;
   autoStart: boolean = false;
@@ -111,6 +127,38 @@ export default class CodeEditor extends Vue {
     });
   }
 
+  onSourceScroll(event: any) {
+    this.$refs.sourceVisor.scrollTop = event.target.scrollTop;
+  }
+
+  onSourceInput(event: any) {
+    if (event.data === "{") {
+      this.pairBracketsWithNewLineAndIndent();
+    }
+  }
+
+  pairBracketsWithNewLineAndIndent(): void {
+    const textToInsert = "\n   \n}";
+    const pos = this.$refs.source.selectionStart;
+    this.sourceCode = injectString(this.sourceCode, textToInsert, pos);
+    this.$nextTick(() => {
+      this.gotoPos(pos + 4);
+    });
+  }
+
+  gotoPos(pos: number): void {
+    this.$refs.source.selectionStart = pos;
+    this.$refs.source.selectionEnd = pos;
+  }
+
+  get sourceCodeHighlighted(): string {
+    return this.sourceCode
+      .replace(/[+\-*=><:]/g, "<span class='operators'>$&</span>")
+      .replace(/[(){}[]/g, "<span class='braces'>$&</span>")
+      .replace(/ifempty|if|return|switch|case|default|else/g, "<span class='keyword'>$&</span>")
+      .replace(/\d+/g, "<span class='num'>$&</span>");
+  }
+
   mounted(): void {
     if (localStorage.tabs) {
       this.tabs = JSON.parse(localStorage.tabs);
@@ -151,20 +199,42 @@ export default class CodeEditor extends Vue {
 </script>
 
 <style lang="stylus">
-.source-code
-  border 1px solid #c1c0bd
-  font-size 12pt
-  width 99%
-  margin 0
-  padding 0
-  font-weight normal
-  font-family monospace
-  color black
-  overflow auto
-  resize none
-  line-height 18px
-  height 100%
-  max-height 700px
+.source-code-wrapper
+  position relative
+  .source-code
+    border 1px solid #c1c0bd
+    font-size 12pt
+    width 99%
+    margin 0
+    padding 0
+    font-weight normal
+    font-family monospace
+    color black
+    overflow auto
+    resize none
+    line-height 18px
+    height 100%
+    max-height 700px
+
+  .original
+    z-index: 1
+    opacity 0.1
+
+  .visualizer
+    background #ffede5
+    position absolute
+    top 0
+    left 0
+    z-index -1
+    color #7d7575
+    .keyword
+      color #ac7d68
+    .num
+      color #a9c089
+    .operators
+      color #9d505c
+    .braces
+      color #9806bc
 
 .code-editor-root
   display flex
