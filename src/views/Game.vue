@@ -30,7 +30,7 @@ export default {
   grid-template-columns 1fr 680px
   grid-template-rows 2fr 1fr
   grid-gap 10px
-  max-height 656px
+  max-height 756px
 .game-editor
   grid-area game-editor
 .game-canvas

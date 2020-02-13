@@ -94,13 +94,13 @@ export default class Console extends Vue {
                       "console-messages console-cost console-cost"
   grid-template-columns 3fr 1fr 1fr
   grid-template-rows 1fr 15px
-  grid-gap 10px
+  grid-gap 3px
   border 3px solid #98662e
   background-color #251006
   color #c08a70
   font-family monospace
   font-size 10pt
-  padding 10px
+  padding 6px
   margin 0
   max-height 300px
   overflow hidden
@@ -121,6 +121,7 @@ export default class Console extends Vue {
   grid-area console-cost
   display flex
   flex-direction row
+  border-top 2px solid #c08a70
   .cost-block
     padding-right 10px
 
