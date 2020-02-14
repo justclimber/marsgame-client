@@ -77,8 +77,8 @@ export default class Console extends Vue {
     }
     this.popupText = event.target.innerText;
     this.showPopup = true;
-    this.popupStyle.left = event.clientX + "px";
-    this.popupStyle.top = event.clientY + "px";
+    this.popupStyle.left = event.clientX + 10 + "px";
+    this.popupStyle.top = event.clientY + 10 + "px";
   }
 
   hoverVarEnd() {
@@ -135,11 +135,10 @@ export default class Console extends Vue {
   border-left 2px solid #c08a70
   padding-left 4px
   overflow auto
-  .row
-    .text
-      text-overflow ellipsis
-      overflow hidden
-      white-space nowrap
+  .text
+    text-overflow ellipsis
+    overflow hidden
+    white-space nowrap
 
 .popup
   position absolute
