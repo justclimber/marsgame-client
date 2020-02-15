@@ -93,8 +93,7 @@
 </template>
 
 <script lang="ts">
-import { Component, Vue, Watch } from "vue-property-decorator";
-import Console from "./Console.vue";
+import { Component, Vue } from "vue-property-decorator";
 
 @Component
 export default class Help extends Vue {
