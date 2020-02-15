@@ -24,8 +24,11 @@
           v-model="sourceCode"
           @input="onSourceInput"
           spellcheck="false"
+          autocapitalize="off"
+          autocomplete="off"
           ref="source"
           @scroll="onSourceScroll"
+          @click="onSourceClick"
         />
         <pre><code class="source-code visualizer" v-html="sourceCodeHighlighted" ref="sourceVisor" /></pre>
         <div class="sidebar" ref="sidebar">
@@ -152,6 +155,12 @@ export default class CodeEditor extends Vue {
     this.$refs.sidebar.scrollTop = event.target.scrollTop;
   }
 
+  onSourceClick(event: any) {
+    let selStart = event.target.selectionStart;
+    let selEnd = event.target.selectionEnd;
+    // console.log(selStart, selEnd);
+  }
+
   onSourceInput(event: any) {
     if (event.data === "{") {
       this.pairBracketsWithNewLineAndIndent();
@@ -253,16 +262,18 @@ export default class CodeEditor extends Vue {
     padding-left 25px
     font-weight normal
     font-family monospace
-    color black
     overflow auto
-    resize none
     line-height 18px
     height 100%
     max-height 700px
 
   .original
+    background none
     z-index: 1
-    opacity 0.1
+    color transparent
+    caret-color black
+    resize none
+    /*opacity 0.1*/
 
   .visualizer
     background #ffede5
