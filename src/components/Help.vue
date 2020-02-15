@@ -26,34 +26,45 @@
         <span class="code">objects</span> - массив структур остальных объектов с параметрами:
         <span class="code">x</span>, <span class="code">y</span>, <span class="code">angle</span> (в радианах!)
       </div>
-      <div class="h1">На выходе могут быть следующие переменные:</div>
       <div>
-        float <span class="code">mThr</span>. Диапазон от <span class="code">-1.</span> до <span class="code">1.</span>
+        <span class="code">commands</span> - структура, в которой содержатся команды меху в виде отдельных меременных
+      </div>
+      <div class="h1">Подробнее про commands:</div>
+      <div>
+        Содержимое структуры <span class="code">commands</span> - переменные и вложенные структуры, значения которых
+        задают поведение вашего меха:
       </div>
       <div>
-        float <span class="code">mrThr</span>. Диапазон от <span class="code">-1.</span> до <span class="code">1.</span>
+        float <span class="code">move</span>. Диапазон от <span class="code">-1.</span> до <span class="code">1.</span>.
+        Default <span class="code">0.</span>
       </div>
       <div>
-        float <span class="code">crThr</span>. Диапазон от <span class="code">-1.</span> до <span class="code">1.</span>
+        float <span class="code">rotate</span>. Диапазон от <span class="code">-1.</span> до
+        <span class="code">1.</span>. Default <span class="code">0.</span>
       </div>
       <div>
-        float <span class="code">shoot</span>. Диапазон от <span class="code">0</span> до
-        <span class="code">max float</span>
+        float <span class="code">cannon.rotate</span>. Диапазон от <span class="code">-1.</span> до
+        <span class="code">1.</span>. Default <span class="code">0.</span>
       </div>
-      <div>Если каких-то из этих переменных на выходе нет, они приравниваются к 0</div>
-      <div class="h1">mThr</div>
-      <div>Mech throttle, или "газ", пятка в пол на педаль. 1. - полный газ, -1. - полный обратный ход</div>
-      <div class="h1">mrThr</div>
       <div>
-        Mech Rotate throttle, или усилие поворота меха. 1. - максимальное вращение меха по часовой стрелке, -1. -
-        максимальное вращение против часовой стрелки
+        float <span class="code">cannon.shoot</span>. Диапазон от <span class="code">0</span> до
+        <span class="code">max float</span>. Default <span class="code">0.</span> - не стрелять
       </div>
-      <div class="h1">crThr</div>
+      <div class="h1">commands.move</div>
       <div>
-        Cannon rotate throttle, или усилие поворота башни меха. 1. - максимальное вращение башни по часовой стрелке, -1.
-        - максимальное вращение против часовой стрелки
+        Движение или "газ", пятка в пол на педаль. 1. - полный газ, -1. - полный обратный ход
       </div>
-      <div class="h1">shoot</div>
+      <div class="h1">commands.rotate</div>
+      <div>
+        Усилие поворота меха. 1. - максимальное вращение меха по часовой стрелке, -1. - максимальное вращение против
+        часовой стрелки
+      </div>
+      <div class="h1">commands.cannon.rotate</div>
+      <div>
+        Усилие поворота башни меха. 1. - максимальное вращение башни по часовой стрелке, -1. - максимальное вращение
+        против часовой стрелки
+      </div>
+      <div class="h1">commands.cannon.shoot</div>
       <div>
         Выстрел. Любое, отличное от нуля положительное число - время в секундах, через сколько запланировать выстрел
       </div>
@@ -96,15 +107,14 @@ export default class Help extends Vue {
 <style scoped lang="stylus">
 #helpContainer
   position absolute
-  width 800px
-  height 860px
+  width 900px
+  height 700px
   top 10px
-  left 400px
+  left 200px
   border 1px solid gray
 
 #help
-  position absolute
-  height calc(100vh - 100px)
+  height 660px
   overflow auto
   background rgba(255, 255, 255, 0.95)
   z-index 9999
