@@ -28,6 +28,11 @@
           @scroll="onSourceScroll"
         />
         <pre><code class="source-code visualizer" v-html="sourceCodeHighlighted" ref="sourceVisor" /></pre>
+        <div class="sidebar" ref="sidebar">
+          <div class="line-numbers">
+            <div class="line-num" v-for="(line, i) in lines" :key="`line-${i}`">{{ i }}</div>
+          </div>
+        </div>
       </div>
       <div class="buttons">
         <button @click="saveCode">Save</button>
@@ -78,6 +83,7 @@ export default class CodeEditor extends Vue {
   $refs!: {
     source: HTMLTextAreaElement;
     sourceVisor: HTMLDivElement;
+    sidebar: HTMLDivElement;
   };
   sourceCode: string = sourceCode;
   autoSave: boolean = false;
@@ -143,6 +149,7 @@ export default class CodeEditor extends Vue {
 
   onSourceScroll(event: any) {
     this.$refs.sourceVisor.scrollTop = event.target.scrollTop;
+    this.$refs.sidebar.scrollTop = event.target.scrollTop;
   }
 
   onSourceInput(event: any) {
@@ -171,6 +178,10 @@ export default class CodeEditor extends Vue {
       .replace(/[(){}[]/g, "<span class='braces'>$&</span>")
       .replace(/ifempty|if|return|switch|case|default|else/g, "<span class='keyword'>$&</span>")
       .replace(/\d+/g, "<span class='num'>$&</span>");
+  }
+
+  get lines(): string[] {
+    return this.sourceCode.split("\n");
   }
 
   mounted(): void {
@@ -215,12 +226,31 @@ export default class CodeEditor extends Vue {
 <style lang="stylus">
 .source-code-wrapper
   position relative
+  font-size 11pt
+  font-weight normal
+  font-family monospace
+  line-height 18px
+  .sidebar
+    position absolute
+    top 0
+    left 0
+    padding 1px
+    overflow hidden
+    max-height 384px
+    background #eeeeee
+    border 1px solid #c1c0bd
+    color #7d7575
+    .line-numbers
+      width 22px
+      text-align right
+
   .source-code
     border 1px solid #c1c0bd
     font-size 12pt
-    width 99%
+    width 96%
     margin 0
     padding 0
+    padding-left 25px
     font-weight normal
     font-family monospace
     color black
