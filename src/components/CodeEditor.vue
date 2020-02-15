@@ -33,6 +33,8 @@
         <button @click="saveCode">Save</button>
         <button @click="runProgram">Run</button>
         <button @click="stopProgram">Stop</button>
+        <button @click="resetMech">Reset Mech</button>
+        <button @click="resetWorld">Reset World</button>
         <div>
           <label for="autoSaveCheckbox">
             <input type="checkbox" id="autoSaveCheckbox" v-model="autoSave" />
@@ -124,6 +126,18 @@ export default class CodeEditor extends Vue {
     this.wsSendCommand({
       type: "programFlow",
       payload: flowCmd
+    });
+  }
+
+  resetMech(): void {
+    this.wsSendCommand({
+      type: "resetMech"
+    });
+  }
+
+  resetWorld(): void {
+    this.wsSendCommand({
+      type: "resetWorld"
     });
   }
 

@@ -98,6 +98,15 @@ export default class GameCanvas extends Vue {
       changelogToRun = [...changelogToRun, ...changelog];
     },
     worldInit(this: GameCanvas, changelog: ChangelogByTime[]) {
+      changelogToRun = [];
+      currTimeId = 0;
+      this.changelogCurrIndex = 0;
+      this.clearPredictions();
+      this.cleanMap();
+      this.wsSendCommand({
+        type: "programFlow",
+        payload: "1"
+      });
       changelog[0].chObjs.forEach(function(this: GameCanvas, obj: ChangelogByObject): void {
         if (obj.t == "player" && this.mech && obj.x && obj.y) {
           // мы должны пересоздать спрайт, чтобы он всегда был на верхнем слое
@@ -214,6 +223,13 @@ export default class GameCanvas extends Vue {
     this.viewport.addChild(obj);
   }
 
+  cleanMap(): void {
+    this.missiles.forEach((missile: GameSpriteObj) => missile.destroy());
+    this.missiles = new Map();
+    this.objects.forEach((objects: GameSpriteObj) => objects.destroy());
+    this.objects = new Map();
+  }
+
   drawBoundsForObj(obj: GameSpriteObj): void {
     if (!this.debug) {
       return;
@@ -247,9 +263,10 @@ export default class GameCanvas extends Vue {
     this.viewport.addChild(explosion);
   }
 
-  destroyMissile(missile: GameSpriteObj) {
+  destroyMissile(id: number, missile: GameSpriteObj) {
     this.explode(missile.x, missile.y);
     missile.destroy();
+    this.missiles.delete(id);
   }
 
   newMissile(id: number, x: number = 0, y: number = 0, rotation: number = 0): GameSpriteObj {
@@ -409,6 +426,7 @@ export default class GameCanvas extends Vue {
       const obj = this.objects.get(change.did);
       if (obj) {
         obj.destroy();
+        this.objects.delete(change.did);
       }
     }
     switch (change.t) {
@@ -422,8 +440,7 @@ export default class GameCanvas extends Vue {
           missile = this.newMissile(change.id, change.x, change.y, change.a);
         }
         if (change.d) {
-          this.destroyMissile(missile);
-          this.missiles.delete(change.id);
+          this.destroyMissile(change.id, missile);
         } else {
           this.applyMapToObj(change, missile, missileChangelogMap);
         }
