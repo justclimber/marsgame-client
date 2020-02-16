@@ -76,8 +76,12 @@ type Tab = {
   code: string;
 };
 
-function injectString(source: string, inject: string, pos: number): string {
-  return source.substring(0, pos) + inject + source.substring(pos, source.length);
+function injectToString(str: string, inject: string, pos: number): string {
+  return str.substring(0, pos) + inject + str.substring(pos, str.length);
+}
+
+function ejectFromString(str: string, pos: number, length: number): string {
+  return str.substring(0, pos) + str.substring(pos + length, str.length);
 }
 
 const indent = 3;
@@ -178,9 +182,15 @@ export default class CodeEditor extends Vue {
   }
 
   onSourceKeyDown(event: any): void {
-    if (event.key === "Enter") {
-      event.preventDefault();
-      this.handleNewLineIndentation();
+    switch (event.key) {
+      case "Enter":
+        event.preventDefault();
+        this.handleNewLineIndentation();
+        break;
+      case "Tab":
+        event.preventDefault();
+        this.handleTabIndent(event.shiftKey);
+        break;
     }
   }
 
@@ -189,16 +199,31 @@ export default class CodeEditor extends Vue {
       "(": ")",
       "[": "]"
     };
-    let pos = this.$refs.source.selectionStart;
-    this.sourceCode = injectString(this.sourceCode, closeBraceMatchMap[brace], pos);
+    const pos = this.$refs.source.selectionStart;
+    this.sourceCode = injectToString(this.sourceCode, closeBraceMatchMap[brace], pos);
     this.gotoPos(pos);
   }
 
-  handleNewLineIndentation(): void {
-    let pos = this.$refs.source.selectionStart;
-    let indent = this.getCurrLineIndent(pos);
+  handleTabIndent(shiftKey: boolean): void {
+    const pos = this.$refs.source.selectionStart;
+    const lineStart = this.sourceCode.lastIndexOf("\n", pos - 1);
+    if (shiftKey) {
+      if (this.sourceCode.substr(lineStart + 1, indent) !== indentStr) {
+        return;
+      }
+      this.sourceCode = ejectFromString(this.sourceCode, lineStart + 1, indent);
+      this.gotoPos(pos - indent);
+    } else {
+      this.sourceCode = injectToString(this.sourceCode, indentStr, lineStart + 1);
+      this.gotoPos(pos + indent);
+    }
+  }
 
-    this.sourceCode = injectString(this.sourceCode, "\n" + " ".repeat(indent), pos);
+  handleNewLineIndentation(): void {
+    const pos = this.$refs.source.selectionStart;
+    const indent = this.getCurrLineIndent(pos);
+
+    this.sourceCode = injectToString(this.sourceCode, "\n" + " ".repeat(indent), pos);
     this.gotoPos(pos + indent + 1);
   }
 
@@ -213,7 +238,7 @@ export default class CodeEditor extends Vue {
     const currLineIndent = this.getCurrLineIndent(pos);
     const currLineIndentStr = " ".repeat(currLineIndent);
     const textToInsert = "\n" + currLineIndentStr + indentStr + "\n" + currLineIndentStr + "}";
-    this.sourceCode = injectString(this.sourceCode, textToInsert, pos);
+    this.sourceCode = injectToString(this.sourceCode, textToInsert, pos);
     this.gotoPos(pos + indent + currLineIndent + 1);
   }
 
