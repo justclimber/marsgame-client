@@ -338,8 +338,11 @@ export default class CodeEditor extends Vue {
     outline none
 
   .original
+    position absolute
+    top 0
+    left 0
     background none
-    z-index: 9999
+    z-index: 2
     color transparent
     caret-color active-element-color
     resize none
