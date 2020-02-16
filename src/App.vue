@@ -30,6 +30,12 @@ body
 html
   overflow hidden
 
+input:focus,
+select:focus,
+textarea:focus,
+button:focus
+  outline none
+
 #app
   max-width 1800px
   overflow hidden

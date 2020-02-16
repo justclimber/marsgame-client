@@ -21,14 +21,15 @@
       <div class="source-code-wrapper">
         <textarea
           class="source-code original"
-          v-model="sourceCode"
-          @input="onSourceInput"
           spellcheck="false"
           autocapitalize="off"
           autocomplete="off"
+          v-model="sourceCode"
           ref="source"
+          @input="onSourceInput"
           @scroll="onSourceScroll"
           @click="onSourceClick"
+          @keydown="onSourceKeyDown"
         />
         <pre><code class="source-code visualizer" v-html="sourceCodeHighlighted" ref="sourceVisor" /></pre>
         <div class="sidebar" ref="sidebar">
@@ -62,10 +63,10 @@
 </template>
 
 <script lang="ts">
-import { Component, Vue, Watch } from "vue-property-decorator";
-import Help from "@/components/Help.vue";
+  import { Component, Vue, Watch } from "vue-property-decorator";
+  import Help from "@/components/Help.vue";
 
-const sourceCode = `mThr = 1.
+  const sourceCode = `mThr = 1.
 mrThr = 0.2
 crThr = 0.2
 `;
@@ -167,6 +168,34 @@ export default class CodeEditor extends Vue {
     }
   }
 
+  onSourceKeyDown(event: any) {
+    if (event.key === "Enter") {
+      event.preventDefault();
+      this.handleNewLineIndentation();
+    }
+  }
+
+  handleNewLineIndentation() {
+    const source = this.$refs.source;
+    let selStartPos = source.selectionStart;
+    let selEndPos = source.selectionEnd;
+    let inputVal = source.value;
+
+    let beforeSelection = inputVal.substr(0, selStartPos);
+    let afterSelection = inputVal.substring(selEndPos);
+
+    let lineStart = inputVal.lastIndexOf("\n", selStartPos - 1);
+    let spaceLast = lineStart + inputVal.slice(lineStart + 1).search(/[^ ]|$/);
+    let indent = spaceLast > lineStart ? spaceLast - lineStart : 0;
+
+    this.sourceCode = beforeSelection + "\n" + " ".repeat(indent) +
+      afterSelection;
+    this.$nextTick(() => {
+      source.selectionStart = selStartPos + indent + 1;
+      source.selectionEnd = selStartPos + indent + 1;
+    });
+  }
+
   pairBracketsWithNewLineAndIndent(): void {
     const textToInsert = "\n   \n}";
     const pos = this.$refs.source.selectionStart;
@@ -266,6 +295,7 @@ export default class CodeEditor extends Vue {
     line-height 18px
     height 100%
     max-height 700px
+    outline none
 
   .original
     background none
@@ -282,6 +312,7 @@ export default class CodeEditor extends Vue {
     left 0
     z-index -1
     color #7d7575
+    white-space pre
     .keyword
       color #ac7d68
     .num
