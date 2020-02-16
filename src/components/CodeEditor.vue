@@ -80,6 +80,9 @@ function injectString(source: string, inject: string, pos: number): string {
   return source.substring(0, pos) + inject + source.substring(pos, source.length);
 }
 
+const indent = 3;
+const indentStr = " ".repeat(indent);
+
 @Component({
   components: { Help }
 })
@@ -151,62 +154,58 @@ export default class CodeEditor extends Vue {
     });
   }
 
-  onSourceScroll(event: any) {
+  onSourceScroll(event: any): void {
     this.$refs.sourceVisor.scrollTop = event.target.scrollTop;
     this.$refs.sidebar.scrollTop = event.target.scrollTop;
   }
 
-  onSourceClick(event: any) {
+  onSourceClick(event: any): void {
     let selStart = event.target.selectionStart;
     let selEnd = event.target.selectionEnd;
     // console.log(selStart, selEnd);
   }
 
-  onSourceInput(event: any) {
+  onSourceInput(event: any): void {
     if (event.data === "{") {
       this.pairBracketsWithNewLineAndIndent();
     }
   }
 
-  onSourceKeyDown(event: any) {
+  onSourceKeyDown(event: any): void {
     if (event.key === "Enter") {
       event.preventDefault();
       this.handleNewLineIndentation();
     }
   }
 
-  handleNewLineIndentation() {
-    const source = this.$refs.source;
-    let selStartPos = source.selectionStart;
-    let selEndPos = source.selectionEnd;
-    let inputVal = source.value;
+  handleNewLineIndentation(): void {
+    let pos = this.$refs.source.selectionStart;
+    let indent = this.getCurrLineIndent(pos);
 
-    let beforeSelection = inputVal.substr(0, selStartPos);
-    let afterSelection = inputVal.substring(selEndPos);
+    this.sourceCode = injectString(this.sourceCode, "\n" + " ".repeat(indent), pos);
+    this.gotoPos(pos + indent + 1);
+  }
 
-    let lineStart = inputVal.lastIndexOf("\n", selStartPos - 1);
-    let spaceLast = lineStart + inputVal.slice(lineStart + 1).search(/[^ ]|$/);
-    let indent = spaceLast > lineStart ? spaceLast - lineStart : 0;
-
-    this.sourceCode = beforeSelection + "\n" + " ".repeat(indent) + afterSelection;
-    this.$nextTick(() => {
-      source.selectionStart = selStartPos + indent + 1;
-      source.selectionEnd = selStartPos + indent + 1;
-    });
+  getCurrLineIndent(pos: number): number {
+    const lineStart = this.sourceCode.lastIndexOf("\n", pos - 1);
+    const spaceLast = lineStart + this.sourceCode.slice(lineStart + 1).search(/[^ ]|$/);
+    return spaceLast > lineStart ? spaceLast - lineStart : 0;
   }
 
   pairBracketsWithNewLineAndIndent(): void {
-    const textToInsert = "\n   \n}";
     const pos = this.$refs.source.selectionStart;
+    const currLineIndent = this.getCurrLineIndent(pos);
+    const currLineIndentStr = " ".repeat(currLineIndent);
+    const textToInsert = "\n" + currLineIndentStr + indentStr + "\n" + currLineIndentStr + "}";
     this.sourceCode = injectString(this.sourceCode, textToInsert, pos);
-    this.$nextTick(() => {
-      this.gotoPos(pos + 4);
-    });
+    this.gotoPos(pos + indent + currLineIndent + 1);
   }
 
   gotoPos(pos: number): void {
-    this.$refs.source.selectionStart = pos;
-    this.$refs.source.selectionEnd = pos;
+    this.$nextTick(() => {
+      this.$refs.source.selectionStart = pos;
+      this.$refs.source.selectionEnd = pos;
+    });
   }
 
   get sourceCodeHighlighted(): string {
