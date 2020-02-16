@@ -166,8 +166,14 @@ export default class CodeEditor extends Vue {
   }
 
   onSourceInput(event: any): void {
-    if (event.data === "{") {
-      this.pairBracketsWithNewLineAndIndent();
+    switch (event.data) {
+      case "{":
+        this.pairCurlyBracesWithNewLineAndIndent();
+        break;
+      case "(":
+      case "[":
+        this.closeBraceOrBracket(event.data);
+        break;
     }
   }
 
@@ -176,6 +182,16 @@ export default class CodeEditor extends Vue {
       event.preventDefault();
       this.handleNewLineIndentation();
     }
+  }
+
+  closeBraceOrBracket(brace: string): void {
+    const closeBraceMatchMap = {
+      "(": ")",
+      "[": "]"
+    };
+    let pos = this.$refs.source.selectionStart;
+    this.sourceCode = injectString(this.sourceCode, closeBraceMatchMap[brace], pos);
+    this.gotoPos(pos);
   }
 
   handleNewLineIndentation(): void {
@@ -192,7 +208,7 @@ export default class CodeEditor extends Vue {
     return spaceLast > lineStart ? spaceLast - lineStart : 0;
   }
 
-  pairBracketsWithNewLineAndIndent(): void {
+  pairCurlyBracesWithNewLineAndIndent(): void {
     const pos = this.$refs.source.selectionStart;
     const currLineIndent = this.getCurrLineIndent(pos);
     const currLineIndentStr = " ".repeat(currLineIndent);
