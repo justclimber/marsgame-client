@@ -338,6 +338,7 @@ export default class CodeEditor extends Vue {
     outline none
 
   .original
+    overflow auto
     position absolute
     top 0
     left 0
@@ -346,16 +347,6 @@ export default class CodeEditor extends Vue {
     color transparent
     caret-color active-element-color
     resize none
-
-  .visualizer
-    overflow auto
-    background panels-bg
-    position absolute
-    top 0
-    left 0
-    z-index 1
-    color codeHighlighting-none
-    white-space pre
     &::-webkit-scrollbar-track
       background-color panels-bg
     &::-webkit-scrollbar
@@ -363,6 +354,16 @@ export default class CodeEditor extends Vue {
     &::-webkit-scrollbar-thumb
       background-color: elements-bg;
       border: 1px solid panels-border-color;
+
+  .visualizer
+    overflow hidden
+    background panels-bg
+    position absolute
+    top 0
+    left 0
+    z-index 1
+    color codeHighlighting-none
+    white-space pre
     .keyword
       color codeHighlighting-keywords
     .num
