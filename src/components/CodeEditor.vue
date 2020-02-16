@@ -253,6 +253,7 @@ export default class CodeEditor extends Vue {
   get sourceCodeHighlighted(): string {
     return this.sourceCode
       .replace(/[+\-*=><:]/g, "<span class='operators'>$&</span>")
+      .replace(/(\w+)\(/g, "<span class='functions'>$1(</span>")
       .replace(/[(){}[]/g, "<span class='braces'>$&</span>")
       .replace(/ifempty|if|return|switch|case|default|else/g, "<span class='keyword'>$&</span>")
       .replace(/\d+/g, "<span class='num'>$&</span>");
@@ -372,6 +373,8 @@ export default class CodeEditor extends Vue {
       color codeHighlighting-operators
     .braces
       color codeHighlighting-braces
+    .functions
+      color codeHighlighting-functions
 
 .code-editor-root
   display flex
