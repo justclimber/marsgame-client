@@ -22,10 +22,13 @@ export default class App extends Vue {}
 </script>
 
 <style lang="stylus">
+@import "./assets/style/variables.styl"
 html,
 body
   height 100%
   font-family Verdana
+  background main-bg
+  color main-text-color
 
 html
   overflow hidden

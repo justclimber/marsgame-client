@@ -88,6 +88,7 @@ export default class Console extends Vue {
 </script>
 
 <style scoped lang="stylus">
+@import "../assets/style/variables.styl"
 .console-root
   display grid
   grid-template-areas "console-messages console-input console-output"\
@@ -95,9 +96,8 @@ export default class Console extends Vue {
   grid-template-columns 3fr 1fr 1fr
   grid-template-rows 1fr 15px
   grid-gap 3px
-  border 3px solid #98662e
-  background-color #251006
-  color #c08a70
+  border 2px solid panels-border-color
+  background-color panels-bg
   font-family monospace
   font-size 10pt
   padding 6px
@@ -121,7 +121,7 @@ export default class Console extends Vue {
   grid-area console-cost
   display flex
   flex-direction row
-  border-top 2px solid #c08a70
+  border-top 2px solid panels-border-color
   .cost-block
     padding-right 10px
 
@@ -132,7 +132,7 @@ export default class Console extends Vue {
     width 80px
 
 .console-col
-  border-left 2px solid #c08a70
+  border-left 2px solid panels-border-color
   padding-left 4px
   overflow auto
   .text

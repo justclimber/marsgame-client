@@ -27,10 +27,12 @@ export default {
   display grid
   grid-template-areas "game-editor game-canvas"\
                       "game-console game-canvas"
-  grid-template-columns 1fr 680px
+  grid-template-columns 1fr 700px
   grid-template-rows 2fr 1fr
   grid-gap 10px
   max-height 800px
+  padding 6px
+  border 6px double #44251e
 .game-editor
   grid-area game-editor
 .game-canvas

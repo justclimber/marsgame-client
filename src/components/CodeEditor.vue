@@ -1,10 +1,6 @@
 <template>
   <div>
     <div class="code-editor-root">
-      <div>
-        <span>Type your code here:</span>
-        <span class="help-button" @click="showHelp = true">?</span>
-      </div>
       <div class="tabs">
         <div
           class="tab"
@@ -17,6 +13,7 @@
           <span class="delete" @click="deleteTab(i)" v-if="i !== 0">х</span>
         </div>
         <div class="tab" @click="addTab">+</div>
+        <span class="help-button" @click="showHelp = true">Help</span>
       </div>
       <div class="source-code-wrapper">
         <textarea
@@ -305,65 +302,75 @@ export default class CodeEditor extends Vue {
 </script>
 
 <style lang="stylus">
+@import "../assets/style/variables.styl"
 .source-code-wrapper
   position relative
   font-size 11pt
   font-weight normal
   font-family monospace
-  line-height 18px
+  line-height codeEditor-line-height
   .sidebar
     position absolute
     top 0
     left 0
     padding 1px
     overflow hidden
-    max-height 384px
-    background #eeeeee
-    border 1px solid #c1c0bd
-    color #7d7575
+    max-height 406px
+    background elements-bg
+    border 1px solid panels-border-color
+    z-index 2
     .line-numbers
       width 22px
       text-align right
 
   .source-code
-    border 1px solid #c1c0bd
-    font-size 12pt
+    border 2px solid panels-border-color
+    font-size codeEditor-font-size
     width 96%
     margin 0
     padding 0
-    padding-left 25px
+    padding-left 27px
     font-weight normal
     font-family monospace
-    overflow auto
-    line-height 18px
+    line-height codeEditor-line-height
     height 100%
     max-height 700px
     outline none
 
   .original
-    background none
-    z-index: 1
-    color transparent
-    caret-color black
-    resize none
-    /*opacity 0.1*/
-
-  .visualizer
-    background #ffede5
     position absolute
     top 0
     left 0
-    z-index -1
-    color #7d7575
+    background none
+    z-index: 2
+    color transparent
+    caret-color active-element-color
+    resize none
+
+  .visualizer
+    overflow auto
+    background panels-bg
+    position absolute
+    top 0
+    left 0
+    z-index 1
+    color codeHighlighting-none
     white-space pre
+    &::-webkit-scrollbar-track
+      background-color panels-bg
+    &::-webkit-scrollbar
+      width 15px
+    &::-webkit-scrollbar-thumb
+      background-color: elements-bg;
+      border: 1px solid panels-border-color;
     .keyword
-      color #ac7d68
+      color codeHighlighting-keywords
     .num
-      color #a9c089
+      color codeHighlighting-num
     .operators
-      color #9d505c
+      color codeHighlighting-operators
     .braces
-      color #9806bc
+      color codeHighlighting-braces
 
 .code-editor-root
   display flex
@@ -379,16 +386,17 @@ export default class CodeEditor extends Vue {
     display flex
     flex-direction row
     .tab
-      background #eeeeee
+      background elements-bg
       padding 5px 5px 1px 5px
-      border 1px solid #c1c0bd
+      border 2px solid panels-border-color
       border-bottom none
       &.active
-        background #ffffff
+        background active-element-bg-color
+        color active-element-color
         font-weight bold
-        font-size larger
+        font-size 13pt
+        padding 3px 5px 3px 5px
       .delete
-        color #c1c0bd
         font-size medium
   .buttons
     display flex
@@ -398,13 +406,15 @@ export default class CodeEditor extends Vue {
     font-size 14px
     button
       font-size 14px
-      border 1px solid #c1c0bd
+      border 1px solid panels-border-color
+      background active-element-bg-color
+      color active-element-color
       margin-right  5px
 
 .help-button
   margin-left 10px
-  padding 2px 5px
-  border 1px solid #c1c0bd
-  border-radius 20px
+  padding 4px 10px 1px 10px
+  border 1px solid panels-border-color
+  border-radius 10px
   cursor pointer
 </style>
