@@ -63,10 +63,10 @@
 </template>
 
 <script lang="ts">
-  import { Component, Vue, Watch } from "vue-property-decorator";
-  import Help from "@/components/Help.vue";
+import { Component, Vue, Watch } from "vue-property-decorator";
+import Help from "@/components/Help.vue";
 
-  const sourceCode = `mThr = 1.
+const sourceCode = `mThr = 1.
 mrThr = 0.2
 crThr = 0.2
 `;
@@ -188,8 +188,7 @@ export default class CodeEditor extends Vue {
     let spaceLast = lineStart + inputVal.slice(lineStart + 1).search(/[^ ]|$/);
     let indent = spaceLast > lineStart ? spaceLast - lineStart : 0;
 
-    this.sourceCode = beforeSelection + "\n" + " ".repeat(indent) +
-      afterSelection;
+    this.sourceCode = beforeSelection + "\n" + " ".repeat(indent) + afterSelection;
     this.$nextTick(() => {
       source.selectionStart = selStartPos + indent + 1;
       source.selectionEnd = selStartPos + indent + 1;
