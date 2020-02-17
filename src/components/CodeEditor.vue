@@ -188,7 +188,21 @@ export default class CodeEditor extends Vue {
         event.preventDefault();
         this.handleTabIndent(event.shiftKey);
         break;
+      case "Backspace":
+        if (event.metaKey) {
+          event.preventDefault();
+          this.handleDeleteLine();
+        }
+        break;
     }
+  }
+
+  handleDeleteLine(): void {
+    const pos = this.$refs.source.selectionStart;
+    const lineStart = this.sourceCode.lastIndexOf("\n", pos - 1);
+    const lineEnd = this.sourceCode.indexOf("\n", pos - 1);
+    this.sourceCode = ejectFromString(this.sourceCode, lineStart + 1, lineEnd - lineStart);
+    this.gotoPos(pos);
   }
 
   closeBraceOrBracket(brace: string): void {
