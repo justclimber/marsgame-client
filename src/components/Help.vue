@@ -111,6 +111,7 @@ export default class Help extends Vue {
   top 10px
   left 200px
   border 1px solid gray
+  z-index 3
 
 #help
   height 660px
