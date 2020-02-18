@@ -127,13 +127,18 @@ export default class CodeEditorCore extends Vue {
   handleNewLineIndentation(): void {
     const pos = this.$refs.source.selectionStart;
     let indentToAdd = this.getCurrLineIndent(pos);
-    const lastChar = this.sourceCode.substr(pos - 1, 1);
-    if (lastChar === ":" || lastChar === "{") {
-      indentToAdd += indent;
+    const prevChar = this.sourceCode.substr(pos - 1, 1);
+    let addition = "";
+    let posToGo = pos + indentToAdd + 1;
+    if (prevChar === ":") {
+      addition = indentStr;
+    } else if (prevChar === "{") {
+      addition = indentStr + "\n" + " ".repeat(indentToAdd);
+      posToGo += indent;
     }
 
-    this.sourceCode = injectToString(this.sourceCode, "\n" + " ".repeat(indentToAdd), pos);
-    this.gotoPos(pos + indentToAdd + 1);
+    this.sourceCode = injectToString(this.sourceCode, "\n" + " ".repeat(indentToAdd) + addition, pos);
+    this.gotoPos(posToGo);
   }
 
   getCurrLineIndent(pos: number): number {
