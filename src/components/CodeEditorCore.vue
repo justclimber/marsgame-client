@@ -80,8 +80,20 @@ export default class CodeEditorCore extends Vue {
 
   handleDeleteLine(): void {
     const pos = this.$refs.source.selectionStart;
-    const lineStart = this.sourceCode.lastIndexOf("\n", pos - 1);
-    const lineEnd = this.sourceCode.indexOf("\n", pos - 1);
+    let lineStart = this.sourceCode.lastIndexOf("\n", pos - 1);
+    let lineEnd: number;
+    if (pos === this.sourceCode.length) {
+      // особый случай для конца документа
+      lineStart--;
+      lineEnd = pos;
+    } else if (pos === lineStart + 1) {
+      // особый случай для начала строки
+      lineStart--;
+      lineEnd = this.sourceCode.indexOf("\n", pos) - 1;
+    } else {
+      // все остальное
+      lineEnd = this.sourceCode.indexOf("\n", pos - 1);
+    }
     this.sourceCode = ejectFromString(this.sourceCode, lineStart + 1, lineEnd - lineStart);
     this.gotoPos(pos);
   }
