@@ -182,8 +182,8 @@ export default class CodeEditorCore extends Vue {
     top 0
     left 0
     padding 1px
+    height 100%
     overflow hidden
-    max-height 406px
     background elements-bg
     border 1px solid panels-border-color
     z-index 2
