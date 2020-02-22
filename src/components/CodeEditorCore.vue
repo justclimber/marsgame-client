@@ -45,6 +45,7 @@ export default class CodeEditorCore extends Vue {
   // sourceCode: string = sourceCode;
   onSourceScroll(event: any): void {
     this.$refs.sourceVisor.scrollTop = event.target.scrollTop;
+    this.$refs.sourceVisor.scrollLeft = event.target.scrollLeft;
     this.$refs.sidebar.scrollTop = event.target.scrollTop;
   }
 
@@ -213,6 +214,7 @@ export default class CodeEditorCore extends Vue {
     background none
     z-index: 2
     color transparent
+    white-space nowrap
     caret-color active-element-color
     resize none
     &::-webkit-scrollbar-track
