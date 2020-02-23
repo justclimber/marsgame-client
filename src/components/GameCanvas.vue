@@ -71,12 +71,12 @@ PIXI.utils.skipHello();
 @Component
 export default class GameCanvas extends Vue {
   app = new PIXI.Application({
-    width: 700,
+    width: 600,
     height: 700,
     backgroundColor: 0xffffff
   });
   viewport = new Viewport({
-    screenWidth: 700,
+    screenWidth: 600,
     screenHeight: 700,
     worldWidth: worldWide,
     worldHeight: worldWide,

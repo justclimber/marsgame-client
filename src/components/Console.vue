@@ -13,9 +13,15 @@
       </div>
     </div>
     <div class="console-col console-output">
-      <div>Result:</div>
+      <div>Output:</div>
       <div v-for="(outputVar, i) in console.output" :key="`output-${i}`">
         <div class="text" v-html="outputVar" @mouseenter="hoverVar" @mouseleave="hoverVarEnd"></div>
+      </div>
+    </div>
+    <div class="console-col console-commands">
+      <div>Commands:</div>
+      <div v-for="(commandVar, i) in console.commands" :key="`commands-${i}`">
+        <div class="text" v-html="commandVar" @mouseenter="hoverVar" @mouseleave="hoverVarEnd"></div>
       </div>
     </div>
     <div class="console-cost">
@@ -38,6 +44,7 @@ type ErrorCommand = {
 type CodeInputOutput = {
   Input: string[];
   Output: string[];
+  Commands: string[];
   Cost: number;
   Energy: number;
 };
@@ -91,9 +98,9 @@ export default class Console extends Vue {
 @import "../assets/style/variables.styl"
 .console-root
   display grid
-  grid-template-areas "console-messages console-input console-output"\
-                      "console-messages console-cost console-cost"
-  grid-template-columns 3fr 1fr 1fr
+  grid-template-areas "console-messages console-input console-output console-commands"\
+                      "console-messages console-cost console-cost console-cost"
+  grid-template-columns 2fr 1fr 1fr 1fr
   grid-template-rows 1fr 15px
   grid-gap 3px
   border 2px solid panels-border-color
@@ -116,6 +123,8 @@ export default class Console extends Vue {
   grid-area console-input
 .console-output
   grid-area console-output
+.console-commands
+  grid-area console-commands
 
 .console-cost
   grid-area console-cost
