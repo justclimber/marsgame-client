@@ -193,6 +193,7 @@ export default class CodeEditorCore extends Vue {
     .line-numbers
       width 22px
       text-align right
+      font-size codeEditor-font-size
 
   .source-code
     border 2px solid panels-border-color
