@@ -157,7 +157,9 @@ export default class CodeEditorCore extends Vue {
 
   get sourceCodeHighlighted(): string {
     return this.sourceCode
-      .replace(/[+\-*=><:]/g, "<span class='operators'>$&</span>")
+      .replace(/[<>=]/g, "<span class='operators'>$&</span>")
+      .replace(/\w+:\w+/g, "<span class='enums'>$&</span>")
+      .replace(/[+\-*:,.]/g, "<span class='operators'>$&</span>")
       .replace(/(\w+)\(/g, "<span class='functions'>$1(</span>")
       .replace(/[(){}[]/g, "<span class='braces'>$&</span>")
       .replace(/ifempty|if|return|switch|case|default|else/g, "<span class='keyword'>$&</span>")
@@ -244,4 +246,6 @@ export default class CodeEditorCore extends Vue {
       color codeHighlighting-braces
     .functions
       color codeHighlighting-functions
+    .enums
+      color codeHighlighting-enums
 </style>
