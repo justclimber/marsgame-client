@@ -2,6 +2,9 @@ import _Vue from "vue";
 import { PluginObject } from "vue/types/umd";
 import { Store } from "vuex";
 
+import { flatbuffers } from "flatbuffers";
+import { WalBuffers } from "@/flatbuffers/log_generated";
+
 export default {
   install(Vue: typeof _Vue, options: any = {}, store: Store<any>) {
     let socket: any;
@@ -24,7 +27,7 @@ export default {
     }
 
     interface CommandWrapper {
-      data: string;
+      data: string | ArrayBuffer;
     }
 
     let commandHandlers: Map<string, WsCallbackObj> = new Map();
@@ -48,6 +51,7 @@ export default {
     Vue.prototype.wsConnect = function(userId: number) {
       store.commit("addConsoleInfo", "Connecting to server...");
       socket = new WebSocket(options.connectionStr + userId);
+      socket.binaryType = "arraybuffer";
       socket.onopen = () => {
         store.commit("addConsoleInfo", "Connected!");
       };
@@ -60,6 +64,12 @@ export default {
       };
 
       socket.onmessage = function(msg: CommandWrapper) {
+        if (msg.data instanceof ArrayBuffer) {
+          let buf = new flatbuffers.ByteBuffer(new Uint8Array(msg.data));
+          let timeLog = WalBuffers.TimeLog.getRoot(buf);
+          console.log(timeLog.x(), timeLog.y());
+          return;
+        }
         let data: Command = JSON.parse(msg.data);
         let payload = JSON.parse(data.payload);
 

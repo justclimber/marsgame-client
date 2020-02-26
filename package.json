@@ -8,6 +8,8 @@
     "lint": "vue-cli-service lint"
   },
   "dependencies": {
+    "@types/flatbuffers": "^1.10.0",
+    "flatbuffers": "^1.11.0",
     "pixi-viewport": "^4.5.0",
     "pixi.js": "^5.2.0",
     "vue": "^2.6.10",
@@ -48,6 +50,12 @@
       "no-console": "off",
       "camelcase": "error"
     },
+    "overrides": [
+      {
+        "files": "flatbuffers/*",
+        "excludedFiles": "flatbuffers/*"
+      }
+    ],
     "parserOptions": {
       "parser": "@typescript-eslint/parser"
     }
