@@ -6,6 +6,7 @@
 import { Component, Vue } from "vue-property-decorator";
 import * as PIXI from "pixi.js";
 import { Viewport } from "pixi-viewport";
+import { WalBuffers } from "@/flatbuffers/log_generated";
 
 const worldWide = 30000;
 const xShift = 10000;
@@ -90,6 +91,22 @@ export default class GameCanvas extends Vue {
   changelogCurrIndex: number = 0;
   debug: boolean = false;
   wsCommands = {
+    worldChangesWal(wal: WalBuffers.Log) {
+      const timeIdsCount = wal.timeIdsLength();
+      const objLogsCount = wal.objectsLength();
+      let changelog: ChangelogByTime[];
+      for (let i = 0; i < timeIdsCount; i++) {
+        console.log(wal.timeIds(i)!.low);
+      }
+      for (let i = 0; i < objLogsCount; i++) {
+        let objectLog = wal.objects(i);
+        const timeLogsCount = objectLog!.timesLength();
+        for (let j = 0; j < timeLogsCount; j++) {
+          let timeLog = objectLog!.times(j);
+          console.log(timeLog!.x(), timeLog!.y());
+        }
+      }
+    },
     worldChanges(changelog: ChangelogByTime[]) {
       if (!currTimeId) {
         // use time shift for more smooth prediction: we need changelogToRun always be not empty on run

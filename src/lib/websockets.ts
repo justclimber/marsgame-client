@@ -64,18 +64,21 @@ export default {
       };
 
       socket.onmessage = function(msg: CommandWrapper) {
+        let commandName: string;
+        let payload: any;
         if (msg.data instanceof ArrayBuffer) {
           let buf = new flatbuffers.ByteBuffer(new Uint8Array(msg.data));
-          let timeLog = WalBuffers.TimeLog.getRoot(buf);
-          console.log(timeLog.x(), timeLog.y());
-          return;
+          payload = WalBuffers.Log.getRoot(buf);
+          commandName = "worldChangesWal";
+        } else {
+          let data: Command = JSON.parse(msg.data);
+          payload = JSON.parse(data.payload);
+          commandName = data.type;
         }
-        let data: Command = JSON.parse(msg.data);
-        let payload = JSON.parse(data.payload);
 
-        const wsCallback = commandHandlers.get(data.type);
+        const wsCallback = commandHandlers.get(commandName);
         if (!wsCallback) {
-          throw new Error("couldn't find " + data.type + " registered handler");
+          throw new Error("couldn't find " + commandName + " registered handler");
         }
 
         wsCallback.callback.call(wsCallback.obj, payload);

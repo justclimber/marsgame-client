@@ -46,7 +46,7 @@ static getRoot(bb:flatbuffers.ByteBuffer, obj?:Log):Log {
  */
 timeIds(index: number):flatbuffers.Long|null {
   var offset = this.bb!.__offset(this.bb_pos, 4);
-  return offset ? this.bb!.readUint64(this.bb!.__vector(this.bb_pos + offset) + index * 8) : this.bb!.createLong(0, 0);
+  return offset ? this.bb!.readInt64(this.bb!.__vector(this.bb_pos + offset) + index * 8) : this.bb!.createLong(0, 0);
 };
 
 /**
@@ -198,13 +198,13 @@ static getRoot(bb:flatbuffers.ByteBuffer, obj?:ObjectLog):ObjectLog {
  */
 id():number {
   var offset = this.bb!.__offset(this.bb_pos, 4);
-  return offset ? this.bb!.readInt32(this.bb_pos + offset) : 0;
+  return offset ? this.bb!.readUint32(this.bb_pos + offset) : 0;
 };
 
 /**
  * @returns WalBuffers.ObjectType
  */
-type():WalBuffers.ObjectType {
+objectType():WalBuffers.ObjectType {
   var offset = this.bb!.__offset(this.bb_pos, 6);
   return offset ? /**  */ (this.bb!.readInt8(this.bb_pos + offset)) : WalBuffers.ObjectType.player;
 };
@@ -244,10 +244,10 @@ static addId(builder:flatbuffers.Builder, id:number) {
 
 /**
  * @param flatbuffers.Builder builder
- * @param WalBuffers.ObjectType type
+ * @param WalBuffers.ObjectType objectType
  */
-static addType(builder:flatbuffers.Builder, type:WalBuffers.ObjectType) {
-  builder.addFieldInt8(1, type, WalBuffers.ObjectType.player);
+static addObjectType(builder:flatbuffers.Builder, objectType:WalBuffers.ObjectType) {
+  builder.addFieldInt8(1, objectType, WalBuffers.ObjectType.player);
 };
 
 /**
@@ -288,10 +288,10 @@ static end(builder:flatbuffers.Builder):flatbuffers.Offset {
   return offset;
 };
 
-static create(builder:flatbuffers.Builder, id:number, type:WalBuffers.ObjectType, timesOffset:flatbuffers.Offset):flatbuffers.Offset {
+static create(builder:flatbuffers.Builder, id:number, objectType:WalBuffers.ObjectType, timesOffset:flatbuffers.Offset):flatbuffers.Offset {
   ObjectLog.start(builder);
   ObjectLog.addId(builder, id);
-  ObjectLog.addType(builder, type);
+  ObjectLog.addObjectType(builder, objectType);
   ObjectLog.addTimes(builder, timesOffset);
   return ObjectLog.end(builder);
 }
@@ -358,10 +358,115 @@ angle():number {
 };
 
 /**
+ * @returns number
+ */
+cannonAngle():number {
+  var offset = this.bb!.__offset(this.bb_pos, 12);
+  return offset ? this.bb!.readFloat32(this.bb_pos + offset) : 99999999.0;
+};
+
+/**
+ * @returns number
+ */
+cannonRotation():number {
+  var offset = this.bb!.__offset(this.bb_pos, 14);
+  return offset ? this.bb!.readFloat32(this.bb_pos + offset) : 99999999.0;
+};
+
+/**
+ * @returns flatbuffers.Long
+ */
+cannonUntilTimeId():flatbuffers.Long {
+  var offset = this.bb!.__offset(this.bb_pos, 16);
+  return offset ? this.bb!.readUint64(this.bb_pos + offset) : this.bb!.createLong(99999999, 0);
+};
+
+/**
+ * @returns boolean
+ */
+fire():boolean {
+  var offset = this.bb!.__offset(this.bb_pos, 18);
+  return offset ? !!this.bb!.readInt8(this.bb_pos + offset) : false;
+};
+
+/**
+ * @returns boolean
+ */
+isDelete():boolean {
+  var offset = this.bb!.__offset(this.bb_pos, 20);
+  return offset ? !!this.bb!.readInt8(this.bb_pos + offset) : false;
+};
+
+/**
+ * @returns boolean
+ */
+explode():boolean {
+  var offset = this.bb!.__offset(this.bb_pos, 22);
+  return offset ? !!this.bb!.readInt8(this.bb_pos + offset) : false;
+};
+
+/**
+ * @returns boolean
+ */
+explodeOther():boolean {
+  var offset = this.bb!.__offset(this.bb_pos, 24);
+  return offset ? !!this.bb!.readInt8(this.bb_pos + offset) : false;
+};
+
+/**
+ * @param number index
+ * @returns number
+ */
+deleteOtherIds(index: number):number|null {
+  var offset = this.bb!.__offset(this.bb_pos, 26);
+  return offset ? this.bb!.readUint32(this.bb!.__vector(this.bb_pos + offset) + index * 4) : 0;
+};
+
+/**
+ * @returns number
+ */
+deleteOtherIdsLength():number {
+  var offset = this.bb!.__offset(this.bb_pos, 26);
+  return offset ? this.bb!.__vector_len(this.bb_pos + offset) : 0;
+};
+
+/**
+ * @returns Uint32Array
+ */
+deleteOtherIdsArray():Uint32Array|null {
+  var offset = this.bb!.__offset(this.bb_pos, 26);
+  return offset ? new Uint32Array(this.bb!.bytes().buffer, this.bb!.bytes().byteOffset + this.bb!.__vector(this.bb_pos + offset), this.bb!.__vector_len(this.bb_pos + offset)) : null;
+};
+
+/**
+ * @returns number
+ */
+velocityX():number {
+  var offset = this.bb!.__offset(this.bb_pos, 28);
+  return offset ? this.bb!.readFloat32(this.bb_pos + offset) : 99999999.0;
+};
+
+/**
+ * @returns number
+ */
+velocityY():number {
+  var offset = this.bb!.__offset(this.bb_pos, 30);
+  return offset ? this.bb!.readFloat32(this.bb_pos + offset) : 99999999.0;
+};
+
+/**
+ * @returns flatbuffers.Long
+ */
+velocityUntilTimeId():flatbuffers.Long {
+  var offset = this.bb!.__offset(this.bb_pos, 32);
+  return offset ? this.bb!.readUint64(this.bb_pos + offset) : this.bb!.createLong(99999999, 0);
+};
+
+/**
  * @param flatbuffers.Builder builder
  */
 static start(builder:flatbuffers.Builder) {
-  builder.startObject(4);
+  builder.startObject(15);
 };
 
 /**
@@ -398,6 +503,115 @@ static addAngle(builder:flatbuffers.Builder, angle:number) {
 
 /**
  * @param flatbuffers.Builder builder
+ * @param number cannonAngle
+ */
+static addCannonAngle(builder:flatbuffers.Builder, cannonAngle:number) {
+  builder.addFieldFloat32(4, cannonAngle, 99999999.0);
+};
+
+/**
+ * @param flatbuffers.Builder builder
+ * @param number cannonRotation
+ */
+static addCannonRotation(builder:flatbuffers.Builder, cannonRotation:number) {
+  builder.addFieldFloat32(5, cannonRotation, 99999999.0);
+};
+
+/**
+ * @param flatbuffers.Builder builder
+ * @param flatbuffers.Long cannonUntilTimeId
+ */
+static addCannonUntilTimeId(builder:flatbuffers.Builder, cannonUntilTimeId:flatbuffers.Long) {
+  builder.addFieldInt64(6, cannonUntilTimeId, builder.createLong(99999999, 0));
+};
+
+/**
+ * @param flatbuffers.Builder builder
+ * @param boolean fire
+ */
+static addFire(builder:flatbuffers.Builder, fire:boolean) {
+  builder.addFieldInt8(7, +fire, +false);
+};
+
+/**
+ * @param flatbuffers.Builder builder
+ * @param boolean isDelete
+ */
+static addIsDelete(builder:flatbuffers.Builder, isDelete:boolean) {
+  builder.addFieldInt8(8, +isDelete, +false);
+};
+
+/**
+ * @param flatbuffers.Builder builder
+ * @param boolean explode
+ */
+static addExplode(builder:flatbuffers.Builder, explode:boolean) {
+  builder.addFieldInt8(9, +explode, +false);
+};
+
+/**
+ * @param flatbuffers.Builder builder
+ * @param boolean explodeOther
+ */
+static addExplodeOther(builder:flatbuffers.Builder, explodeOther:boolean) {
+  builder.addFieldInt8(10, +explodeOther, +false);
+};
+
+/**
+ * @param flatbuffers.Builder builder
+ * @param flatbuffers.Offset deleteOtherIdsOffset
+ */
+static addDeleteOtherIds(builder:flatbuffers.Builder, deleteOtherIdsOffset:flatbuffers.Offset) {
+  builder.addFieldOffset(11, deleteOtherIdsOffset, 0);
+};
+
+/**
+ * @param flatbuffers.Builder builder
+ * @param Array.<number> data
+ * @returns flatbuffers.Offset
+ */
+static createDeleteOtherIdsVector(builder:flatbuffers.Builder, data:number[] | Uint8Array):flatbuffers.Offset {
+  builder.startVector(4, data.length, 4);
+  for (var i = data.length - 1; i >= 0; i--) {
+    builder.addInt32(data[i]);
+  }
+  return builder.endVector();
+};
+
+/**
+ * @param flatbuffers.Builder builder
+ * @param number numElems
+ */
+static startDeleteOtherIdsVector(builder:flatbuffers.Builder, numElems:number) {
+  builder.startVector(4, numElems, 4);
+};
+
+/**
+ * @param flatbuffers.Builder builder
+ * @param number velocityX
+ */
+static addVelocityX(builder:flatbuffers.Builder, velocityX:number) {
+  builder.addFieldFloat32(12, velocityX, 99999999.0);
+};
+
+/**
+ * @param flatbuffers.Builder builder
+ * @param number velocityY
+ */
+static addVelocityY(builder:flatbuffers.Builder, velocityY:number) {
+  builder.addFieldFloat32(13, velocityY, 99999999.0);
+};
+
+/**
+ * @param flatbuffers.Builder builder
+ * @param flatbuffers.Long velocityUntilTimeId
+ */
+static addVelocityUntilTimeId(builder:flatbuffers.Builder, velocityUntilTimeId:flatbuffers.Long) {
+  builder.addFieldInt64(14, velocityUntilTimeId, builder.createLong(99999999, 0));
+};
+
+/**
+ * @param flatbuffers.Builder builder
  * @returns flatbuffers.Offset
  */
 static end(builder:flatbuffers.Builder):flatbuffers.Offset {
@@ -405,12 +619,23 @@ static end(builder:flatbuffers.Builder):flatbuffers.Offset {
   return offset;
 };
 
-static create(builder:flatbuffers.Builder, timeId:flatbuffers.Long, x:number, y:number, angle:number):flatbuffers.Offset {
+static create(builder:flatbuffers.Builder, timeId:flatbuffers.Long, x:number, y:number, angle:number, cannonAngle:number, cannonRotation:number, cannonUntilTimeId:flatbuffers.Long, fire:boolean, isDelete:boolean, explode:boolean, explodeOther:boolean, deleteOtherIdsOffset:flatbuffers.Offset, velocityX:number, velocityY:number, velocityUntilTimeId:flatbuffers.Long):flatbuffers.Offset {
   TimeLog.start(builder);
   TimeLog.addTimeId(builder, timeId);
   TimeLog.addX(builder, x);
   TimeLog.addY(builder, y);
   TimeLog.addAngle(builder, angle);
+  TimeLog.addCannonAngle(builder, cannonAngle);
+  TimeLog.addCannonRotation(builder, cannonRotation);
+  TimeLog.addCannonUntilTimeId(builder, cannonUntilTimeId);
+  TimeLog.addFire(builder, fire);
+  TimeLog.addIsDelete(builder, isDelete);
+  TimeLog.addExplode(builder, explode);
+  TimeLog.addExplodeOther(builder, explodeOther);
+  TimeLog.addDeleteOtherIds(builder, deleteOtherIdsOffset);
+  TimeLog.addVelocityX(builder, velocityX);
+  TimeLog.addVelocityY(builder, velocityY);
+  TimeLog.addVelocityUntilTimeId(builder, velocityUntilTimeId);
   return TimeLog.end(builder);
 }
 }
