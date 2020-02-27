@@ -7,6 +7,7 @@ import { Component, Vue } from "vue-property-decorator";
 import * as PIXI from "pixi.js";
 import { Viewport } from "pixi-viewport";
 import { WalBuffers } from "@/flatbuffers/log_generated";
+import WalParser from "@/lib/wal/parser";
 
 const worldWide = 30000;
 const xShift = 10000;
@@ -92,20 +93,9 @@ export default class GameCanvas extends Vue {
   debug: boolean = false;
   wsCommands = {
     worldChangesWal(wal: WalBuffers.Log) {
-      const timeIdsCount = wal.timeIdsLength();
-      const objLogsCount = wal.objectsLength();
-      let changelog: ChangelogByTime[];
-      for (let i = 0; i < timeIdsCount; i++) {
-        console.log(wal.timeIds(i)!.low);
-      }
-      for (let i = 0; i < objLogsCount; i++) {
-        let objectLog = wal.objects(i);
-        const timeLogsCount = objectLog!.timesLength();
-        for (let j = 0; j < timeLogsCount; j++) {
-          let timeLog = objectLog!.times(j);
-          console.log(timeLog!.x(), timeLog!.y());
-        }
-      }
+      let parser = new WalParser();
+      let changelog = parser.parseWal(wal);
+      console.log(changelog);
     },
     worldChanges(changelog: ChangelogByTime[]) {
       if (!currTimeId) {

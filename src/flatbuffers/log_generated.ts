@@ -6,10 +6,10 @@
 export namespace WalBuffers{
 export enum ObjectType{
   player= 0,
-  missile= 1,
+  enemy_mech= 1,
   rock= 2,
-  enemy_mech= 3,
-  xelon= 4
+  xelon= 3,
+  missile= 4
 }};
 
 /**
@@ -378,7 +378,7 @@ cannonRotation():number {
  */
 cannonUntilTimeId():flatbuffers.Long {
   var offset = this.bb!.__offset(this.bb_pos, 16);
-  return offset ? this.bb!.readUint64(this.bb_pos + offset) : this.bb!.createLong(99999999, 0);
+  return offset ? this.bb!.readInt64(this.bb_pos + offset) : this.bb!.createLong(99999999, 0);
 };
 
 /**
@@ -455,18 +455,26 @@ velocityY():number {
 };
 
 /**
+ * @returns number
+ */
+velocityRotation():number {
+  var offset = this.bb!.__offset(this.bb_pos, 32);
+  return offset ? this.bb!.readFloat32(this.bb_pos + offset) : 99999999.0;
+};
+
+/**
  * @returns flatbuffers.Long
  */
 velocityUntilTimeId():flatbuffers.Long {
-  var offset = this.bb!.__offset(this.bb_pos, 32);
-  return offset ? this.bb!.readUint64(this.bb_pos + offset) : this.bb!.createLong(99999999, 0);
+  var offset = this.bb!.__offset(this.bb_pos, 34);
+  return offset ? this.bb!.readInt64(this.bb_pos + offset) : this.bb!.createLong(99999999, 0);
 };
 
 /**
  * @param flatbuffers.Builder builder
  */
 static start(builder:flatbuffers.Builder) {
-  builder.startObject(15);
+  builder.startObject(16);
 };
 
 /**
@@ -604,10 +612,18 @@ static addVelocityY(builder:flatbuffers.Builder, velocityY:number) {
 
 /**
  * @param flatbuffers.Builder builder
+ * @param number velocityRotation
+ */
+static addVelocityRotation(builder:flatbuffers.Builder, velocityRotation:number) {
+  builder.addFieldFloat32(14, velocityRotation, 99999999.0);
+};
+
+/**
+ * @param flatbuffers.Builder builder
  * @param flatbuffers.Long velocityUntilTimeId
  */
 static addVelocityUntilTimeId(builder:flatbuffers.Builder, velocityUntilTimeId:flatbuffers.Long) {
-  builder.addFieldInt64(14, velocityUntilTimeId, builder.createLong(99999999, 0));
+  builder.addFieldInt64(15, velocityUntilTimeId, builder.createLong(99999999, 0));
 };
 
 /**
@@ -619,7 +635,7 @@ static end(builder:flatbuffers.Builder):flatbuffers.Offset {
   return offset;
 };
 
-static create(builder:flatbuffers.Builder, timeId:flatbuffers.Long, x:number, y:number, angle:number, cannonAngle:number, cannonRotation:number, cannonUntilTimeId:flatbuffers.Long, fire:boolean, isDelete:boolean, explode:boolean, explodeOther:boolean, deleteOtherIdsOffset:flatbuffers.Offset, velocityX:number, velocityY:number, velocityUntilTimeId:flatbuffers.Long):flatbuffers.Offset {
+static create(builder:flatbuffers.Builder, timeId:flatbuffers.Long, x:number, y:number, angle:number, cannonAngle:number, cannonRotation:number, cannonUntilTimeId:flatbuffers.Long, fire:boolean, isDelete:boolean, explode:boolean, explodeOther:boolean, deleteOtherIdsOffset:flatbuffers.Offset, velocityX:number, velocityY:number, velocityRotation:number, velocityUntilTimeId:flatbuffers.Long):flatbuffers.Offset {
   TimeLog.start(builder);
   TimeLog.addTimeId(builder, timeId);
   TimeLog.addX(builder, x);
@@ -635,6 +651,7 @@ static create(builder:flatbuffers.Builder, timeId:flatbuffers.Long, x:number, y:
   TimeLog.addDeleteOtherIds(builder, deleteOtherIdsOffset);
   TimeLog.addVelocityX(builder, velocityX);
   TimeLog.addVelocityY(builder, velocityY);
+  TimeLog.addVelocityRotation(builder, velocityRotation);
   TimeLog.addVelocityUntilTimeId(builder, velocityUntilTimeId);
   return TimeLog.end(builder);
 }
