@@ -42,11 +42,11 @@ static getRoot(bb:flatbuffers.ByteBuffer, obj?:Log):Log {
 
 /**
  * @param number index
- * @returns flatbuffers.Long
+ * @returns number
  */
-timeIds(index: number):flatbuffers.Long|null {
+timeIds(index: number):number|null {
   var offset = this.bb!.__offset(this.bb_pos, 4);
-  return offset ? this.bb!.readInt64(this.bb!.__vector(this.bb_pos + offset) + index * 8) : this.bb!.createLong(0, 0);
+  return offset ? this.bb!.readInt32(this.bb!.__vector(this.bb_pos + offset) + index * 4) : 0;
 };
 
 /**
@@ -55,6 +55,14 @@ timeIds(index: number):flatbuffers.Long|null {
 timeIdsLength():number {
   var offset = this.bb!.__offset(this.bb_pos, 4);
   return offset ? this.bb!.__vector_len(this.bb_pos + offset) : 0;
+};
+
+/**
+ * @returns Int32Array
+ */
+timeIdsArray():Int32Array|null {
+  var offset = this.bb!.__offset(this.bb_pos, 4);
+  return offset ? new Int32Array(this.bb!.bytes().buffer, this.bb!.bytes().byteOffset + this.bb!.__vector(this.bb_pos + offset), this.bb!.__vector_len(this.bb_pos + offset)) : null;
 };
 
 /**
@@ -92,13 +100,13 @@ static addTimeIds(builder:flatbuffers.Builder, timeIdsOffset:flatbuffers.Offset)
 
 /**
  * @param flatbuffers.Builder builder
- * @param Array.<flatbuffers.Long> data
+ * @param Array.<number> data
  * @returns flatbuffers.Offset
  */
-static createTimeIdsVector(builder:flatbuffers.Builder, data:flatbuffers.Long[]):flatbuffers.Offset {
-  builder.startVector(8, data.length, 8);
+static createTimeIdsVector(builder:flatbuffers.Builder, data:number[] | Uint8Array):flatbuffers.Offset {
+  builder.startVector(4, data.length, 4);
   for (var i = data.length - 1; i >= 0; i--) {
-    builder.addInt64(data[i]);
+    builder.addInt32(data[i]);
   }
   return builder.endVector();
 };
@@ -108,7 +116,7 @@ static createTimeIdsVector(builder:flatbuffers.Builder, data:flatbuffers.Long[])
  * @param number numElems
  */
 static startTimeIdsVector(builder:flatbuffers.Builder, numElems:number) {
-  builder.startVector(8, numElems, 8);
+  builder.startVector(4, numElems, 4);
 };
 
 /**
@@ -326,11 +334,11 @@ static getRoot(bb:flatbuffers.ByteBuffer, obj?:TimeLog):TimeLog {
 };
 
 /**
- * @returns flatbuffers.Long
+ * @returns number
  */
-timeId():flatbuffers.Long {
+timeId():number {
   var offset = this.bb!.__offset(this.bb_pos, 4);
-  return offset ? this.bb!.readUint64(this.bb_pos + offset) : this.bb!.createLong(0, 0);
+  return offset ? this.bb!.readInt32(this.bb_pos + offset) : 0;
 };
 
 /**
@@ -374,11 +382,11 @@ cannonRotation():number {
 };
 
 /**
- * @returns flatbuffers.Long
+ * @returns number
  */
-cannonUntilTimeId():flatbuffers.Long {
+cannonUntilTimeId():number {
   var offset = this.bb!.__offset(this.bb_pos, 16);
-  return offset ? this.bb!.readInt64(this.bb_pos + offset) : this.bb!.createLong(99999999, 0);
+  return offset ? this.bb!.readInt32(this.bb_pos + offset) : 99999999;
 };
 
 /**
@@ -463,11 +471,11 @@ velocityRotation():number {
 };
 
 /**
- * @returns flatbuffers.Long
+ * @returns number
  */
-velocityUntilTimeId():flatbuffers.Long {
+velocityUntilTimeId():number {
   var offset = this.bb!.__offset(this.bb_pos, 34);
-  return offset ? this.bb!.readInt64(this.bb_pos + offset) : this.bb!.createLong(99999999, 0);
+  return offset ? this.bb!.readInt32(this.bb_pos + offset) : 99999999;
 };
 
 /**
@@ -479,10 +487,10 @@ static start(builder:flatbuffers.Builder) {
 
 /**
  * @param flatbuffers.Builder builder
- * @param flatbuffers.Long timeId
+ * @param number timeId
  */
-static addTimeId(builder:flatbuffers.Builder, timeId:flatbuffers.Long) {
-  builder.addFieldInt64(0, timeId, builder.createLong(0, 0));
+static addTimeId(builder:flatbuffers.Builder, timeId:number) {
+  builder.addFieldInt32(0, timeId, 0);
 };
 
 /**
@@ -527,10 +535,10 @@ static addCannonRotation(builder:flatbuffers.Builder, cannonRotation:number) {
 
 /**
  * @param flatbuffers.Builder builder
- * @param flatbuffers.Long cannonUntilTimeId
+ * @param number cannonUntilTimeId
  */
-static addCannonUntilTimeId(builder:flatbuffers.Builder, cannonUntilTimeId:flatbuffers.Long) {
-  builder.addFieldInt64(6, cannonUntilTimeId, builder.createLong(99999999, 0));
+static addCannonUntilTimeId(builder:flatbuffers.Builder, cannonUntilTimeId:number) {
+  builder.addFieldInt32(6, cannonUntilTimeId, 99999999);
 };
 
 /**
@@ -620,10 +628,10 @@ static addVelocityRotation(builder:flatbuffers.Builder, velocityRotation:number)
 
 /**
  * @param flatbuffers.Builder builder
- * @param flatbuffers.Long velocityUntilTimeId
+ * @param number velocityUntilTimeId
  */
-static addVelocityUntilTimeId(builder:flatbuffers.Builder, velocityUntilTimeId:flatbuffers.Long) {
-  builder.addFieldInt64(15, velocityUntilTimeId, builder.createLong(99999999, 0));
+static addVelocityUntilTimeId(builder:flatbuffers.Builder, velocityUntilTimeId:number) {
+  builder.addFieldInt32(15, velocityUntilTimeId, 99999999);
 };
 
 /**
@@ -635,7 +643,7 @@ static end(builder:flatbuffers.Builder):flatbuffers.Offset {
   return offset;
 };
 
-static create(builder:flatbuffers.Builder, timeId:flatbuffers.Long, x:number, y:number, angle:number, cannonAngle:number, cannonRotation:number, cannonUntilTimeId:flatbuffers.Long, fire:boolean, isDelete:boolean, explode:boolean, explodeOther:boolean, deleteOtherIdsOffset:flatbuffers.Offset, velocityX:number, velocityY:number, velocityRotation:number, velocityUntilTimeId:flatbuffers.Long):flatbuffers.Offset {
+static create(builder:flatbuffers.Builder, timeId:number, x:number, y:number, angle:number, cannonAngle:number, cannonRotation:number, cannonUntilTimeId:number, fire:boolean, isDelete:boolean, explode:boolean, explodeOther:boolean, deleteOtherIdsOffset:flatbuffers.Offset, velocityX:number, velocityY:number, velocityRotation:number, velocityUntilTimeId:number):flatbuffers.Offset {
   TimeLog.start(builder);
   TimeLog.addTimeId(builder, timeId);
   TimeLog.addX(builder, x);

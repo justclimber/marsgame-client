@@ -7,7 +7,8 @@ import { Component, Vue } from "vue-property-decorator";
 import * as PIXI from "pixi.js";
 import { Viewport } from "pixi-viewport";
 import { WalBuffers } from "@/flatbuffers/log_generated";
-import WalParser from "@/lib/wal/parser";
+import { GameHistory, GameHistoryObject, WalParser } from "@/lib/wal/walParser";
+import ObjectType = WalBuffers.ObjectType;
 
 const worldWide = 30000;
 const xShift = 10000;
@@ -17,6 +18,7 @@ const timeShiftForPrediction = 500;
 let timer = new Date();
 let currTimeId: number;
 let changelogToRun: ChangelogByTime[] = [];
+let gameHistory: GameHistory = { timeIds: [], moments: [] };
 let sheet: PIXI.Spritesheet;
 
 const mechChangelogMap = {
@@ -91,11 +93,16 @@ export default class GameCanvas extends Vue {
   mechWeaponCannon?: PIXI.Sprite = undefined;
   changelogCurrIndex: number = 0;
   debug: boolean = false;
+  walParser: WalParser = new WalParser();
   wsCommands = {
-    worldChangesWal(wal: WalBuffers.Log) {
-      let parser = new WalParser();
-      let changelog = parser.parseWal(wal);
-      console.log(changelog);
+    worldChangesWal(this: GameCanvas, wal: WalBuffers.Log) {
+      let gameHistoryChunk = this.walParser.parseWal(wal);
+      if (!currTimeId) {
+        // use time shift for more smooth prediction: we need changelogToRun always be not empty on run
+        currTimeId = gameHistoryChunk.timeIds[0] - timeShiftForPrediction;
+      }
+      Object.assign(gameHistory.moments, gameHistoryChunk.moments);
+      gameHistory.timeIds.push(...gameHistoryChunk.timeIds);
     },
     worldChanges(changelog: ChangelogByTime[]) {
       if (!currTimeId) {
@@ -323,9 +330,27 @@ export default class GameCanvas extends Vue {
     let timeDelta = now.getTime() - timer.getTime();
     timer = now;
     if (currTimeId) {
-      this.runChangelog(timeDelta);
+      // this.runChangelog(timeDelta);
+      this.gameHistoryPlay(timeDelta);
     }
   }
+
+  gameHistoryPlay(timeDelta: number) {
+    currTimeId += timeDelta;
+    if (this.changelogCurrIndex >= gameHistory.timeIds.length) {
+      this.clearPredictions();
+      return;
+    }
+
+    if (gameHistory.timeIds[this.changelogCurrIndex] > currTimeId) {
+      // wait for future
+      return;
+    }
+    const timeId = gameHistory.timeIds[this.changelogCurrIndex++];
+
+    gameHistory.moments[timeId].objects.forEach(this.playHistoryObject, this);
+  }
+
   runChangelog(timeDelta: number): void {
     currTimeId += timeDelta;
     if (this.changelogCurrIndex >= changelogToRun.length) {
@@ -423,6 +448,65 @@ export default class GameCanvas extends Vue {
       if (change[k] && fieldName) {
         obj[fieldName] = change[k];
       }
+    }
+  }
+
+  playHistoryObject(object: GameHistoryObject): void {
+    let missile: GameSpriteObj | undefined;
+    let enemyMech: GameSpriteObj | undefined;
+    if (object.deleteOtherIds) {
+      object.deleteOtherIds.forEach((did: number) => {
+        const obj = this.objects.get(did);
+        if (obj) {
+          obj.destroy();
+          this.objects.delete(did);
+        }
+      }, this);
+    }
+    switch (object.objectType) {
+      case ObjectType.player:
+        if (!this.mech || !this.mechWeaponCannon) {
+          break;
+        }
+        this.mech.x = object.x;
+        this.mech.y = object.y;
+        this.mech.rotation = object.angle;
+        this.mechWeaponCannon.rotation = object.cannonAngle;
+        this.mech.vx = object.velocityX;
+        this.mech.vy = object.velocityY;
+        this.mech.vr = object.velocityRotation;
+        break;
+      case ObjectType.missile:
+        missile = this.missiles.get(object.id);
+        if (!missile) {
+          missile = this.newMissile(object.id, object.x, object.y, object.angle);
+        }
+        if (object.isDelete) {
+          this.destroyMissile(object.id, missile);
+        } else {
+          missile.x = object.x;
+          missile.y = object.y;
+          missile.rotation = object.angle;
+
+          missile.vx = object.velocityX;
+          missile.vy = object.velocityY;
+          missile.vr = object.velocityRotation;
+        }
+        break;
+      case ObjectType.enemy_mech:
+        enemyMech = this.objects.get(object.id);
+        if (!enemyMech) {
+          console.log("object on non existed obj:", object);
+          break;
+        }
+        enemyMech.x = object.x;
+        enemyMech.y = object.y;
+        enemyMech.rotation = object.angle;
+
+        enemyMech.vx = object.velocityX;
+        enemyMech.vy = object.velocityY;
+        enemyMech.vr = object.velocityRotation;
+        break;
     }
   }
 
