@@ -1,5 +1,17 @@
 <template>
-  <div id="pixiDiv"></div>
+  <div>
+    <div ref="pixiContainer"></div>
+    <div class="controls">
+      <button @click="saveGame">Save game</button>
+      <button @click="loadGame">Load game</button>
+      <button class="spacer" @click="playerButton('prevMore')">&#171;</button>
+      <button @click="playerButton('prev')">&#8249;</button>
+      <button @click="playerButton('stop')">■</button>
+      <button @click="playerButton('play')">▶</button>
+      <button @click="playerButton('next')">&#8250;</button>
+      <button @click="playerButton('nextMore')">&#187;</button>
+    </div>
+  </div>
 </template>
 
 <script lang="ts">
@@ -17,7 +29,7 @@ const timeShiftForPrediction = 1500;
 let timer = new Date();
 let currTimeId: number;
 let changelogToRun: ChangelogByTime[] = [];
-let gameHistory: Wal.GameHistory = { timeIds: [], moments: [], timeToStart: 0 };
+let gameHistory: Wal.GameHistory = { timeIds: [], moments: new Map(), timeToStart: 0 };
 let sheet: PIXI.Spritesheet;
 
 function getRandomInt(min: number, max: number) {
@@ -46,10 +58,16 @@ interface ChangelogByTime {
   chObjs: ChangelogByObject[];
 }
 
+enum GameState {
+  paused = 0,
+  play = 1
+}
+
 PIXI.utils.skipHello();
 
 @Component
 export default class GameCanvas extends Vue {
+  $refs!: { pixiContainer: HTMLDivElement };
   app = new PIXI.Application({
     width: 600,
     height: 700,
@@ -67,9 +85,10 @@ export default class GameCanvas extends Vue {
   mech?: PIXI.Container = undefined;
   mechBase?: PIXI.Sprite = undefined;
   mechWeaponCannon?: PIXI.Sprite = undefined;
-  changelogCurrIndex: number = 0;
+  historyCursor: number = 0;
   debug: boolean = false;
   walParser: Wal.Wall = new Wal.Wall();
+  gameState: GameState = GameState.paused;
   wsCommands = {
     worldChangesWal(this: GameCanvas, wal: WalBuffers.Log) {
       let gameHistoryChunk = this.walParser.parseWal(wal);
@@ -77,14 +96,17 @@ export default class GameCanvas extends Vue {
       if (!currTimeId) {
         // use time shift for more smooth prediction: we need changelogToRun always be not empty on run
         currTimeId = gameHistoryChunk.timeToStart - timeShiftForPrediction;
+        this.gameState = GameState.play;
       }
-      Object.assign(gameHistory.moments, gameHistoryChunk.moments);
+      gameHistory.moments = new Map([...gameHistory.moments, ...gameHistoryChunk.moments]);
+      // Object.assign(gameHistory.moments, gameHistoryChunk.moments);
       gameHistory.timeIds.push(...gameHistoryChunk.timeIds);
+      console.log(gameHistory);
     },
     worldInit(this: GameCanvas, changelog: ChangelogByTime[]) {
       changelogToRun = [];
       currTimeId = 0;
-      this.changelogCurrIndex = 0;
+      this.historyCursor = 0;
       this.clearPredictions();
       this.cleanMap();
       this.wsSendCommand({
@@ -107,7 +129,7 @@ export default class GameCanvas extends Vue {
     }
   };
   mounted() {
-    this.$el.appendChild(this.app.view);
+    this.$refs.pixiContainer.appendChild(this.app.view);
     this.viewportSetup();
     this.app.loader
       .add("/images/spritesheet.json")
@@ -282,7 +304,7 @@ export default class GameCanvas extends Vue {
   }
 
   gameLoop(): void {
-    if (!this.mech || !this.mechWeaponCannon) {
+    if (!this.mech || !this.mechWeaponCannon || this.gameState == GameState.paused) {
       return;
     }
     let now = new Date();
@@ -301,25 +323,23 @@ export default class GameCanvas extends Vue {
       m.rotation += m.vr * dt;
     }
 
-    if (currTimeId) {
-      this.gameHistoryPlay(timeDelta);
-    }
+    this.gameHistoryPlay(timeDelta);
   }
 
   gameHistoryPlay(timeDelta: number) {
     currTimeId += timeDelta;
-    if (this.changelogCurrIndex >= gameHistory.timeIds.length) {
+    if (this.historyCursor >= gameHistory.timeIds.length) {
       this.clearPredictions();
       return;
     }
 
-    if (gameHistory.timeIds[this.changelogCurrIndex] > currTimeId) {
+    if (gameHistory.timeIds[this.historyCursor] > currTimeId) {
       // wait for future
       return;
     }
-    const timeId = gameHistory.timeIds[this.changelogCurrIndex++];
+    const timeId = gameHistory.timeIds[this.historyCursor++];
 
-    gameHistory.moments[timeId].objects.forEach(this.playHistoryObject, this);
+    gameHistory.moments.get(timeId)!.objects.forEach(this.playHistoryObject, this);
   }
 
   clearPredictions(): void {
@@ -384,7 +404,7 @@ export default class GameCanvas extends Vue {
     }
   }
 
-  deleteOthers(snapshot: Wal.ObjectSnapshotUnion) {
+  deleteOthers(snapshot: Wal.ObjectSnapshotUnion): void {
     snapshot.obj.deleteOtherIds.forEach((did: number) => {
       const obj = this.objects.get(did);
       if (obj) {
@@ -393,7 +413,54 @@ export default class GameCanvas extends Vue {
       }
     }, this);
   }
+  saveGame(): void {
+    localStorage.setItem("gameHistory", JSON.stringify(gameHistory));
+    this.$store.commit("addConsoleInfo", "Game saved");
+    console.log(gameHistory);
+  }
+  loadGame(): void {
+    const raw = localStorage.getItem("gameHistory");
+    if (raw) {
+      gameHistory = JSON.parse(raw, Map.fromJSON);
+      console.log(gameHistory);
+      currTimeId = 1;
+      this.historyCursor = 0;
+    }
+    this.$store.commit("addConsoleInfo", "Game loaded");
+  }
+  playerButton(code: string): void {
+    switch (code) {
+      case "prevMore":
+        //sdf
+        break;
+      case "prev":
+        //sdf
+        break;
+      case "stop":
+        this.gameState = GameState.paused;
+        break;
+      case "play":
+        this.gameState = GameState.play;
+        break;
+      case "next":
+        //sdf
+        break;
+      case "nextMore":
+        //sdf
+        break;
+    }
+  }
 }
+
+Map.prototype.toJSON = function() {
+  return ["window.Map", Array.from(this.entries())];
+};
+Map.fromJSON = function(key: any, value: any) {
+  return value instanceof Array && value[0] == "window.Map" ? new Map(value[1]) : value;
+};
 </script>
 
-<style scoped></style>
+<style scoped lang="stylus">
+.spacer
+  margin-left 120px
+</style>

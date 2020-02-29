@@ -20,3 +20,12 @@ declare module "vue/types/options" {
     $store?: any;
   }
 }
+
+declare global {
+  interface Map<K, V> {
+    toJSON(): any;
+  }
+  interface MapConstructor {
+    fromJSON(key: any, value: any): any;
+  }
+}

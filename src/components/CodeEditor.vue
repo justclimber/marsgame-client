@@ -199,12 +199,6 @@ export default class CodeEditor extends Vue {
     align-content left
     padding-top 5px
     font-size 14px
-    button
-      font-size 14px
-      border 1px solid panels-border-color
-      background active-element-bg-color
-      color active-element-color
-      margin-right  5px
 
 .help-button
   margin-left 10px

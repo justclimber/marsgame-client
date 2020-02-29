@@ -3,7 +3,7 @@ import { WalBuffers } from "@/flatbuffers/log_generated";
 export interface GameHistory {
   timeToStart: number;
   timeIds: number[];
-  moments: GameHistoryMoment[];
+  moments: Map<number, GameHistoryMoment>;
 }
 
 export type ObjectsSnapshotsMap = Map<number, ObjectSnapshotUnion>;
@@ -46,7 +46,7 @@ function objectPredictionsByVelocity(
   timeIds: number[],
   timeLog: WalBuffers.TimeLog,
   objectLog: WalBuffers.ObjectLog,
-  history: GameHistoryMoment[]
+  history: Map<number, GameHistoryMoment>
 ) {
   let x: number = timeLog.x();
   let y: number = timeLog.y();
@@ -59,7 +59,7 @@ function objectPredictionsByVelocity(
       continue;
     }
     let timeDelta = (timeIds[t] - timeIds[t - 1]) / 1000;
-    let objectInHistory = history[timeIds[t]].objects.get(objectLog.id());
+    let objectInHistory = history.get(timeIds[t])!.objects.get(objectLog.id());
 
     x = x + velocityLen * Math.cos(angle) * timeDelta;
     y = y + velocityLen * Math.sin(angle) * timeDelta;
@@ -84,7 +84,7 @@ function objectPredictionsByVelocity(
           deleteOtherIds: []
         }
       };
-      history[timeIds[t]].objects.set(objectLog.id(), historyObjectPrediction);
+      history.get(timeIds[t])!.objects.set(objectLog.id(), historyObjectPrediction);
     }
     if (timeIds[t] === timeLog.velocityUntilTimeId()) {
       break;
@@ -98,14 +98,14 @@ export class Wall {
     const timeIdsCount = wal.timeIdsLength();
     const objLogsCount = wal.objectsLength();
 
-    let history: GameHistoryMoment[] = [];
+    let history: Map<number, GameHistoryMoment> = new Map();
     let timeIds: number[] = [];
     for (let i = 0; i < timeIdsCount; i++) {
       const timeId = wal.timeIds(i);
       if (!timeId) {
         continue;
       }
-      history[timeId] = { timeId: timeId, objects: new Map() };
+      history.set(timeId, { timeId: timeId, objects: new Map() });
       timeIds.push(timeId);
     }
 
@@ -141,7 +141,7 @@ export class Wall {
         if (!isDefault(timeLog.velocityUntilTimeId())) {
           objectPredictionsByVelocity(timeIdsCount, timeIds, timeLog, objectLog, history);
         }
-        Wall.upsertObjectToHistory(history[timeLog.timeId()].objects, newObject);
+        Wall.upsertObjectToHistory(history.get(timeLog.timeId())!.objects, newObject);
       }
     }
     return { timeToStart: wal.currTimeId(), timeIds: timeIds, moments: history };

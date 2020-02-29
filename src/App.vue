@@ -39,6 +39,12 @@ textarea:focus,
 button:focus
   outline none
 
+button
+  font-size 14px
+  border 1px solid panels-border-color
+  background active-element-bg-color
+  color active-element-color
+  margin-right  5px
 #app
   max-width 1800px
   overflow hidden
