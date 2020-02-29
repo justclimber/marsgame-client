@@ -13,12 +13,12 @@ import ObjectType = WalBuffers.ObjectType;
 const worldWide = 30000;
 const xShift = 10000;
 const yShift = 10000;
-const timeShiftForPrediction = 500;
+const timeShiftForPrediction = 1500;
 
 let timer = new Date();
 let currTimeId: number;
 let changelogToRun: ChangelogByTime[] = [];
-let gameHistory: GameHistory = { timeIds: [], moments: [] };
+let gameHistory: GameHistory = { timeIds: [], moments: [], timeToStart: 0 };
 let sheet: PIXI.Spritesheet;
 
 const mechChangelogMap = {
@@ -97,9 +97,10 @@ export default class GameCanvas extends Vue {
   wsCommands = {
     worldChangesWal(this: GameCanvas, wal: WalBuffers.Log) {
       let gameHistoryChunk = this.walParser.parseWal(wal);
+      console.log(gameHistoryChunk);
       if (!currTimeId) {
         // use time shift for more smooth prediction: we need changelogToRun always be not empty on run
-        currTimeId = gameHistoryChunk.timeIds[0] - timeShiftForPrediction;
+        currTimeId = gameHistoryChunk.timeToStart - timeShiftForPrediction;
       }
       Object.assign(gameHistory.moments, gameHistoryChunk.moments);
       gameHistory.timeIds.push(...gameHistoryChunk.timeIds);
@@ -315,20 +316,22 @@ export default class GameCanvas extends Vue {
     if (!this.mech || !this.mechWeaponCannon) {
       return;
     }
-    this.mech.x += this.mech.vx;
-    this.mech.y += this.mech.vy;
-    this.viewport.moveCenter(this.mech.x, this.mech.y);
-    this.mech.rotation += this.mech.vr;
-    this.mechWeaponCannon.rotation += this.mechWeaponCannon.vr;
-    for (let m of this.missiles.values()) {
-      m.x += m.vx;
-      m.y += m.vy;
-      m.rotation += m.vr;
-    }
-
     let now = new Date();
     let timeDelta = now.getTime() - timer.getTime();
     timer = now;
+    const dt = timeDelta / 1000;
+
+    this.mech.x += this.mech.vx * dt;
+    this.mech.y += this.mech.vy * dt;
+    this.viewport.moveCenter(this.mech.x, this.mech.y);
+    this.mech.rotation += this.mech.vr * dt;
+    this.mechWeaponCannon.rotation += this.mechWeaponCannon.vr;
+    for (let m of this.missiles.values()) {
+      m.x += m.vx * dt;
+      m.y += m.vy * dt;
+      m.rotation += m.vr * dt;
+    }
+
     if (currTimeId) {
       // this.runChangelog(timeDelta);
       this.gameHistoryPlay(timeDelta);
@@ -472,8 +475,8 @@ export default class GameCanvas extends Vue {
         this.mech.y = object.y;
         this.mech.rotation = object.angle;
         this.mechWeaponCannon.rotation = object.cannonAngle;
-        this.mech.vx = object.velocityX;
-        this.mech.vy = object.velocityY;
+        this.mech.vx = object.velocityLen * Math.cos(object.angle);
+        this.mech.vy = object.velocityLen * Math.sin(object.angle);
         this.mech.vr = object.velocityRotation;
         break;
       case ObjectType.missile:
@@ -488,8 +491,8 @@ export default class GameCanvas extends Vue {
           missile.y = object.y;
           missile.rotation = object.angle;
 
-          missile.vx = object.velocityX;
-          missile.vy = object.velocityY;
+          missile.vx = object.velocityLen * Math.cos(object.angle);
+          missile.vy = object.velocityLen * Math.sin(object.angle);
           missile.vr = object.velocityRotation;
         }
         break;
@@ -503,8 +506,8 @@ export default class GameCanvas extends Vue {
         enemyMech.y = object.y;
         enemyMech.rotation = object.angle;
 
-        enemyMech.vx = object.velocityX;
-        enemyMech.vy = object.velocityY;
+        enemyMech.vx = object.velocityLen * Math.cos(object.angle);
+        enemyMech.vy = object.velocityLen * Math.sin(object.angle);
         enemyMech.vr = object.velocityRotation;
         break;
     }

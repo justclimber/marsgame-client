@@ -1,13 +1,15 @@
 import { WalBuffers } from "@/flatbuffers/log_generated";
 
 export interface GameHistory {
+  timeToStart: number;
   timeIds: number[];
   moments: GameHistoryMoment[];
 }
+export type GameHistoryObjectsMap = Map<number, GameHistoryObject>;
 
 export interface GameHistoryMoment {
   timeId: number;
-  objects: GameHistoryObject[];
+  objects: GameHistoryObjectsMap;
 }
 export interface GameHistoryObject {
   id: number;
@@ -17,8 +19,7 @@ export interface GameHistoryObject {
   y: number;
   angle: number;
   cannonAngle: number;
-  velocityX: number;
-  velocityY: number;
+  velocityLen: number;
   velocityRotation: number;
   isDelete?: boolean;
   explode?: boolean;
@@ -47,12 +48,11 @@ function objectPredictions(
       y: timeLog.y(),
       angle: timeLog.angle(),
       cannonAngle: timeLog.cannonAngle(),
-      velocityX: timeLog.velocityX(),
-      velocityY: timeLog.velocityY(),
+      velocityLen: timeLog.velocityLen(),
       velocityRotation: timeLog.velocityRotation()
     };
     // @fixme: надо учитывать что в истории в будущем уже могут быть объекты
-    history[timeIds[t]].objects.push(historyObjectPrediction);
+    history[timeIds[t]].objects.set(objectLog.id(), historyObjectPrediction);
     if (timeIds[t] === timeLog.velocityUntilTimeId()) {
       break;
     }
@@ -60,6 +60,7 @@ function objectPredictions(
 }
 
 export class WalParser {
+  objectsCache: Map<number, GameHistoryObject> = new Map();
   parseWal(wal: WalBuffers.Log): GameHistory {
     const timeIdsCount = wal.timeIdsLength();
     const objLogsCount = wal.objectsLength();
@@ -71,7 +72,7 @@ export class WalParser {
       if (!timeId) {
         continue;
       }
-      history[timeId] = { timeId: timeId, objects: [] };
+      history[timeId] = { timeId: timeId, objects: new Map() };
       timeIds.push(timeId);
     }
     // console.log(history);
@@ -86,24 +87,59 @@ export class WalParser {
         if (!timeLog) {
           continue;
         }
-        let historyObject: GameHistoryObject = {
+
+        let newObject = {
           id: objectLog.id(),
           objectType: objectLog.objectType(),
           x: timeLog.x(),
           y: timeLog.y(),
           angle: timeLog.angle(),
           cannonAngle: timeLog.cannonAngle(),
-          velocityX: timeLog.velocityX(),
-          velocityY: timeLog.velocityY(),
+          velocityLen: timeLog.velocityLen(),
           velocityRotation: timeLog.velocityRotation()
         };
+
+        let objectFromCache: GameHistoryObject | undefined;
+        objectFromCache = this.objectsCache.get(objectLog.id());
+
+        if (objectFromCache) {
+          if (isDefault(newObject.x)) {
+            newObject.x = objectFromCache.x;
+          }
+          if (isDefault(newObject.y)) {
+            newObject.y = objectFromCache.y;
+          }
+          if (isDefault(newObject.angle)) {
+            newObject.angle = objectFromCache.angle;
+          }
+          if (isDefault(newObject.velocityLen)) {
+            newObject.velocityLen = objectFromCache.velocityLen;
+          }
+          if (isDefault(newObject.velocityRotation)) {
+            newObject.velocityRotation = objectFromCache.velocityRotation;
+          }
+        }
+        this.objectsCache.set(objectLog.id(), newObject);
+
         if (!isDefault(timeLog.velocityUntilTimeId())) {
           objectPredictions(timeIdsCount, timeIds, timeLog, objectLog, history);
         }
-        // @fixme: надо учитывать что в истории в уже могут быть объекты
-        history[timeLog.timeId()].objects.push(historyObject);
+        this.upsertObjectToHistory(history[timeLog.timeId()].objects, newObject);
       }
     }
-    return { timeIds: timeIds, moments: history };
+    return { timeToStart: wal.currTimeId(), timeIds: timeIds, moments: history };
+  }
+
+  private upsertObjectToHistory(objects: GameHistoryObjectsMap, historyObject: GameHistoryObject): void {
+    let obj = objects.get(historyObject.id);
+    if (obj) {
+      obj.x = historyObject.x;
+      obj.y = historyObject.y;
+      obj.angle = historyObject.angle;
+      obj.velocityLen = historyObject.velocityLen;
+      obj.velocityRotation = historyObject.velocityRotation;
+    } else {
+      objects.set(historyObject.id, historyObject);
+    }
   }
 }
