@@ -6,45 +6,25 @@
 import { Component, Vue } from "vue-property-decorator";
 import * as PIXI from "pixi.js";
 import { Viewport } from "pixi-viewport";
+import { WalBuffers } from "@/flatbuffers/log_generated";
+import * as Wal from "@/lib/wal/wall";
 
 const worldWide = 30000;
 const xShift = 10000;
 const yShift = 10000;
-const timeShiftForPrediction = 500;
+const timeShiftForPrediction = 1500;
 
 let timer = new Date();
 let currTimeId: number;
 let changelogToRun: ChangelogByTime[] = [];
+let gameHistory: Wal.GameHistory = { timeIds: [], moments: [], timeToStart: 0 };
 let sheet: PIXI.Spritesheet;
-
-const mechChangelogMap = {
-  x: "x",
-  y: "y",
-  a: "rotation"
-};
-const cannonChangelogMap = {
-  ca: "rotation"
-};
-const missileChangelogMap = {
-  x: "x",
-  y: "y",
-  a: "rotation"
-};
 
 function getRandomInt(min: number, max: number) {
   return Math.floor(Math.random() * Math.floor(max)) + min;
 }
 
 type GameSpriteObj = PIXI.Sprite | PIXI.AnimatedSprite | PIXI.Container;
-
-interface ChangeMap {
-  x?: string;
-  y?: string;
-  a?: string;
-  ca?: string;
-
-  [propName: string]: string | undefined;
-}
 
 interface ChangelogByObject {
   t: string;
@@ -89,13 +69,17 @@ export default class GameCanvas extends Vue {
   mechWeaponCannon?: PIXI.Sprite = undefined;
   changelogCurrIndex: number = 0;
   debug: boolean = false;
+  walParser: Wal.Wall = new Wal.Wall();
   wsCommands = {
-    worldChanges(changelog: ChangelogByTime[]) {
+    worldChangesWal(this: GameCanvas, wal: WalBuffers.Log) {
+      let gameHistoryChunk = this.walParser.parseWal(wal);
+      // console.log(gameHistoryChunk);
       if (!currTimeId) {
         // use time shift for more smooth prediction: we need changelogToRun always be not empty on run
-        currTimeId = changelog[0].tId - timeShiftForPrediction;
+        currTimeId = gameHistoryChunk.timeToStart - timeShiftForPrediction;
       }
-      changelogToRun = [...changelogToRun, ...changelog];
+      Object.assign(gameHistory.moments, gameHistoryChunk.moments);
+      gameHistory.timeIds.push(...gameHistoryChunk.timeIds);
     },
     worldInit(this: GameCanvas, changelog: ChangelogByTime[]) {
       changelogToRun = [];
@@ -301,89 +285,41 @@ export default class GameCanvas extends Vue {
     if (!this.mech || !this.mechWeaponCannon) {
       return;
     }
-    this.mech.x += this.mech.vx;
-    this.mech.y += this.mech.vy;
-    this.viewport.moveCenter(this.mech.x, this.mech.y);
-    this.mech.rotation += this.mech.vr;
-    this.mechWeaponCannon.rotation += this.mechWeaponCannon.vr;
-    for (let m of this.missiles.values()) {
-      m.x += m.vx;
-      m.y += m.vy;
-      m.rotation += m.vr;
-    }
-
     let now = new Date();
     let timeDelta = now.getTime() - timer.getTime();
     timer = now;
+    const dt = timeDelta / 1000;
+
+    this.mech.x += this.mech.vx * dt;
+    this.mech.y += this.mech.vy * dt;
+    this.viewport.moveCenter(this.mech.x, this.mech.y);
+    this.mech.rotation += this.mech.vr * dt;
+    // this.mechWeaponCannon.rotation += this.mechWeaponCannon.vr;
+    for (let m of this.missiles.values()) {
+      m.x += m.vx * dt;
+      m.y += m.vy * dt;
+      m.rotation += m.vr * dt;
+    }
+
     if (currTimeId) {
-      this.runChangelog(timeDelta);
+      this.gameHistoryPlay(timeDelta);
     }
   }
-  runChangelog(timeDelta: number): void {
+
+  gameHistoryPlay(timeDelta: number) {
     currTimeId += timeDelta;
-    if (this.changelogCurrIndex >= changelogToRun.length) {
+    if (this.changelogCurrIndex >= gameHistory.timeIds.length) {
       this.clearPredictions();
       return;
     }
 
-    if (changelogToRun[this.changelogCurrIndex].tId > currTimeId) {
+    if (gameHistory.timeIds[this.changelogCurrIndex] > currTimeId) {
+      // wait for future
       return;
     }
+    const timeId = gameHistory.timeIds[this.changelogCurrIndex++];
 
-    changelogToRun[this.changelogCurrIndex].chObjs.forEach(this.runChange, this);
-
-    this.changelogCurrIndex++;
-
-    if (this.changelogCurrIndex < changelogToRun.length) {
-      this.makePredictions(timeDelta);
-    }
-  }
-
-  // smoothing movements of objects
-  makePredictions(timeDelta: number): void {
-    let nextChange = changelogToRun[this.changelogCurrIndex];
-    let nextTimeIdDelta = nextChange.tId - currTimeId;
-    // f - proposed future game ticks
-    let f = nextTimeIdDelta / timeDelta;
-    let missile: GameSpriteObj | undefined;
-    let wasPlayerPrediction = false;
-
-    changelogToRun[this.changelogCurrIndex].chObjs.forEach((change: ChangelogByObject) => {
-      switch (change.t) {
-        case "player":
-          if (!this.mech || !this.mechWeaponCannon) {
-            return;
-          }
-          this.mech.vx = !change.x ? 0 : (change.x - this.mech.x) / f;
-          this.mech.vy = !change.y ? 0 : (change.y - this.mech.y) / f;
-          if (change.a) {
-            let da = change.a - this.mech.rotation;
-            if (da > 1.5 * Math.PI) {
-              da = da - 2 * Math.PI;
-            } else if (da < -1.5 * Math.PI) {
-              da = da + 2 * Math.PI;
-            }
-            this.mech.vr = da / f;
-          } else {
-            this.mech.vr = 0;
-          }
-          this.mechWeaponCannon.vr = !change.ca ? 0 : (change.ca - this.mechWeaponCannon.rotation) / f;
-          wasPlayerPrediction = true;
-          break;
-        case "missile":
-          missile = this.missiles.get(change.id);
-          if (missile) {
-            missile.vx = !change.x ? 0 : (change.x - missile.x) / f;
-            missile.vy = !change.y ? 0 : (change.y - missile.y) / f;
-            missile.vr = !change.a ? 0 : (change.a - missile.rotation) / f;
-          }
-          break;
-      }
-    });
-
-    if (!wasPlayerPrediction) {
-      this.clearMechPredictions();
-    }
+    gameHistory.moments[timeId].objects.forEach(this.playHistoryObject, this);
   }
 
   clearPredictions(): void {
@@ -405,54 +341,57 @@ export default class GameCanvas extends Vue {
     this.mechWeaponCannon.vr = 0;
   }
 
-  applyMapToObj(change: ChangelogByObject, obj: GameSpriteObj | undefined, map: ChangeMap): void {
-    if (!obj) {
-      console.error("Attempt to apply change to a non-object");
-      return;
+  playHistoryObject(snapshot: Wal.ObjectSnapshotUnion): void {
+    let object: GameSpriteObj | undefined;
+    if (snapshot.obj.deleteOtherIds) {
+      this.deleteOthers(snapshot);
     }
-    let k: string;
-    for (k in map) {
-      const fieldName = map[k];
-      if (change[k] && fieldName) {
-        obj[fieldName] = change[k];
-      }
+    switch (snapshot.obj.objectType) {
+      case WalBuffers.ObjectType.player:
+        if (!this.mech || !this.mechWeaponCannon) {
+          break;
+        }
+        object = this.mech;
+        this.mechWeaponCannon.rotation = (snapshot as Wal.MechSnapshot).cannonAngle;
+        this.mechWeaponCannon.vr = (snapshot as Wal.MechSnapshot).cannonRotation;
+        break;
+      case WalBuffers.ObjectType.missile:
+        object = this.missiles.get(snapshot.obj.id);
+        if (!object) {
+          object = this.newMissile(snapshot.obj.id, snapshot.obj.x, snapshot.obj.y, snapshot.obj.angle);
+        }
+        if (snapshot.obj.isDelete) {
+          this.destroyMissile(snapshot.obj.id, object);
+          object = undefined;
+        }
+        break;
+      case WalBuffers.ObjectType.enemy_mech:
+        object = this.objects.get(snapshot.obj.id);
+        if (!object) {
+          console.log("object on non existed obj:", snapshot);
+          break;
+        }
+        break;
+    }
+    if (object) {
+      object.x = snapshot.obj.x;
+      object.y = snapshot.obj.y;
+      object.rotation = snapshot.obj.angle;
+
+      object.vx = snapshot.obj.velocityLen * Math.cos(snapshot.obj.angle);
+      object.vy = snapshot.obj.velocityLen * Math.sin(snapshot.obj.angle);
+      object.vr = snapshot.obj.velocityRotation;
     }
   }
 
-  runChange(change: ChangelogByObject): void {
-    let missile: GameSpriteObj | undefined;
-    let enemyMech: GameSpriteObj | undefined;
-    if (change.did) {
-      const obj = this.objects.get(change.did);
+  deleteOthers(snapshot: Wal.ObjectSnapshotUnion) {
+    snapshot.obj.deleteOtherIds.forEach((did: number) => {
+      const obj = this.objects.get(did);
       if (obj) {
         obj.destroy();
-        this.objects.delete(change.did);
+        this.objects.delete(did);
       }
-    }
-    switch (change.t) {
-      case "player":
-        this.applyMapToObj(change, this.mech, mechChangelogMap);
-        this.applyMapToObj(change, this.mechWeaponCannon, cannonChangelogMap);
-        break;
-      case "missile":
-        missile = this.missiles.get(change.id);
-        if (!missile) {
-          missile = this.newMissile(change.id, change.x, change.y, change.a);
-        }
-        if (change.d) {
-          this.destroyMissile(change.id, missile);
-        } else {
-          this.applyMapToObj(change, missile, missileChangelogMap);
-        }
-        break;
-      case "enemy_mech":
-        enemyMech = this.objects.get(change.id);
-        if (!enemyMech) {
-          console.log("change on non existed obj:", change);
-        }
-        this.applyMapToObj(change, enemyMech, missileChangelogMap);
-        break;
-    }
+    }, this);
   }
 }
 </script>

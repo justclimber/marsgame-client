@@ -2,6 +2,9 @@ import _Vue from "vue";
 import { PluginObject } from "vue/types/umd";
 import { Store } from "vuex";
 
+import { flatbuffers } from "flatbuffers";
+import { WalBuffers } from "@/flatbuffers/log_generated";
+
 export default {
   install(Vue: typeof _Vue, options: any = {}, store: Store<any>) {
     let socket: any;
@@ -24,7 +27,7 @@ export default {
     }
 
     interface CommandWrapper {
-      data: string;
+      data: string | ArrayBuffer;
     }
 
     let commandHandlers: Map<string, WsCallbackObj> = new Map();
@@ -48,6 +51,7 @@ export default {
     Vue.prototype.wsConnect = function(userId: number) {
       store.commit("addConsoleInfo", "Connecting to server...");
       socket = new WebSocket(options.connectionStr + userId);
+      socket.binaryType = "arraybuffer";
       socket.onopen = () => {
         store.commit("addConsoleInfo", "Connected!");
       };
@@ -60,12 +64,21 @@ export default {
       };
 
       socket.onmessage = function(msg: CommandWrapper) {
-        let data: Command = JSON.parse(msg.data);
-        let payload = JSON.parse(data.payload);
+        let commandName: string;
+        let payload: any;
+        if (msg.data instanceof ArrayBuffer) {
+          let buf = new flatbuffers.ByteBuffer(new Uint8Array(msg.data));
+          payload = WalBuffers.Log.getRoot(buf);
+          commandName = "worldChangesWal";
+        } else {
+          let data: Command = JSON.parse(msg.data);
+          payload = JSON.parse(data.payload);
+          commandName = data.type;
+        }
 
-        const wsCallback = commandHandlers.get(data.type);
+        const wsCallback = commandHandlers.get(commandName);
         if (!wsCallback) {
-          throw new Error("couldn't find " + data.type + " registered handler");
+          throw new Error("couldn't find " + commandName + " registered handler");
         }
 
         wsCallback.callback.call(wsCallback.obj, payload);
