@@ -20,34 +20,11 @@ let changelogToRun: ChangelogByTime[] = [];
 let gameHistory: Wal.GameHistory = { timeIds: [], moments: [], timeToStart: 0 };
 let sheet: PIXI.Spritesheet;
 
-const mechChangelogMap = {
-  x: "x",
-  y: "y",
-  a: "rotation"
-};
-const cannonChangelogMap = {
-  ca: "rotation"
-};
-const missileChangelogMap = {
-  x: "x",
-  y: "y",
-  a: "rotation"
-};
-
 function getRandomInt(min: number, max: number) {
   return Math.floor(Math.random() * Math.floor(max)) + min;
 }
 
 type GameSpriteObj = PIXI.Sprite | PIXI.AnimatedSprite | PIXI.Container;
-
-interface ChangeMap {
-  x?: string;
-  y?: string;
-  a?: string;
-  ca?: string;
-
-  [propName: string]: string | undefined;
-}
 
 interface ChangelogByObject {
   t: string;
@@ -96,20 +73,13 @@ export default class GameCanvas extends Vue {
   wsCommands = {
     worldChangesWal(this: GameCanvas, wal: WalBuffers.Log) {
       let gameHistoryChunk = this.walParser.parseWal(wal);
-      console.log(gameHistoryChunk);
+      // console.log(gameHistoryChunk);
       if (!currTimeId) {
         // use time shift for more smooth prediction: we need changelogToRun always be not empty on run
         currTimeId = gameHistoryChunk.timeToStart - timeShiftForPrediction;
       }
       Object.assign(gameHistory.moments, gameHistoryChunk.moments);
       gameHistory.timeIds.push(...gameHistoryChunk.timeIds);
-    },
-    worldChanges(changelog: ChangelogByTime[]) {
-      if (!currTimeId) {
-        // use time shift for more smooth prediction: we need changelogToRun always be not empty on run
-        currTimeId = changelog[0].tId - timeShiftForPrediction;
-      }
-      changelogToRun = [...changelogToRun, ...changelog];
     },
     worldInit(this: GameCanvas, changelog: ChangelogByTime[]) {
       changelogToRun = [];

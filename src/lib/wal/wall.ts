@@ -59,9 +59,6 @@ function objectPredictionsByVelocity(
       continue;
     }
     let timeDelta = (timeIds[t] - timeIds[t - 1]) / 1000;
-    if (objectLog.objectType() === WalBuffers.ObjectType.player) {
-      console.log(123123123, timeLog.timeId());
-    }
     let objectInHistory = history[timeIds[t]].objects.get(objectLog.id());
 
     x = x + velocityLen * Math.cos(angle) * timeDelta;
@@ -111,7 +108,7 @@ export class Wall {
       history[timeId] = { timeId: timeId, objects: new Map() };
       timeIds.push(timeId);
     }
-    // console.log(history);
+
     for (let i = 0; i < objLogsCount; i++) {
       let objectLog = wal.objects(i);
       if (!objectLog) {
@@ -135,7 +132,6 @@ export class Wall {
         let newObject: ObjectSnapshotUnion;
         if (objectLog.objectType() === WalBuffers.ObjectType.player) {
           newObject = Wall.parseMechObject(timeLog, objSnapshot);
-          console.log(newObject);
         } else {
           newObject = Wall.parseGenericObject(objSnapshot);
         }
@@ -155,6 +151,8 @@ export class Wall {
     id: number,
     timeLog: WalBuffers.TimeLog
   ): ObjSnapshot {
+    const rawArray = timeLog.deleteOtherIdsArray();
+    const deleteOtherIds = rawArray ? Array.from(rawArray) : [];
     return {
       id: id,
       objectType: objectLog.objectType(),
@@ -165,7 +163,7 @@ export class Wall {
       velocityRotation: timeLog.velocityRotation(),
       isDelete: timeLog.isDelete(),
       explode: timeLog.explode(),
-      deleteOtherIds: []
+      deleteOtherIds: deleteOtherIds
     };
   }
 
@@ -199,16 +197,19 @@ export class Wall {
     return { obj: objSnapshot };
   }
 
-  private static upsertObjectToHistory(objects: ObjectsSnapshotsMap, historyObject: ObjectSnapshotUnion): void {
-    let obj = objects.get(historyObject.obj.id);
+  private static upsertObjectToHistory(objects: ObjectsSnapshotsMap, newObject: ObjectSnapshotUnion): void {
+    let obj = objects.get(newObject.obj.id);
     if (obj) {
-      obj.obj.x = historyObject.obj.x;
-      obj.obj.y = historyObject.obj.y;
-      obj.obj.angle = historyObject.obj.angle;
-      obj.obj.velocityLen = historyObject.obj.velocityLen;
-      obj.obj.velocityRotation = historyObject.obj.velocityRotation;
+      obj.obj.x = newObject.obj.x;
+      obj.obj.y = newObject.obj.y;
+      obj.obj.angle = newObject.obj.angle;
+      obj.obj.velocityLen = newObject.obj.velocityLen;
+      obj.obj.velocityRotation = newObject.obj.velocityRotation;
+      obj.obj.isDelete = newObject.obj.isDelete;
+      obj.obj.explode = newObject.obj.explode;
+      obj.obj.deleteOtherIds = newObject.obj.deleteOtherIds;
     } else {
-      objects.set(historyObject.obj.id, historyObject);
+      objects.set(newObject.obj.id, newObject);
     }
   }
 }
