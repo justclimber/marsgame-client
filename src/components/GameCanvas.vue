@@ -7,8 +7,7 @@ import { Component, Vue } from "vue-property-decorator";
 import * as PIXI from "pixi.js";
 import { Viewport } from "pixi-viewport";
 import { WalBuffers } from "@/flatbuffers/log_generated";
-import { GameHistory, GameHistoryObject, WalParser } from "@/lib/wal/walParser";
-import ObjectType = WalBuffers.ObjectType;
+import * as Wal from "@/lib/wal/wall";
 
 const worldWide = 30000;
 const xShift = 10000;
@@ -18,7 +17,7 @@ const timeShiftForPrediction = 1500;
 let timer = new Date();
 let currTimeId: number;
 let changelogToRun: ChangelogByTime[] = [];
-let gameHistory: GameHistory = { timeIds: [], moments: [], timeToStart: 0 };
+let gameHistory: Wal.GameHistory = { timeIds: [], moments: [], timeToStart: 0 };
 let sheet: PIXI.Spritesheet;
 
 const mechChangelogMap = {
@@ -93,7 +92,7 @@ export default class GameCanvas extends Vue {
   mechWeaponCannon?: PIXI.Sprite = undefined;
   changelogCurrIndex: number = 0;
   debug: boolean = false;
-  walParser: WalParser = new WalParser();
+  walParser: Wal.Wall = new Wal.Wall();
   wsCommands = {
     worldChangesWal(this: GameCanvas, wal: WalBuffers.Log) {
       let gameHistoryChunk = this.walParser.parseWal(wal);
@@ -454,11 +453,10 @@ export default class GameCanvas extends Vue {
     }
   }
 
-  playHistoryObject(object: GameHistoryObject): void {
-    let missile: GameSpriteObj | undefined;
-    let enemyMech: GameSpriteObj | undefined;
-    if (object.deleteOtherIds) {
-      object.deleteOtherIds.forEach((did: number) => {
+  playHistoryObject(snapshot: Wal.ObjectSnapshotUnion): void {
+    let object: GameSpriteObj | undefined;
+    if (snapshot.obj.deleteOtherIds) {
+      snapshot.obj.deleteOtherIds.forEach((did: number) => {
         const obj = this.objects.get(did);
         if (obj) {
           obj.destroy();
@@ -466,50 +464,41 @@ export default class GameCanvas extends Vue {
         }
       }, this);
     }
-    switch (object.objectType) {
-      case ObjectType.player:
+    switch (snapshot.obj.objectType) {
+      case WalBuffers.ObjectType.player:
         if (!this.mech || !this.mechWeaponCannon) {
           break;
         }
-        this.mech.x = object.x;
-        this.mech.y = object.y;
-        this.mech.rotation = object.angle;
-        this.mechWeaponCannon.rotation = object.cannonAngle;
-        this.mech.vx = object.velocityLen * Math.cos(object.angle);
-        this.mech.vy = object.velocityLen * Math.sin(object.angle);
-        this.mech.vr = object.velocityRotation;
+        object = this.mech;
+        this.mechWeaponCannon.rotation = (snapshot as Wal.MechSnapshot).cannonAngle;
+        this.mechWeaponCannon.vr = (snapshot as Wal.MechSnapshot).cannonRotation;
         break;
-      case ObjectType.missile:
-        missile = this.missiles.get(object.id);
-        if (!missile) {
-          missile = this.newMissile(object.id, object.x, object.y, object.angle);
+      case WalBuffers.ObjectType.missile:
+        object = this.missiles.get(snapshot.obj.id);
+        if (!object) {
+          object = this.newMissile(snapshot.obj.id, snapshot.obj.x, snapshot.obj.y, snapshot.obj.angle);
         }
-        if (object.isDelete) {
-          this.destroyMissile(object.id, missile);
-        } else {
-          missile.x = object.x;
-          missile.y = object.y;
-          missile.rotation = object.angle;
-
-          missile.vx = object.velocityLen * Math.cos(object.angle);
-          missile.vy = object.velocityLen * Math.sin(object.angle);
-          missile.vr = object.velocityRotation;
+        if (snapshot.obj.isDelete) {
+          this.destroyMissile(snapshot.obj.id, object);
+          object = undefined;
         }
         break;
-      case ObjectType.enemy_mech:
-        enemyMech = this.objects.get(object.id);
-        if (!enemyMech) {
-          console.log("object on non existed obj:", object);
+      case WalBuffers.ObjectType.enemy_mech:
+        object = this.objects.get(snapshot.obj.id);
+        if (!object) {
+          console.log("object on non existed obj:", snapshot);
           break;
         }
-        enemyMech.x = object.x;
-        enemyMech.y = object.y;
-        enemyMech.rotation = object.angle;
-
-        enemyMech.vx = object.velocityLen * Math.cos(object.angle);
-        enemyMech.vy = object.velocityLen * Math.sin(object.angle);
-        enemyMech.vr = object.velocityRotation;
         break;
+    }
+    if (object) {
+      object.x = snapshot.obj.x;
+      object.y = snapshot.obj.y;
+      object.rotation = snapshot.obj.angle;
+
+      object.vx = snapshot.obj.velocityLen * Math.cos(snapshot.obj.angle);
+      object.vy = snapshot.obj.velocityLen * Math.sin(snapshot.obj.angle);
+      object.vr = snapshot.obj.velocityRotation;
     }
   }
 
