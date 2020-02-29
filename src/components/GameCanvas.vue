@@ -324,7 +324,7 @@ export default class GameCanvas extends Vue {
     this.mech.y += this.mech.vy * dt;
     this.viewport.moveCenter(this.mech.x, this.mech.y);
     this.mech.rotation += this.mech.vr * dt;
-    this.mechWeaponCannon.rotation += this.mechWeaponCannon.vr;
+    // this.mechWeaponCannon.rotation += this.mechWeaponCannon.vr;
     for (let m of this.missiles.values()) {
       m.x += m.vx * dt;
       m.y += m.vy * dt;
@@ -332,7 +332,6 @@ export default class GameCanvas extends Vue {
     }
 
     if (currTimeId) {
-      // this.runChangelog(timeDelta);
       this.gameHistoryPlay(timeDelta);
     }
   }
@@ -351,73 +350,6 @@ export default class GameCanvas extends Vue {
     const timeId = gameHistory.timeIds[this.changelogCurrIndex++];
 
     gameHistory.moments[timeId].objects.forEach(this.playHistoryObject, this);
-  }
-
-  runChangelog(timeDelta: number): void {
-    currTimeId += timeDelta;
-    if (this.changelogCurrIndex >= changelogToRun.length) {
-      this.clearPredictions();
-      return;
-    }
-
-    if (changelogToRun[this.changelogCurrIndex].tId > currTimeId) {
-      return;
-    }
-
-    changelogToRun[this.changelogCurrIndex].chObjs.forEach(this.runChange, this);
-
-    this.changelogCurrIndex++;
-
-    if (this.changelogCurrIndex < changelogToRun.length) {
-      this.makePredictions(timeDelta);
-    }
-  }
-
-  // smoothing movements of objects
-  makePredictions(timeDelta: number): void {
-    let nextChange = changelogToRun[this.changelogCurrIndex];
-    let nextTimeIdDelta = nextChange.tId - currTimeId;
-    // f - proposed future game ticks
-    let f = nextTimeIdDelta / timeDelta;
-    let missile: GameSpriteObj | undefined;
-    let wasPlayerPrediction = false;
-
-    changelogToRun[this.changelogCurrIndex].chObjs.forEach((change: ChangelogByObject) => {
-      switch (change.t) {
-        case "player":
-          if (!this.mech || !this.mechWeaponCannon) {
-            return;
-          }
-          this.mech.vx = !change.x ? 0 : (change.x - this.mech.x) / f;
-          this.mech.vy = !change.y ? 0 : (change.y - this.mech.y) / f;
-          if (change.a) {
-            let da = change.a - this.mech.rotation;
-            if (da > 1.5 * Math.PI) {
-              da = da - 2 * Math.PI;
-            } else if (da < -1.5 * Math.PI) {
-              da = da + 2 * Math.PI;
-            }
-            this.mech.vr = da / f;
-          } else {
-            this.mech.vr = 0;
-          }
-          this.mechWeaponCannon.vr = !change.ca ? 0 : (change.ca - this.mechWeaponCannon.rotation) / f;
-          wasPlayerPrediction = true;
-          break;
-        case "missile":
-          missile = this.missiles.get(change.id);
-          if (missile) {
-            missile.vx = !change.x ? 0 : (change.x - missile.x) / f;
-            missile.vy = !change.y ? 0 : (change.y - missile.y) / f;
-            missile.vr = !change.a ? 0 : (change.a - missile.rotation) / f;
-          }
-          break;
-      }
-    });
-
-    if (!wasPlayerPrediction) {
-      this.clearMechPredictions();
-    }
   }
 
   clearPredictions(): void {
@@ -439,30 +371,10 @@ export default class GameCanvas extends Vue {
     this.mechWeaponCannon.vr = 0;
   }
 
-  applyMapToObj(change: ChangelogByObject, obj: GameSpriteObj | undefined, map: ChangeMap): void {
-    if (!obj) {
-      console.error("Attempt to apply change to a non-object");
-      return;
-    }
-    let k: string;
-    for (k in map) {
-      const fieldName = map[k];
-      if (change[k] && fieldName) {
-        obj[fieldName] = change[k];
-      }
-    }
-  }
-
   playHistoryObject(snapshot: Wal.ObjectSnapshotUnion): void {
     let object: GameSpriteObj | undefined;
     if (snapshot.obj.deleteOtherIds) {
-      snapshot.obj.deleteOtherIds.forEach((did: number) => {
-        const obj = this.objects.get(did);
-        if (obj) {
-          obj.destroy();
-          this.objects.delete(did);
-        }
-      }, this);
+      this.deleteOthers(snapshot);
     }
     switch (snapshot.obj.objectType) {
       case WalBuffers.ObjectType.player:
@@ -502,40 +414,14 @@ export default class GameCanvas extends Vue {
     }
   }
 
-  runChange(change: ChangelogByObject): void {
-    let missile: GameSpriteObj | undefined;
-    let enemyMech: GameSpriteObj | undefined;
-    if (change.did) {
-      const obj = this.objects.get(change.did);
+  deleteOthers(snapshot: Wal.ObjectSnapshotUnion) {
+    snapshot.obj.deleteOtherIds.forEach((did: number) => {
+      const obj = this.objects.get(did);
       if (obj) {
         obj.destroy();
-        this.objects.delete(change.did);
+        this.objects.delete(did);
       }
-    }
-    switch (change.t) {
-      case "player":
-        this.applyMapToObj(change, this.mech, mechChangelogMap);
-        this.applyMapToObj(change, this.mechWeaponCannon, cannonChangelogMap);
-        break;
-      case "missile":
-        missile = this.missiles.get(change.id);
-        if (!missile) {
-          missile = this.newMissile(change.id, change.x, change.y, change.a);
-        }
-        if (change.d) {
-          this.destroyMissile(change.id, missile);
-        } else {
-          this.applyMapToObj(change, missile, missileChangelogMap);
-        }
-        break;
-      case "enemy_mech":
-        enemyMech = this.objects.get(change.id);
-        if (!enemyMech) {
-          console.log("change on non existed obj:", change);
-        }
-        this.applyMapToObj(change, enemyMech, missileChangelogMap);
-        break;
-    }
+    }, this);
   }
 }
 </script>

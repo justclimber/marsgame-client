@@ -41,36 +41,54 @@ function isDefault(value: number) {
   return value === 99999999;
 }
 
-function objectPredictions(
+function objectPredictionsByVelocity(
   timeIdsCount: number,
   timeIds: number[],
   timeLog: WalBuffers.TimeLog,
   objectLog: WalBuffers.ObjectLog,
   history: GameHistoryMoment[]
 ) {
+  let x: number = timeLog.x();
+  let y: number = timeLog.y();
+  let angle: number = timeLog.angle();
+  const velocityLen = timeLog.velocityLen();
+  const velocityRotation = timeLog.velocityRotation();
+
   for (let t = 0; t < timeIdsCount; t++) {
     if (timeIds[t] <= timeLog.timeId()) {
       continue;
     }
-    if (objectLog.objectType() === WalBuffers.ObjectType.enemy_mech) {
-      //asd
+    let timeDelta = (timeIds[t] - timeIds[t - 1]) / 1000;
+    if (objectLog.objectType() === WalBuffers.ObjectType.player) {
+      console.log(123123123, timeLog.timeId());
     }
-    let historyObjectPrediction: ObjectSnapshotUnion = {
-      obj: {
-        id: objectLog.id(),
-        objectType: objectLog.objectType(),
-        x: timeLog.x(),
-        y: timeLog.y(),
-        angle: timeLog.angle(),
-        velocityLen: timeLog.velocityLen(),
-        velocityRotation: timeLog.velocityRotation(),
-        isDelete: timeLog.isDelete(),
-        explode: timeLog.explode(),
-        deleteOtherIds: []
-      }
-    };
-    // @fixme: надо учитывать что в истории в будущем уже могут быть объекты
-    history[timeIds[t]].objects.set(objectLog.id(), historyObjectPrediction);
+    let objectInHistory = history[timeIds[t]].objects.get(objectLog.id());
+
+    x = x + velocityLen * Math.cos(angle) * timeDelta;
+    y = y + velocityLen * Math.sin(angle) * timeDelta;
+    angle = angle + velocityRotation;
+
+    if (objectInHistory) {
+      objectInHistory.obj.x = x;
+      objectInHistory.obj.y = y;
+      objectInHistory.obj.angle = angle;
+    } else {
+      let historyObjectPrediction: ObjectSnapshotUnion = {
+        obj: {
+          id: objectLog.id(),
+          objectType: objectLog.objectType(),
+          x: x,
+          y: y,
+          angle: angle,
+          velocityLen: velocityLen,
+          velocityRotation: velocityRotation,
+          isDelete: false,
+          explode: false,
+          deleteOtherIds: []
+        }
+      };
+      history[timeIds[t]].objects.set(objectLog.id(), historyObjectPrediction);
+    }
     if (timeIds[t] === timeLog.velocityUntilTimeId()) {
       break;
     }
@@ -115,8 +133,9 @@ export class Wall {
         }
 
         let newObject: ObjectSnapshotUnion;
-        if (objectLog.objectType() === WalBuffers.ObjectType.enemy_mech) {
+        if (objectLog.objectType() === WalBuffers.ObjectType.player) {
           newObject = Wall.parseMechObject(timeLog, objSnapshot);
+          console.log(newObject);
         } else {
           newObject = Wall.parseGenericObject(objSnapshot);
         }
@@ -124,7 +143,7 @@ export class Wall {
         this.objectsCache.set(objectLog.id(), newObject);
 
         if (!isDefault(timeLog.velocityUntilTimeId())) {
-          objectPredictions(timeIdsCount, timeIds, timeLog, objectLog, history);
+          objectPredictionsByVelocity(timeIdsCount, timeIds, timeLog, objectLog, history);
         }
         Wall.upsertObjectToHistory(history[timeLog.timeId()].objects, newObject);
       }
@@ -169,11 +188,11 @@ export class Wall {
   }
 
   private static parseMechObject(timeLog: WalBuffers.TimeLog, objSnapshot: ObjSnapshot): MechSnapshot {
-    let mech: any = objSnapshot as unknown;
-    mech.obj = objSnapshot;
-    mech.cannonAngle = timeLog.cannonAngle();
-    mech.cannonRotation = timeLog.cannonRotation();
-    return mech as MechSnapshot;
+    return {
+      obj: objSnapshot,
+      cannonAngle: timeLog.cannonAngle(),
+      cannonRotation: isDefault(timeLog.cannonRotation()) ? 0 : timeLog.cannonRotation()
+    };
   }
 
   private static parseGenericObject(objSnapshot: ObjSnapshot): GenericObjSnapshot {
