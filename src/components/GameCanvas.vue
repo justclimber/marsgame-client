@@ -262,7 +262,7 @@ export default class GameCanvas extends Vue {
     this.mech.x += this.mech.vx * dt;
     this.mech.y += this.mech.vy * dt;
     this.viewport.follow(this.mech, {
-      acceleration: 0.2,
+      acceleration: 0.6,
       speed: 300,
     });
     this.mech.rotation += this.mech.vr * dt;

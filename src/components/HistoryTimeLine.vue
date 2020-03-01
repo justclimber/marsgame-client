@@ -5,6 +5,7 @@
       @mousemove="hoverTimeLine"
       @mouseenter="showChooserPopup"
       @mouseleave="hideChooserPopup"
+      @click="chooseFromTimeline"
       ref="timeline"
     >
       <div class="current" :style="currentBarStyle()"></div>
@@ -28,6 +29,7 @@
 
 <script lang="ts">
 import {Component, Prop, Vue} from "vue-property-decorator";
+import { ClickEventType } from "pixi-viewport";
 
 interface ChooserPopup {
   show: boolean;
@@ -77,6 +79,14 @@ export default class HistoryTimeLine extends Vue {
   }
   chooseTimeId(timeId: number): void {
     this.$emit("choose-time-id", timeId);
+  }
+  chooseFromTimeline(event: any) {
+    if (!this.timeIds) {
+      return;
+    }
+    const percentage = event.offsetX / this.$refs.timeline.offsetWidth;
+    const timeIdPos = Math.floor(this.timeIds.length * percentage);
+    this.$emit("choose-time-id", this.timeIds[timeIdPos]);
   }
   hideChooserPopup(): void {
     this.chooserPopup.show = false;
