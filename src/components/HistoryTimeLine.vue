@@ -3,23 +3,24 @@
     <div
       class="timeline"
       @mousemove="hoverTimeLine"
-      @mouseenter="hoverTimeLineEnter"
-      @mouseleave="hoverTimeLineLeave"
+      @mouseenter="showChooserPopup"
+      @mouseleave="hideChooserPopup"
       ref="timeline"
     >
       <div class="current" :style="currentBarStyle()"></div>
-      <div class="position-info">{{ currentPos }} / {{ totalPos }}</div>
+      <div class="position-info">{{ roundToSecond(currentPos) }} / {{ roundToSecond(totalPos) }} sec</div>
     </div>
     <div
       class="position-chooser-popup"
       :style="positionChooserPopupStyle()"
       v-show="chooserPopup.show"
-      @mouseenter="hoverPositionChooserPopupEnter"
-      @mouseleave="hoverPositionChooserPopupLeave"
+      @mouseenter="showChooserPopup"
+      @mouseleave="hideChooserPopup"
+      ref="chooserPopup"
     >
-      <div class="time-id" v-for="(timeId, i) in chooserPopup.timeIdsSlice" :key="`timeId-${i}`">
-        <div class="time-text">{{ timeId }}</div>
-        <div class="time-bar" @click="chooseTimeId(timeId)">&nbsp;</div>
+      <div class="time-id" v-for="(timeId, i) in timeIds" :key="`timeId-${i}`">
+        <div class="time-text">{{ roundToSecond(timeId) }}</div>
+        <div class="time-bar" @click="chooseTimeId(timeId)" :class="{active: timeId === currentPos}">&nbsp;</div>
       </div>
     </div>
   </div>
@@ -34,17 +35,19 @@ interface ChooserPopup {
   top: number;
   timeIdsSlice: number[];
 }
-
 @Component
 export default class HistoryTimeLine extends Vue {
   @Prop(Number) readonly currentPos: number | undefined;
   @Prop(Number) readonly totalPos: number | undefined;
   @Prop(Array) readonly timeIds: number[] | undefined;
-  $refs!: {timeline: HTMLDivElement};
+  $refs!: {
+    timeline: HTMLDivElement;
+    chooserPopup: HTMLDivElement;
+  };
   chooserPopup: ChooserPopup = {
     show: false,
-    left: 1000,
-    top: 677,
+    left: 904,
+    top: 573,
     timeIdsSlice: [],
   };
   get currentBarStyle() {
@@ -62,34 +65,24 @@ export default class HistoryTimeLine extends Vue {
       };
     };
   }
+  roundToSecond(value?: number): string {
+    return value ? (value / 1000).toFixed(1) : "0";
+  }
   hoverTimeLine(event: any): void {
-    this.chooserPopup.left = event.clientX - 90;
     if (!this.timeIds) {
       return;
     }
-    const timeIdsCount = this.timeIds.length;
     const percentage = event.offsetX / this.$refs.timeline.offsetWidth;
-    let posToStart = Math.round(timeIdsCount * percentage) - 10;
-    if (posToStart < 0) {
-      posToStart = 0;
-    }
-    this.chooserPopup.timeIdsSlice = this.timeIds.slice(posToStart, posToStart + 10);
+    this.$refs.chooserPopup.scrollLeft = this.$refs.chooserPopup.scrollWidth * percentage - 150;
   }
   chooseTimeId(timeId: number): void {
     this.$emit("choose-time-id", timeId);
   }
-
-  hoverTimeLineEnter(): void {
-    this.chooserPopup.show = true;
-  }
-  hoverTimeLineLeave(): void {
+  hideChooserPopup(): void {
     this.chooserPopup.show = false;
   }
-  hoverPositionChooserPopupEnter(): void {
+  showChooserPopup(): void {
     this.chooserPopup.show = true;
-  }
-  hoverPositionChooserPopupLeave(): void {
-    this.chooserPopup.show = false;
   }
 }
 </script>
@@ -114,24 +107,29 @@ export default class HistoryTimeLine extends Vue {
     font-size main-font-size
 .position-chooser-popup
   position absolute
-  width 175px
-  height 47px
+  width 595px
+  height 45px
   border 2px solid panels-border-color
   background main-bg
   z-index 5
   display flex
   flex-direction row
+  padding 1px 1px 2px 5px
+  overflow hidden
   .time-id
     height 25px
     width 3px
-    margin-right 13px
+    margin-right 14px
     .time-text
-      font-size 9px
+      font-size 10px
       transform rotate(-45deg)
-      padding-top 20px
+      padding-top 17px
+      margin-left -7px
     .time-bar
       width 5px
-      background active-element-color
+      background panels-border-color
       height 15px
       cursor pointer
+      &.active
+        background active-element-color
 </style>

@@ -59,12 +59,12 @@ export default class GameCanvas extends Vue {
   $refs!: {pixiContainer: HTMLDivElement};
   app = new PIXI.Application({
     width: 600,
-    height: 700,
+    height: 600,
     backgroundColor: 0xffffff,
   });
   viewport = new Viewport({
     screenWidth: 600,
-    screenHeight: 700,
+    screenHeight: 600,
     worldWidth: worldWide,
     worldHeight: worldWide,
     interaction: this.app.renderer.plugins.interaction,
