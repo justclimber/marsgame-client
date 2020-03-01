@@ -92,7 +92,7 @@ function objectPredictionsByVelocity(
   }
 }
 
-export class Wall {
+export class Wal {
   objectsCache: ObjectsSnapshotsMap = new Map();
   parseWal(wal: WalBuffers.Log): GameHistory {
     const timeIdsCount = wal.timeIdsLength();
@@ -124,16 +124,16 @@ export class Wall {
         let objectFromCache: ObjectSnapshotUnion | undefined;
         objectFromCache = this.objectsCache.get(objectLog.id());
 
-        let objSnapshot = Wall.parseObjectSnapshot(objectLog, objectLog.id(), timeLog);
+        let objSnapshot = Wal.parseObjectSnapshot(objectLog, objectLog.id(), timeLog);
         if (objectFromCache) {
-          Wall.extendObjectSnapshotByCached(objSnapshot, objectFromCache);
+          Wal.extendObjectSnapshotByCached(objSnapshot, objectFromCache);
         }
 
         let newObject: ObjectSnapshotUnion;
         if (objectLog.objectType() === WalBuffers.ObjectType.player) {
-          newObject = Wall.parseMechObject(timeLog, objSnapshot);
+          newObject = Wal.parseMechObject(timeLog, objSnapshot);
         } else {
-          newObject = Wall.parseGenericObject(objSnapshot);
+          newObject = Wal.parseGenericObject(objSnapshot);
         }
 
         this.objectsCache.set(objectLog.id(), newObject);
@@ -141,7 +141,7 @@ export class Wall {
         if (!isDefault(timeLog.velocityUntilTimeId())) {
           objectPredictionsByVelocity(timeIdsCount, timeIds, timeLog, objectLog, history);
         }
-        Wall.upsertObjectToHistory(history.get(timeLog.timeId())!.objects, newObject);
+        Wal.upsertObjectToHistory(history.get(timeLog.timeId())!.objects, newObject);
       }
     }
     return { timeToStart: wal.currTimeId(), timeIds: timeIds, moments: history };

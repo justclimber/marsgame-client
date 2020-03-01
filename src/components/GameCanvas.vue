@@ -19,7 +19,7 @@ import { Component, Vue } from "vue-property-decorator";
 import * as PIXI from "pixi.js";
 import { Viewport } from "pixi-viewport";
 import { WalBuffers } from "@/flatbuffers/log_generated";
-import * as Wal from "@/lib/wal/wall";
+import * as Wal from "@/lib/wal/wal";
 
 const worldWide = 30000;
 const xShift = 10000;
@@ -27,8 +27,7 @@ const yShift = 10000;
 const timeShiftForPrediction = 1500;
 
 let timer = new Date();
-let currTimeId: number;
-let changelogToRun: ChangelogByTime[] = [];
+let currTimeId: number = 0;
 let gameHistory: Wal.GameHistory = { timeIds: [], moments: new Map(), timeToStart: 0 };
 let sheet: PIXI.Spritesheet;
 
@@ -38,25 +37,7 @@ function getRandomInt(min: number, max: number) {
 
 type GameSpriteObj = PIXI.Sprite | PIXI.AnimatedSprite | PIXI.Container;
 
-interface ChangelogByObject {
-  t: string;
-  id: number;
-  x?: number;
-  y?: number;
-  a?: number;
-  ca?: number;
-  d?: boolean;
-  did?: number;
-
-  [propName: string]: string | number | boolean | undefined;
-}
-
 type MapGameSpriteObj = Map<number, GameSpriteObj>;
-
-interface ChangelogByTime {
-  tId: number;
-  chObjs: ChangelogByObject[];
-}
 
 enum GameState {
   paused = 0,
@@ -80,52 +61,27 @@ export default class GameCanvas extends Vue {
     worldHeight: worldWide,
     interaction: this.app.renderer.plugins.interaction
   });
-  missiles: MapGameSpriteObj = new Map();
   objects: MapGameSpriteObj = new Map();
   mech?: PIXI.Container = undefined;
   mechBase?: PIXI.Sprite = undefined;
   mechWeaponCannon?: PIXI.Sprite = undefined;
   historyCursor: number = 0;
   debug: boolean = false;
-  walParser: Wal.Wall = new Wal.Wall();
+  walParser: Wal.Wal = new Wal.Wal();
   gameState: GameState = GameState.paused;
   wsCommands = {
     worldChangesWal(this: GameCanvas, wal: WalBuffers.Log) {
       let gameHistoryChunk = this.walParser.parseWal(wal);
       // console.log(gameHistoryChunk);
       if (!currTimeId) {
-        // use time shift for more smooth prediction: we need changelogToRun always be not empty on run
+        // use time shift for more smooth prediction
         currTimeId = gameHistoryChunk.timeToStart - timeShiftForPrediction;
         this.gameState = GameState.play;
       }
       gameHistory.moments = new Map([...gameHistory.moments, ...gameHistoryChunk.moments]);
       // Object.assign(gameHistory.moments, gameHistoryChunk.moments);
       gameHistory.timeIds.push(...gameHistoryChunk.timeIds);
-      console.log(gameHistory);
-    },
-    worldInit(this: GameCanvas, changelog: ChangelogByTime[]) {
-      changelogToRun = [];
-      currTimeId = 0;
-      this.historyCursor = 0;
-      this.clearPredictions();
-      this.cleanMap();
-      this.wsSendCommand({
-        type: "programFlow",
-        payload: "1"
-      });
-      changelog[0].chObjs.forEach(function(this: GameCanvas, obj: ChangelogByObject): void {
-        if (obj.t == "player" && this.mech && obj.x && obj.y) {
-          // мы должны пересоздать спрайт, чтобы он всегда был на верхнем слое
-          this.mech.destroy();
-          this.mechSetup(obj.x, obj.y);
-        } else {
-          this.newMapObj(obj.id, obj.t, obj.x, obj.y);
-        }
-      }, this);
-      if (this.mech) {
-        // добавляем пересозданный спрайт в последнюю очередь
-        this.viewport.addChild(this.mech);
-      }
+      // console.log(gameHistory);
     }
   };
   mounted() {
@@ -168,6 +124,12 @@ export default class GameCanvas extends Vue {
       .decelerate();
   }
 
+  mapSetup(): PIXI.TilingSprite {
+    const terra = new PIXI.TilingSprite(sheet.textures["terra_256.png"], worldWide, worldWide);
+    terra.anchor.set(0);
+    return terra;
+  }
+
   mechSetup(x: number, y: number): PIXI.Container {
     this.mechBase = new PIXI.Sprite(sheet.textures["mech_base.png"]);
     this.mechWeaponCannon = new PIXI.Sprite(sheet.textures["cannon.png"]);
@@ -196,24 +158,31 @@ export default class GameCanvas extends Vue {
     return this.mech;
   }
 
-  newMapObj(id: number, type: string, x: number = 0, y: number = 0): void {
+  newMapObj(id: number, type: WalBuffers.ObjectType, x: number = 0, y: number = 0): GameSpriteObj {
     let obj: GameSpriteObj;
     let xelon: PIXI.AnimatedSprite;
+    let missile: PIXI.AnimatedSprite;
     switch (type) {
-      case "rock":
+      case WalBuffers.ObjectType.rock:
         obj = new PIXI.Sprite(sheet.textures[`rock${getRandomInt(1, 3)}.png`]);
         break;
-      case "xelon":
+      case WalBuffers.ObjectType.xelon:
         xelon = new PIXI.AnimatedSprite(sheet.animations["k"]);
         xelon.animationSpeed = 0.167;
         xelon.play();
         obj = xelon;
         break;
-      case "enemy_mech":
+      case WalBuffers.ObjectType.enemy_mech:
         obj = new PIXI.Container();
         obj.pivot.set(0.5);
         obj.addChild(new PIXI.Sprite(sheet.textures[`enemy_base.png`]));
         obj.addChild(new PIXI.Sprite(sheet.textures[`enemy_cannon.png`]));
+        break;
+      case WalBuffers.ObjectType.missile:
+        missile = new PIXI.AnimatedSprite(sheet.animations["m"]);
+        missile.animationSpeed = 0.167;
+        missile.play();
+        obj = missile;
         break;
       default:
         throw new Error("Unsupported object type: " + type);
@@ -227,11 +196,11 @@ export default class GameCanvas extends Vue {
 
     this.objects.set(id, obj);
     this.viewport.addChild(obj);
+
+    return obj;
   }
 
   cleanMap(): void {
-    this.missiles.forEach((missile: GameSpriteObj) => missile.destroy());
-    this.missiles = new Map();
     this.objects.forEach((objects: GameSpriteObj) => objects.destroy());
     this.objects = new Map();
   }
@@ -269,40 +238,6 @@ export default class GameCanvas extends Vue {
     this.viewport.addChild(explosion);
   }
 
-  destroyMissile(id: number, missile: GameSpriteObj) {
-    this.explode(missile.x, missile.y);
-    missile.destroy();
-    this.missiles.delete(id);
-  }
-
-  newMissile(id: number, x: number = 0, y: number = 0, rotation: number = 0): GameSpriteObj {
-    const missile = new PIXI.AnimatedSprite(sheet.animations["m"]);
-
-    missile.x = x;
-    missile.y = y;
-    missile.rotation = rotation;
-
-    missile.vx = 0;
-    missile.vy = 0;
-    missile.vr = 0;
-
-    missile.animationSpeed = 0.167;
-    missile.play();
-
-    this.drawBoundsForObj(missile);
-    this.drawCollisionCircleForObj(missile, 20);
-
-    this.missiles.set(id, missile);
-    this.viewport.addChild(missile);
-    return missile;
-  }
-
-  mapSetup(): PIXI.TilingSprite {
-    const terra = new PIXI.TilingSprite(sheet.textures["terra_256.png"], worldWide, worldWide);
-    terra.anchor.set(0);
-    return terra;
-  }
-
   gameLoop(): void {
     if (!this.mech || !this.mechWeaponCannon || this.gameState == GameState.paused) {
       return;
@@ -317,7 +252,7 @@ export default class GameCanvas extends Vue {
     this.viewport.moveCenter(this.mech.x, this.mech.y);
     this.mech.rotation += this.mech.vr * dt;
     // this.mechWeaponCannon.rotation += this.mechWeaponCannon.vr;
-    for (let m of this.missiles.values()) {
+    for (let m of this.objects.values()) {
       m.x += m.vx * dt;
       m.y += m.vy * dt;
       m.rotation += m.vr * dt;
@@ -344,7 +279,7 @@ export default class GameCanvas extends Vue {
 
   clearPredictions(): void {
     this.clearMechPredictions();
-    for (let m of this.missiles.values()) {
+    for (let m of this.objects.values()) {
       m.vx = 0;
       m.vy = 0;
       m.vr = 0;
@@ -366,33 +301,21 @@ export default class GameCanvas extends Vue {
     if (snapshot.obj.deleteOtherIds) {
       this.deleteOthers(snapshot);
     }
-    switch (snapshot.obj.objectType) {
-      case WalBuffers.ObjectType.player:
-        if (!this.mech || !this.mechWeaponCannon) {
-          break;
-        }
-        object = this.mech;
-        this.mechWeaponCannon.rotation = (snapshot as Wal.MechSnapshot).cannonAngle;
-        this.mechWeaponCannon.vr = (snapshot as Wal.MechSnapshot).cannonRotation;
-        break;
-      case WalBuffers.ObjectType.missile:
-        object = this.missiles.get(snapshot.obj.id);
-        if (!object) {
-          object = this.newMissile(snapshot.obj.id, snapshot.obj.x, snapshot.obj.y, snapshot.obj.angle);
-        }
-        if (snapshot.obj.isDelete) {
-          this.destroyMissile(snapshot.obj.id, object);
-          object = undefined;
-        }
-        break;
-      case WalBuffers.ObjectType.enemy_mech:
-        object = this.objects.get(snapshot.obj.id);
-        if (!object) {
-          console.log("object on non existed obj:", snapshot);
-          break;
-        }
-        break;
+
+    if (snapshot.obj.objectType === WalBuffers.ObjectType.player) {
+      if (!this.mech || !this.mechWeaponCannon) {
+        return;
+      }
+      object = this.mech;
+      this.mechWeaponCannon.rotation = (snapshot as Wal.MechSnapshot).cannonAngle;
+      this.mechWeaponCannon.vr = (snapshot as Wal.MechSnapshot).cannonRotation;
+    } else {
+      object = this.objects.get(snapshot.obj.id);
+      if (!object) {
+        object = this.newMapObj(snapshot.obj.id, snapshot.obj.objectType, snapshot.obj.x, snapshot.obj.y);
+      }
     }
+
     if (object) {
       object.x = snapshot.obj.x;
       object.y = snapshot.obj.y;
@@ -401,6 +324,15 @@ export default class GameCanvas extends Vue {
       object.vx = snapshot.obj.velocityLen * Math.cos(snapshot.obj.angle);
       object.vy = snapshot.obj.velocityLen * Math.sin(snapshot.obj.angle);
       object.vr = snapshot.obj.velocityRotation;
+
+      if (snapshot.obj.explode) {
+        this.explode(object.x, object.y);
+      }
+      if (snapshot.obj.isDelete) {
+        object.destroy();
+        this.objects.delete(snapshot.obj.id);
+        object = undefined;
+      }
     }
   }
 
