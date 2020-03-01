@@ -47,7 +47,7 @@ export default class HistoryTimeLine extends Vue {
   };
   chooserPopup: ChooserPopup = {
     show: false,
-    left: 904,
+    left: 900,
     top: 573,
     timeIdsSlice: [],
   };
@@ -91,6 +91,7 @@ export default class HistoryTimeLine extends Vue {
     this.chooserPopup.show = false;
   }
   showChooserPopup(): void {
+    this.chooserPopup.left = this.$refs.timeline.offsetLeft;
     this.chooserPopup.show = true;
   }
 }
@@ -116,7 +117,7 @@ export default class HistoryTimeLine extends Vue {
     font-size main-font-size
 .position-chooser-popup
   position absolute
-  width 595px
+  width 592px
   height 45px
   border 2px solid panels-border-color
   background main-bg
