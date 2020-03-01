@@ -45,6 +45,10 @@ button
   background active-element-bg-color
   color active-element-color
   margin-right  5px
+  &:hover
+    outline 1px solid active-element-color
+  &:active
+    outline 3px solid active-element-color
 #app
   max-width 1800px
   overflow hidden

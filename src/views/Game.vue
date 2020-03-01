@@ -29,7 +29,7 @@ export default {
                       "game-console game-canvas"
   grid-template-columns 1fr 600px
   grid-template-rows 2fr 1fr
-  grid-gap 10px
+  grid-gap 7px
   max-height 800px
   padding 6px
   border 6px double #44251e

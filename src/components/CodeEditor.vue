@@ -197,7 +197,7 @@ export default class CodeEditor extends Vue {
     display flex
     flex-direction row
     align-content left
-    padding-top 5px
+    padding 8px 0 2px 0
     font-size 14px
 
 .help-button
