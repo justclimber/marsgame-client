@@ -251,12 +251,13 @@ export default class GameCanvas extends Vue {
   }
 
   gameLoop(): void {
-    if (this.gameState == GameState.paused) {
-      return;
-    }
     let now = new Date();
     let timeDelta = now.getTime() - prevNow.getTime();
     prevNow = now;
+
+    if (this.gameState == GameState.paused) {
+      return;
+    }
     currTimeId += timeDelta;
 
     if (this.historyCursor >= this.gameHistory.timeIds.length) {
