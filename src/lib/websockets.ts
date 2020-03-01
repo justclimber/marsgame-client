@@ -1,9 +1,9 @@
 import _Vue from "vue";
-import { PluginObject } from "vue/types/umd";
-import { Store } from "vuex";
+import {PluginObject} from "vue/types/umd";
+import {Store} from "vuex";
 
-import { flatbuffers } from "flatbuffers";
-import { WalBuffers } from "@/flatbuffers/log_generated";
+import {flatbuffers} from "flatbuffers";
+import {WalBuffers} from "@/flatbuffers/log_generated";
 
 export default {
   install(Vue: typeof _Vue, options: any = {}, store: Store<any>) {
@@ -37,11 +37,11 @@ export default {
           for (let key in this.wsCommands) {
             commandHandlers.set(key, {
               callback: this.wsCommands[key],
-              obj: this
+              obj: this,
             });
           }
         }
-      }
+      },
     });
 
     Vue.prototype.wsSendCommand = function(command: any) {
@@ -84,5 +84,5 @@ export default {
         wsCallback.callback.call(wsCallback.obj, payload);
       };
     };
-  }
+  },
 } as PluginObject<any>;

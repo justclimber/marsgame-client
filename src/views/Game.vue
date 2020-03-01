@@ -17,8 +17,8 @@ export default {
   components: {
     CodeEditor,
     GameCanvas,
-    Console
-  }
+    Console,
+  },
 };
 </script>
 
