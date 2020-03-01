@@ -33,7 +33,7 @@ const xShift = 10000;
 const yShift = 10000;
 const timeShiftForPrediction = 1500;
 
-let timer = new Date();
+let prevNow = new Date();
 let currTimeId: number = 0;
 let sheet: PIXI.Spritesheet;
 
@@ -251,64 +251,52 @@ export default class GameCanvas extends Vue {
   }
 
   gameLoop(): void {
-    if (!this.mech || !this.mechWeaponCannon || this.gameState == GameState.paused) {
+    if (this.gameState == GameState.paused) {
       return;
     }
     let now = new Date();
-    let timeDelta = now.getTime() - timer.getTime();
-    timer = now;
-    const dt = timeDelta / 1000;
+    let timeDelta = now.getTime() - prevNow.getTime();
+    prevNow = now;
+    currTimeId += timeDelta;
 
-    this.mech.x += this.mech.vx * dt;
-    this.mech.y += this.mech.vy * dt;
-    this.viewport.follow(this.mech, {
-      acceleration: 0.6,
-      speed: 300,
-    });
-    this.mech.rotation += this.mech.vr * dt;
-    // this.mechWeaponCannon.rotation += this.mechWeaponCannon.vr;
+    if (this.historyCursor >= this.gameHistory.timeIds.length) {
+      this.gameState = GameState.paused;
+      return;
+    }
+
+    this.doObjectsMovements(timeDelta / 1000);
+
+    if (this.gameHistory.timeIds[this.historyCursor] > currTimeId) {
+      // wait for a while
+      return;
+    }
+
+    this.gameHistoryPlayByCursor(this.historyCursor++);
+  }
+
+  doObjectsMovements(dt: number): void {
     for (let m of this.objects.values()) {
       m.x += m.vx * dt;
       m.y += m.vy * dt;
       m.rotation += m.vr * dt;
     }
 
-    this.gameHistoryPlay(timeDelta);
-  }
-
-  gameHistoryPlay(timeDelta: number) {
-    currTimeId += timeDelta;
-    if (this.historyCursor >= this.gameHistory.timeIds.length) {
-      this.clearPredictions();
-      return;
-    }
-
-    if (this.gameHistory.timeIds[this.historyCursor] > currTimeId) {
-      // wait for future
-      return;
-    }
-    this.currTimeIdByCursor = this.gameHistory.timeIds[this.historyCursor++];
-
-    this.gameHistory.moments.get(this.currTimeIdByCursor)!.objects.forEach(this.playHistoryObject, this);
-  }
-
-  clearPredictions(): void {
-    this.clearMechPredictions();
-    for (let m of this.objects.values()) {
-      m.vx = 0;
-      m.vy = 0;
-      m.vr = 0;
-    }
-  }
-
-  clearMechPredictions(): void {
     if (!this.mech || !this.mechWeaponCannon) {
       return;
     }
-    this.mech.vx = 0;
-    this.mech.vy = 0;
-    this.mech.vr = 0;
-    this.mechWeaponCannon.vr = 0;
+    this.mech.x += this.mech.vx * dt;
+    this.mech.y += this.mech.vy * dt;
+    this.viewport.follow(this.mech, {
+      acceleration: 0.8,
+      speed: 300,
+    });
+    this.mech.rotation += this.mech.vr * dt;
+    // this.mechWeaponCannon.rotation += this.mechWeaponCannon.vr;
+  }
+
+  gameHistoryPlayByCursor(cursor: number) {
+    this.currTimeIdByCursor = this.gameHistory.timeIds[cursor];
+    this.gameHistory.moments.get(this.currTimeIdByCursor)!.objects.forEach(this.playHistoryObject, this);
   }
 
   playHistoryObject(snapshot: Wal.ObjectSnapshotUnion): void {
@@ -375,6 +363,7 @@ export default class GameCanvas extends Vue {
       this.currTimeIdByCursor = this.gameHistory.timeIds[0];
       this.lastTimeId = this.gameHistory.timeIds[this.gameHistory.timeIds.length - 1];
       this.cleanMap();
+      prevNow = new Date();
       this.gameState = GameState.play;
     }
     this.$store.commit("addConsoleInfo", "Game loaded");
@@ -386,22 +375,26 @@ export default class GameCanvas extends Vue {
       if (this.gameHistory.timeIds[i] === timeId) {
         this.cleanMap();
         this.historyCursor = i;
-        this.currTimeIdByCursor = timeId;
-        currTimeId = timeId - 300;
-        this.gameState = GameState.play;
+        currTimeId = timeId;
+        prevNow = new Date();
+        this.gameHistoryPlayByCursor(this.historyCursor++);
         return;
       }
     }
     throw Error("Wrong timeId to choose: " + timeId);
   }
-
+  pickSiblingTimeId(interval: number): void {
+    if (this.historyCursor + interval <= this.gameHistory.timeIds.length && this.historyCursor + interval >= 0) {
+      this.chooseTimeId(this.gameHistory.timeIds[this.historyCursor + interval]);
+    }
+  }
   playerButton(code: string): void {
     switch (code) {
       case "prevMore":
-        //sdf
+        this.pickSiblingTimeId(-5);
         break;
       case "prev":
-        //sdf
+        this.pickSiblingTimeId(-1);
         break;
       case "stop":
         this.gameState = GameState.paused;
@@ -410,10 +403,10 @@ export default class GameCanvas extends Vue {
         this.gameState = GameState.play;
         break;
       case "next":
-        //sdf
+        this.pickSiblingTimeId(1);
         break;
       case "nextMore":
-        //sdf
+        this.pickSiblingTimeId(5);
         break;
     }
   }

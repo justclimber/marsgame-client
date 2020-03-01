@@ -29,7 +29,6 @@
 
 <script lang="ts">
 import {Component, Prop, Vue} from "vue-property-decorator";
-import { ClickEventType } from "pixi-viewport";
 
 interface ChooserPopup {
   show: boolean;
