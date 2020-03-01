@@ -1,7 +1,12 @@
 <template>
   <div>
     <div ref="pixiContainer"></div>
-    <HistoryTimeLine :current-pos="currTimeIdByCursor" :total-pos="lastTimeId" />
+    <HistoryTimeLine
+      :current-pos="currTimeIdByCursor"
+      :total-pos="lastTimeId"
+      :time-ids="gameHistory.timeIds"
+      @choose-time-id="chooseTimeId"
+    />
     <div class="controls">
       <button @click="saveGame">Save game</button>
       <button @click="loadGame">Load game</button>
@@ -30,7 +35,6 @@ const timeShiftForPrediction = 1500;
 
 let timer = new Date();
 let currTimeId: number = 0;
-let gameHistory: Wal.GameHistory = {timeIds: [], moments: new Map(), timeToStart: 0};
 let sheet: PIXI.Spritesheet;
 
 function getRandomInt(min: number, max: number) {
@@ -75,6 +79,7 @@ export default class GameCanvas extends Vue {
   gameState: GameState = GameState.paused;
   currTimeIdByCursor: number = 0;
   lastTimeId: number = 0;
+  gameHistory: Wal.GameHistory = {timeIds: [], moments: new Map(), timeToStart: 0};
   wsCommands = {
     worldChangesWal(this: GameCanvas, wal: WalBuffers.Log) {
       let gameHistoryChunk = this.walParser.parseWal(wal);
@@ -84,8 +89,8 @@ export default class GameCanvas extends Vue {
         currTimeId = gameHistoryChunk.timeToStart - timeShiftForPrediction;
         this.gameState = GameState.play;
       }
-      gameHistory.moments = new Map([...gameHistory.moments, ...gameHistoryChunk.moments]);
-      gameHistory.timeIds.push(...gameHistoryChunk.timeIds);
+      this.gameHistory.moments = new Map([...this.gameHistory.moments, ...gameHistoryChunk.moments]);
+      this.gameHistory.timeIds.push(...gameHistoryChunk.timeIds);
       this.lastTimeId = gameHistoryChunk.timeIds[gameHistoryChunk.timeIds.length - 1];
       // console.log(gameHistory);
     },
@@ -270,18 +275,18 @@ export default class GameCanvas extends Vue {
 
   gameHistoryPlay(timeDelta: number) {
     currTimeId += timeDelta;
-    if (this.historyCursor >= gameHistory.timeIds.length) {
+    if (this.historyCursor >= this.gameHistory.timeIds.length) {
       this.clearPredictions();
       return;
     }
 
-    if (gameHistory.timeIds[this.historyCursor] > currTimeId) {
+    if (this.gameHistory.timeIds[this.historyCursor] > currTimeId) {
       // wait for future
       return;
     }
-    this.currTimeIdByCursor = gameHistory.timeIds[this.historyCursor++];
+    this.currTimeIdByCursor = this.gameHistory.timeIds[this.historyCursor++];
 
-    gameHistory.moments.get(this.currTimeIdByCursor)!.objects.forEach(this.playHistoryObject, this);
+    this.gameHistory.moments.get(this.currTimeIdByCursor)!.objects.forEach(this.playHistoryObject, this);
   }
 
   clearPredictions(): void {
@@ -353,20 +358,40 @@ export default class GameCanvas extends Vue {
     }, this);
   }
   saveGame(): void {
-    localStorage.setItem("gameHistory", JSON.stringify(gameHistory));
+    localStorage.setItem("gameHistory", JSON.stringify(this.gameHistory));
     this.$store.commit("addConsoleInfo", "Game saved");
-    console.log(gameHistory);
+    console.log(this.gameHistory);
   }
   loadGame(): void {
     const raw = localStorage.getItem("gameHistory");
+    this.gameState = GameState.paused;
     if (raw) {
-      gameHistory = JSON.parse(raw, Map.fromJSON);
-      console.log(gameHistory);
+      this.gameHistory = JSON.parse(raw, Map.fromJSON);
       currTimeId = 1;
       this.historyCursor = 0;
+      this.currTimeIdByCursor = this.gameHistory.timeIds[0];
+      this.lastTimeId = this.gameHistory.timeIds[this.gameHistory.timeIds.length - 1];
+      this.cleanMap();
+      this.gameState = GameState.play;
     }
     this.$store.commit("addConsoleInfo", "Game loaded");
   }
+  chooseTimeId(timeId: number): void {
+    this.gameState = GameState.paused;
+    const timeIdsCount = this.gameHistory.timeIds.length;
+    for (let i = 0; i < timeIdsCount; i++) {
+      if (this.gameHistory.timeIds[i] === timeId) {
+        this.cleanMap();
+        this.historyCursor = i;
+        this.currTimeIdByCursor = timeId;
+        currTimeId = timeId - 300;
+        this.gameState = GameState.play;
+        return;
+      }
+    }
+    throw Error("Wrong timeId to choose: " + timeId);
+  }
+
   playerButton(code: string): void {
     switch (code) {
       case "prevMore":
