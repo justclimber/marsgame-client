@@ -6,7 +6,7 @@
           class="tab"
           v-for="(tab, i) in tabs"
           :key="`tab-${i}`"
-          :class="{ active: i === activeTab }"
+          :class="{active: i === activeTab}"
           @click="changeTab(i)"
         >
           {{ tab.name }}
@@ -29,7 +29,7 @@
           </label>
         </div>
         <div>
-          <label for="autoStartCheckbox" :class="{ disabled: !autoSave }">
+          <label for="autoStartCheckbox" :class="{disabled: !autoSave}">
             <input type="checkbox" id="autoStartCheckbox" v-model="autoStart" :disabled="!autoSave" />
             <span>Auto start</span>
           </label>
@@ -41,7 +41,7 @@
 </template>
 
 <script lang="ts">
-import { Component, Vue, Watch } from "vue-property-decorator";
+import {Component, Vue, Watch} from "vue-property-decorator";
 import Help from "@/components/Help.vue";
 import CodeEditorCore from "@/components/CodeEditorCore.vue";
 
@@ -56,7 +56,7 @@ type Tab = {
 };
 
 @Component({
-  components: { Help, CodeEditorCore }
+  components: {Help, CodeEditorCore},
 })
 export default class CodeEditor extends Vue {
   sourceCode: string = sourceCode;
@@ -66,8 +66,8 @@ export default class CodeEditor extends Vue {
   tabs: Tab[] = [
     {
       name: "main",
-      code: sourceCode
-    }
+      code: sourceCode,
+    },
   ];
   activeTab: number = 0;
 
@@ -78,7 +78,7 @@ export default class CodeEditor extends Vue {
   saveCode(): void {
     this.wsSendCommand({
       type: "saveCode",
-      payload: this.sourceCode
+      payload: this.sourceCode,
     });
   }
 
@@ -89,7 +89,7 @@ export default class CodeEditor extends Vue {
   addTab(i: number): void {
     this.tabs.push({
       name: "tab" + this.tabs.length,
-      code: ""
+      code: "",
     });
     this.activeTab = this.tabs.length - 1;
   }
@@ -110,19 +110,19 @@ export default class CodeEditor extends Vue {
   programFlow(flowCmd: string): void {
     this.wsSendCommand({
       type: "programFlow",
-      payload: flowCmd
+      payload: flowCmd,
     });
   }
 
   resetMech(): void {
     this.wsSendCommand({
-      type: "resetMech"
+      type: "resetMech",
     });
   }
 
   resetWorld(): void {
     this.wsSendCommand({
-      type: "resetWorld"
+      type: "resetWorld",
     });
   }
 

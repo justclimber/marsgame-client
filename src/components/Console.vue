@@ -33,8 +33,8 @@
 </template>
 
 <script lang="ts">
-import { Component, Vue } from "vue-property-decorator";
-import { mapState } from "vuex";
+import {Component, Vue} from "vue-property-decorator";
+import {mapState} from "vuex";
 
 type ErrorCommand = {
   errorType: number;
@@ -50,12 +50,12 @@ type CodeInputOutput = {
 };
 
 @Component({
-  computed: mapState(["console"])
+  computed: mapState(["console"]),
 })
 export default class Console extends Vue {
   showPopup: boolean = false;
   popupText: string = "some popup stub text";
-  popupStyle: { top: string; left: string } = { top: "100px", left: "200px" };
+  popupStyle: {top: string; left: string} = {top: "100px", left: "200px"};
   wsCommands = {
     codeError(this: Console, errorPayload: ErrorCommand) {
       let msg;
@@ -75,7 +75,7 @@ export default class Console extends Vue {
     },
     codeInputOutput(this: Console, payload: CodeInputOutput) {
       this.$store.commit("setConsoleInputOutput", payload);
-    }
+    },
   };
 
   hoverVar(event: any) {

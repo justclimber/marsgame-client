@@ -21,7 +21,7 @@
 </template>
 
 <script lang="ts">
-import { Component, PropSync, Vue } from "vue-property-decorator";
+import {Component, PropSync, Vue} from "vue-property-decorator";
 
 function injectToString(str: string, inject: string, pos: number): string {
   return str.substring(0, pos) + inject + str.substring(pos, str.length);
@@ -103,7 +103,7 @@ export default class CodeEditorCore extends Vue {
     const closeBraceMatchMap = {
       "(": ")",
       "[": "]",
-      "{": "}"
+      "{": "}",
     };
     const pos = this.$refs.source.selectionStart;
     this.sourceCode = injectToString(this.sourceCode, brace + closeBraceMatchMap[brace], pos - 1);

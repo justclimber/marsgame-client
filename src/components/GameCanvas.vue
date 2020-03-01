@@ -1,6 +1,7 @@
 <template>
   <div>
     <div ref="pixiContainer"></div>
+    <HistoryTimeLine :current-pos="currTimeIdByCursor" :total-pos="lastTimeId" />
     <div class="controls">
       <button @click="saveGame">Save game</button>
       <button @click="loadGame">Load game</button>
@@ -15,10 +16,11 @@
 </template>
 
 <script lang="ts">
-import { Component, Vue } from "vue-property-decorator";
+import {Component, Vue} from "vue-property-decorator";
+import HistoryTimeLine from "@/components/HistoryTimeLine.vue";
 import * as PIXI from "pixi.js";
-import { Viewport } from "pixi-viewport";
-import { WalBuffers } from "@/flatbuffers/log_generated";
+import {Viewport} from "pixi-viewport";
+import {WalBuffers} from "@/flatbuffers/log_generated";
 import * as Wal from "@/lib/wal/wal";
 
 const worldWide = 30000;
@@ -28,7 +30,7 @@ const timeShiftForPrediction = 1500;
 
 let timer = new Date();
 let currTimeId: number = 0;
-let gameHistory: Wal.GameHistory = { timeIds: [], moments: new Map(), timeToStart: 0 };
+let gameHistory: Wal.GameHistory = {timeIds: [], moments: new Map(), timeToStart: 0};
 let sheet: PIXI.Spritesheet;
 
 function getRandomInt(min: number, max: number) {
@@ -41,25 +43,27 @@ type MapGameSpriteObj = Map<number, GameSpriteObj>;
 
 enum GameState {
   paused = 0,
-  play = 1
+  play = 1,
 }
 
 PIXI.utils.skipHello();
 
-@Component
+@Component({
+  components: {HistoryTimeLine},
+})
 export default class GameCanvas extends Vue {
-  $refs!: { pixiContainer: HTMLDivElement };
+  $refs!: {pixiContainer: HTMLDivElement};
   app = new PIXI.Application({
     width: 600,
     height: 700,
-    backgroundColor: 0xffffff
+    backgroundColor: 0xffffff,
   });
   viewport = new Viewport({
     screenWidth: 600,
     screenHeight: 700,
     worldWidth: worldWide,
     worldHeight: worldWide,
-    interaction: this.app.renderer.plugins.interaction
+    interaction: this.app.renderer.plugins.interaction,
   });
   objects: MapGameSpriteObj = new Map();
   mech?: PIXI.Container = undefined;
@@ -69,6 +73,8 @@ export default class GameCanvas extends Vue {
   debug: boolean = false;
   walParser: Wal.Wal = new Wal.Wal();
   gameState: GameState = GameState.paused;
+  currTimeIdByCursor: number = 0;
+  lastTimeId: number = 0;
   wsCommands = {
     worldChangesWal(this: GameCanvas, wal: WalBuffers.Log) {
       let gameHistoryChunk = this.walParser.parseWal(wal);
@@ -79,10 +85,10 @@ export default class GameCanvas extends Vue {
         this.gameState = GameState.play;
       }
       gameHistory.moments = new Map([...gameHistory.moments, ...gameHistoryChunk.moments]);
-      // Object.assign(gameHistory.moments, gameHistoryChunk.moments);
       gameHistory.timeIds.push(...gameHistoryChunk.timeIds);
+      this.lastTimeId = gameHistoryChunk.timeIds[gameHistoryChunk.timeIds.length - 1];
       // console.log(gameHistory);
-    }
+    },
   };
   mounted() {
     this.$refs.pixiContainer.appendChild(this.app.view);
@@ -109,11 +115,12 @@ export default class GameCanvas extends Vue {
   get userId(): number {
     return this.$store.state.userId;
   }
+
   viewportSetup(): void {
     this.viewport
       .clampZoom({
         minWidth: 300,
-        maxWidth: worldWide
+        maxWidth: worldWide,
       })
       .zoom(2000)
       // .zoom(1)
@@ -272,9 +279,9 @@ export default class GameCanvas extends Vue {
       // wait for future
       return;
     }
-    const timeId = gameHistory.timeIds[this.historyCursor++];
+    this.currTimeIdByCursor = gameHistory.timeIds[this.historyCursor++];
 
-    gameHistory.moments.get(timeId)!.objects.forEach(this.playHistoryObject, this);
+    gameHistory.moments.get(this.currTimeIdByCursor)!.objects.forEach(this.playHistoryObject, this);
   }
 
   clearPredictions(): void {
@@ -394,5 +401,5 @@ Map.fromJSON = function(key: any, value: any) {
 
 <style scoped lang="stylus">
 .spacer
-  margin-left 120px
+  margin-left 70px
 </style>

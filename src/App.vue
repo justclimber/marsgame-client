@@ -14,9 +14,9 @@ import { Component, Vue } from "vue-property-decorator";
 @Component({
   data: function() {
     return {
-      showMenu: false
+      showMenu: false,
     };
-  }
+  },
 })
 export default class App extends Vue {}
 </script>
@@ -40,7 +40,7 @@ button:focus
   outline none
 
 button
-  font-size 14px
+  font-size main-font-size
   border 1px solid panels-border-color
   background active-element-bg-color
   color active-element-color

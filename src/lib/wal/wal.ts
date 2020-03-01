@@ -1,4 +1,4 @@
-import { WalBuffers } from "@/flatbuffers/log_generated";
+import {WalBuffers} from "@/flatbuffers/log_generated";
 
 export interface GameHistory {
   timeToStart: number;
@@ -46,7 +46,7 @@ function objectPredictionsByVelocity(
   timeIds: number[],
   timeLog: WalBuffers.TimeLog,
   objectLog: WalBuffers.ObjectLog,
-  history: Map<number, GameHistoryMoment>
+  history: Map<number, GameHistoryMoment>,
 ) {
   let x: number = timeLog.x();
   let y: number = timeLog.y();
@@ -81,8 +81,8 @@ function objectPredictionsByVelocity(
           velocityRotation: velocityRotation,
           isDelete: false,
           explode: false,
-          deleteOtherIds: []
-        }
+          deleteOtherIds: [],
+        },
       };
       history.get(timeIds[t])!.objects.set(objectLog.id(), historyObjectPrediction);
     }
@@ -105,7 +105,7 @@ export class Wal {
       if (!timeId) {
         continue;
       }
-      history.set(timeId, { timeId: timeId, objects: new Map() });
+      history.set(timeId, {timeId: timeId, objects: new Map()});
       timeIds.push(timeId);
     }
 
@@ -144,12 +144,12 @@ export class Wal {
         Wal.upsertObjectToHistory(history.get(timeLog.timeId())!.objects, newObject);
       }
     }
-    return { timeToStart: wal.currTimeId(), timeIds: timeIds, moments: history };
+    return {timeToStart: wal.currTimeId(), timeIds: timeIds, moments: history};
   }
   private static parseObjectSnapshot(
     objectLog: WalBuffers.ObjectLog,
     id: number,
-    timeLog: WalBuffers.TimeLog
+    timeLog: WalBuffers.TimeLog,
   ): ObjSnapshot {
     const rawArray = timeLog.deleteOtherIdsArray();
     const deleteOtherIds = rawArray ? Array.from(rawArray) : [];
@@ -163,7 +163,7 @@ export class Wal {
       velocityRotation: timeLog.velocityRotation(),
       isDelete: timeLog.isDelete(),
       explode: timeLog.explode(),
-      deleteOtherIds: deleteOtherIds
+      deleteOtherIds: deleteOtherIds,
     };
   }
 
@@ -189,12 +189,12 @@ export class Wal {
     return {
       obj: objSnapshot,
       cannonAngle: timeLog.cannonAngle(),
-      cannonRotation: isDefault(timeLog.cannonRotation()) ? 0 : timeLog.cannonRotation()
+      cannonRotation: isDefault(timeLog.cannonRotation()) ? 0 : timeLog.cannonRotation(),
     };
   }
 
   private static parseGenericObject(objSnapshot: ObjSnapshot): GenericObjSnapshot {
-    return { obj: objSnapshot };
+    return {obj: objSnapshot};
   }
 
   private static upsertObjectToHistory(objects: ObjectsSnapshotsMap, newObject: ObjectSnapshotUnion): void {
