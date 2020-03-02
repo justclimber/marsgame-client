@@ -4,6 +4,7 @@ import {Store} from "vuex";
 
 import {flatbuffers} from "flatbuffers";
 import {WalBuffers} from "@/flatbuffers/log_generated";
+import {WalBuffers as Commands} from "@/flatbuffers/command_generated";
 
 export default {
   install(Vue: typeof _Vue, options: any = {}, store: Store<any>) {
@@ -67,9 +68,15 @@ export default {
         let commandName: string;
         let payload: any;
         if (msg.data instanceof ArrayBuffer) {
-          let buf = new flatbuffers.ByteBuffer(new Uint8Array(msg.data));
-          payload = WalBuffers.Log.getRoot(buf);
-          commandName = "worldChangesWal";
+          const uint8Array = new Uint8Array(msg.data);
+          const commandType = uint8Array[0];
+          let buf = new flatbuffers.ByteBuffer(uint8Array.slice(1));
+          if (commandType == Commands.Command.wal) {
+            payload = WalBuffers.Log.getRoot(buf);
+            commandName = "worldChangesWal";
+          } else {
+            commandName = "unknown";
+          }
         } else {
           let data: Command = JSON.parse(msg.data);
           payload = JSON.parse(data.payload);
