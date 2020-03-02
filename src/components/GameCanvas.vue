@@ -51,6 +51,7 @@ enum GameState {
 }
 
 PIXI.utils.skipHello();
+PIXI.settings.SCALE_MODE = PIXI.SCALE_MODES.NEAREST;
 
 @Component({
   components: {HistoryTimeLine},
@@ -127,7 +128,7 @@ export default class GameCanvas extends Vue {
         minWidth: 300,
         maxWidth: worldWide,
       })
-      .zoom(2000)
+      .zoom(1000)
       // .zoom(1)
       .moveCenter(xShift, yShift)
       .drag()
@@ -137,7 +138,7 @@ export default class GameCanvas extends Vue {
   }
 
   mapSetup(): PIXI.TilingSprite {
-    const terra = new PIXI.TilingSprite(sheet.textures["terra_256.png"], worldWide, worldWide);
+    const terra = new PIXI.TilingSprite(sheet.textures["Sand.png"], worldWide, worldWide);
     terra.anchor.set(0);
     return terra;
   }
