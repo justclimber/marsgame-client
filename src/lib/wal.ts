@@ -1,4 +1,5 @@
 import {WalBuffers} from "@/flatbuffers/log_generated";
+import {flatbuffers} from "flatbuffers";
 
 export interface GameHistory {
   timeToStart: number;
@@ -94,7 +95,8 @@ function objectPredictionsByVelocity(
 
 export class Parser {
   objectsCache: ObjectsSnapshotsMap = new Map();
-  parse(wal: WalBuffers.Log): GameHistory {
+  parse(buf: flatbuffers.ByteBuffer): GameHistory {
+    const wal: WalBuffers.Log = WalBuffers.Log.getRoot(buf);
     const timeIdsCount = wal.timeIdsLength();
     const objLogsCount = wal.objectsLength();
 

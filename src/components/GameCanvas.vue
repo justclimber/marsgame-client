@@ -30,12 +30,14 @@ import {Viewport} from "pixi-viewport";
 import {flatbuffers} from "flatbuffers";
 import {WalBuffers} from "@/flatbuffers/log_generated";
 import {CommandsBuffer} from "@/flatbuffers/command_generated";
-import {InitBuffers} from "@/flatbuffers/init_data_generated";
-import * as Wal from "@/lib/wal/wal";
+import * as Wal from "@/lib/wal";
+import * as Init from "@/lib/init";
 
 const worldWide = 30000;
 const xShift = 10000;
 const yShift = 10000;
+const screenWidth = 600;
+const screenHeight = 600;
 const timeShiftForPrediction = 1500;
 
 let prevNow = new Date();
@@ -64,13 +66,13 @@ PIXI.settings.SCALE_MODE = PIXI.SCALE_MODES.NEAREST;
 export default class GameCanvas extends Vue {
   $refs!: {pixiContainer: HTMLDivElement};
   app = new PIXI.Application({
-    width: 600,
-    height: 600,
+    width: screenWidth,
+    height: screenHeight,
     backgroundColor: 0xffffff,
   });
   viewport = new Viewport({
-    screenWidth: 600,
-    screenHeight: 600,
+    screenWidth: screenWidth,
+    screenHeight: screenHeight,
     worldWidth: worldWide,
     worldHeight: worldWide,
     interaction: this.app.renderer.plugins.interaction,
@@ -79,6 +81,7 @@ export default class GameCanvas extends Vue {
   mech?: PIXI.Container = undefined;
   mechBase?: PIXI.Sprite = undefined;
   mechWeaponCannon?: PIXI.Sprite = undefined;
+  timerText?: PIXI.Text = undefined;
   historyCursor: number = 0;
   debug: boolean = false;
   walParser: Wal.Parser = new Wal.Parser();
@@ -90,7 +93,7 @@ export default class GameCanvas extends Vue {
     {
       command: CommandsBuffer.Command.Wal,
       fn(this: GameCanvas, buf: flatbuffers.ByteBuffer) {
-        let gameHistoryChunk = this.walParser.parse(WalBuffers.Log.getRoot(buf));
+        let gameHistoryChunk = this.walParser.parse(buf);
         // console.log(gameHistoryChunk);
         if (!currTimeId) {
           // use time shift for more smooth prediction
@@ -106,7 +109,15 @@ export default class GameCanvas extends Vue {
     {
       command: CommandsBuffer.Command.Init,
       fn(this: GameCanvas, buf: flatbuffers.ByteBuffer) {
-        const initBuf = InitBuffers.Init.getRoot(buf);
+        const initData = new Init.Parser().parse(buf);
+
+        let timeLeft = initData.timer.value;
+        let intervalId = setInterval(() => {
+          this.timerText!.text = "Time left: " + timeLeft + " sec";
+          if (timeLeft-- === 0) {
+            clearInterval(intervalId);
+          }
+        }, 1000);
       },
     },
   ];
@@ -121,19 +132,28 @@ export default class GameCanvas extends Vue {
         if (resources["/images/spritesheet.json"]!.spritesheet) {
           sheet = resources["/images/spritesheet.json"]!.spritesheet;
         } else {
-          console.error("Can't load spritesheet");
-          return;
+          throw Error("Can't load spritesheet");
         }
-        const mech = this.mechSetup(xShift, yShift);
-
         this.app.stage.addChild(this.viewport);
         this.viewport.addChild(this.mapSetup());
-        this.viewport.addChild(mech);
+        this.viewport.addChild(this.mechSetup(xShift, yShift));
+        this.app.stage.addChild(this.timerSetup());
         this.app.ticker.add(() => this.gameLoop());
       });
   }
   get userId(): number {
     return this.$store.state.userId;
+  }
+
+  timerSetup(): PIXI.Text {
+    this.timerText = new PIXI.Text("Time left: ...", {
+      fontFamily: "Arial",
+      fontSize: 16,
+      fill: 0xffffff,
+    });
+    this.timerText.x = 10;
+    this.timerText.y = screenHeight - 70;
+    return this.timerText;
   }
 
   viewportSetup(): void {
@@ -428,6 +448,7 @@ export default class GameCanvas extends Vue {
   }
 }
 
+// little magic for serializing to localStorage and back
 Map.prototype.toJSON = function() {
   return ["window.Map", Array.from(this.entries())];
 };
