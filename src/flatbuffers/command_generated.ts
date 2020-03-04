@@ -3,9 +3,9 @@
 /**
  * @enum {number}
  */
-export namespace WalBuffers{
+export namespace CommandsBuffer{
 export enum Command{
-  wal= 0,
-  init= 1
+  Wal= 0,
+  Init= 1
 }};
 

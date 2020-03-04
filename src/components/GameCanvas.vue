@@ -23,9 +23,13 @@
 <script lang="ts">
 import {Component, Vue} from "vue-property-decorator";
 import HistoryTimeLine from "@/components/HistoryTimeLine.vue";
+
 import * as PIXI from "pixi.js";
 import {Viewport} from "pixi-viewport";
+
+import {flatbuffers} from "flatbuffers";
 import {WalBuffers} from "@/flatbuffers/log_generated";
+import {CommandsBuffer} from "@/flatbuffers/command_generated";
 import * as Wal from "@/lib/wal/wal";
 
 const worldWide = 30000;
@@ -81,21 +85,25 @@ export default class GameCanvas extends Vue {
   currTimeIdByCursor: number = 0;
   lastTimeId: number = 0;
   gameHistory: Wal.GameHistory = {timeIds: [], moments: new Map(), timeToStart: 0};
-  wsCommands = {
-    worldChangesWal(this: GameCanvas, wal: WalBuffers.Log) {
-      let gameHistoryChunk = this.walParser.parseWal(wal);
-      // console.log(gameHistoryChunk);
-      if (!currTimeId) {
-        // use time shift for more smooth prediction
-        currTimeId = gameHistoryChunk.timeToStart - timeShiftForPrediction;
-        this.gameState = GameState.play;
-      }
-      this.gameHistory.moments = new Map([...this.gameHistory.moments, ...gameHistoryChunk.moments]);
-      this.gameHistory.timeIds.push(...gameHistoryChunk.timeIds);
-      this.lastTimeId = gameHistoryChunk.timeIds[gameHistoryChunk.timeIds.length - 1];
-      // console.log(gameHistory);
+  wsBuffers = [
+    {
+      command: CommandsBuffer.Command.Wal,
+      fn(this: GameCanvas, buf: flatbuffers.ByteBuffer) {
+        const wal = WalBuffers.Log.getRoot(buf);
+        let gameHistoryChunk = this.walParser.parseWal(wal);
+        // console.log(gameHistoryChunk);
+        if (!currTimeId) {
+          // use time shift for more smooth prediction
+          currTimeId = gameHistoryChunk.timeToStart - timeShiftForPrediction;
+          this.gameState = GameState.play;
+        }
+        this.gameHistory.moments = new Map([...this.gameHistory.moments, ...gameHistoryChunk.moments]);
+        this.gameHistory.timeIds.push(...gameHistoryChunk.timeIds);
+        this.lastTimeId = gameHistoryChunk.timeIds[gameHistoryChunk.timeIds.length - 1];
+        // console.log(gameHistory);
+      },
     },
-  };
+  ];
   mounted() {
     this.$refs.pixiContainer.appendChild(this.app.view);
     this.viewportSetup();

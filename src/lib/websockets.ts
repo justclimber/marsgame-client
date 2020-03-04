@@ -3,8 +3,7 @@ import {PluginObject} from "vue/types/umd";
 import {Store} from "vuex";
 
 import {flatbuffers} from "flatbuffers";
-import {WalBuffers} from "@/flatbuffers/log_generated";
-import {WalBuffers as Commands} from "@/flatbuffers/command_generated";
+import {CommandsBuffer} from "@/flatbuffers/command_generated";
 
 export default {
   install(Vue: typeof _Vue, options: any = {}, store: Store<any>) {
@@ -14,26 +13,34 @@ export default {
     }
     Vue.prototype.$socket = socket;
 
-    interface WsCallback {
-      (payload: any): void;
+    interface WsFbCommand {
+      command: CommandsBuffer.Command;
+      fn: Callback;
     }
-    interface WsCallbackObj {
-      callback: WsCallback;
+    interface WsFbCommandWithObj {
+      wsCommand: WsFbCommand;
       obj: any;
     }
-
-    interface Command {
+    interface WsJsonCallbackObj {
+      callback: Callback;
+      obj: any;
+    }
+    interface JsonCommand {
       type: string;
       payload: string;
     }
-
+    interface Callback {
+      (payload: any): void;
+    }
     interface CommandWrapper {
       data: string | ArrayBuffer;
     }
 
-    let commandHandlers: Map<string, WsCallbackObj> = new Map();
+    let commandHandlers: Map<string, WsJsonCallbackObj> = new Map();
+    let buffHandlers: Map<CommandsBuffer.Command, WsFbCommandWithObj> = new Map();
     Vue.mixin({
       beforeMount() {
+        // websocket json protocol callbacks
         if (this.wsCommands) {
           for (let key in this.wsCommands) {
             commandHandlers.set(key, {
@@ -41,6 +48,15 @@ export default {
               obj: this,
             });
           }
+        }
+        // websocket binary Flattbuffers protocol callbacks
+        if (this.wsBuffers) {
+          this.wsBuffers.forEach((wsCommand: WsFbCommand) => {
+            buffHandlers.set(wsCommand.command, {
+              wsCommand: wsCommand,
+              obj: this,
+            });
+          });
         }
       },
     });
@@ -65,31 +81,34 @@ export default {
       };
 
       socket.onmessage = function(msg: CommandWrapper) {
-        let commandName: string;
-        let payload: any;
         if (msg.data instanceof ArrayBuffer) {
-          const uint8Array = new Uint8Array(msg.data);
-          const commandType = uint8Array[0];
-          let buf = new flatbuffers.ByteBuffer(uint8Array.slice(1));
-          if (commandType == Commands.Command.wal) {
-            payload = WalBuffers.Log.getRoot(buf);
-            commandName = "worldChangesWal";
-          } else {
-            commandName = "unknown";
-          }
+          parseFlatbuffersCommand(msg.data);
         } else {
-          let data: Command = JSON.parse(msg.data);
-          payload = JSON.parse(data.payload);
-          commandName = data.type;
+          parseJsonCommand(msg.data);
         }
-
-        const wsCallback = commandHandlers.get(commandName);
-        if (!wsCallback) {
-          throw new Error("couldn't find " + commandName + " registered handler");
-        }
-
-        wsCallback.callback.call(wsCallback.obj, payload);
       };
     };
+
+    function parseFlatbuffersCommand(data: ArrayBuffer): void {
+      const uint8Array = new Uint8Array(data);
+      const command = uint8Array[0];
+      let wsCommandWithObj = buffHandlers.get(command);
+      if (!wsCommandWithObj) {
+        throw new Error("couldn't find '" + command + "' registered buf handler");
+      }
+
+      wsCommandWithObj.wsCommand.fn.call(wsCommandWithObj.obj, new flatbuffers.ByteBuffer(uint8Array.slice(1)));
+    }
+
+    function parseJsonCommand(data: string): void {
+      let jsonCommand: JsonCommand = JSON.parse(data);
+      let payload = JSON.parse(jsonCommand.payload);
+      const wsCallback = commandHandlers.get(jsonCommand.type);
+      if (!wsCallback) {
+        throw new Error("couldn't find " + jsonCommand.type + " registered handler");
+      }
+
+      wsCallback.callback.call(wsCallback.obj, payload);
+    }
   },
 } as PluginObject<any>;
