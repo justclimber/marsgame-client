@@ -81,7 +81,7 @@ export default class GameCanvas extends Vue {
   mechWeaponCannon?: PIXI.Sprite = undefined;
   historyCursor: number = 0;
   debug: boolean = false;
-  walParser: Wal.Wal = new Wal.Wal();
+  walParser: Wal.Parser = new Wal.Parser();
   gameState: GameState = GameState.paused;
   currTimeIdByCursor: number = 0;
   lastTimeId: number = 0;
@@ -90,7 +90,7 @@ export default class GameCanvas extends Vue {
     {
       command: CommandsBuffer.Command.Wal,
       fn(this: GameCanvas, buf: flatbuffers.ByteBuffer) {
-        let gameHistoryChunk = this.walParser.parseWal(WalBuffers.Log.getRoot(buf));
+        let gameHistoryChunk = this.walParser.parse(WalBuffers.Log.getRoot(buf));
         // console.log(gameHistoryChunk);
         if (!currTimeId) {
           // use time shift for more smooth prediction
