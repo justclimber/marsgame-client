@@ -42,13 +42,15 @@ button:focus
 button
   font-size main-font-size
   border 1px solid panels-border-color
-  background active-element-bg-color
+  background element-bg-color
   color active-element-color
   margin-right  5px
   &:hover
     outline 1px solid active-element-color
   &:active
     outline 3px solid active-element-color
+  &.active
+    background active-element-bg-color
 #app
   max-width 1800px
   overflow hidden

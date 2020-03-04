@@ -8,14 +8,18 @@
       @choose-time-id="chooseTimeId"
     />
     <div class="controls">
-      <button @click="saveGame">Save game</button>
-      <button @click="loadGame">Load game</button>
-      <button class="spacer" @click="playerButton('prevMore')">&#171;</button>
+      <button @click="saveGame" class="big-icon">💾</button>
+      <button @click="loadGame" class="big-icon">&#128193;</button>
+      <button class="spacer1" @click="playerButton('prevMore')">&#171;</button>
       <button @click="playerButton('prev')">&#8249;</button>
       <button @click="playerButton('stop')">■</button>
       <button @click="playerButton('play')">▶</button>
       <button @click="playerButton('next')">&#8250;</button>
       <button @click="playerButton('nextMore')">&#187;</button>
+      <span class="spacer2">Speed:</span>
+      <button @click="playerSpeedChange(1)" :class="{active: playSpeedMultiplicator === 1}">x1</button>
+      <button @click="playerSpeedChange(2)" :class="{active: playSpeedMultiplicator === 2}">x2</button>
+      <button @click="playerSpeedChange(3)" :class="{active: playSpeedMultiplicator === 3}">x3</button>
     </div>
   </div>
 </template>
@@ -88,6 +92,7 @@ export default class GameCanvas extends Vue {
   gameState: GameState = GameState.paused;
   currTimeIdByCursor: number = 0;
   lastTimeId: number = 0;
+  playSpeedMultiplicator: number = 1;
   gameHistory: Wal.GameHistory = {timeIds: [], moments: new Map(), timeToStart: 0};
   wsBuffers = [
     {
@@ -293,7 +298,7 @@ export default class GameCanvas extends Vue {
     if (this.gameState == GameState.paused) {
       return;
     }
-    currTimeId += timeDelta;
+    currTimeId += timeDelta * this.playSpeedMultiplicator;
 
     if (this.historyCursor >= this.gameHistory.timeIds.length) {
       this.gameState = GameState.paused;
@@ -446,6 +451,10 @@ export default class GameCanvas extends Vue {
         break;
     }
   }
+
+  playerSpeedChange(speed: number): void {
+    this.playSpeedMultiplicator = speed;
+  }
 }
 
 // little magic for serializing to localStorage and back
@@ -458,6 +467,12 @@ Map.fromJSON = function(key: any, value: any) {
 </script>
 
 <style scoped lang="stylus">
-.spacer
-  margin-left 70px
+.controls
+  font-size 12px
+  .big-icon
+    font-size 10px
+.spacer1
+  margin-left 130px
+.spacer2
+  margin-left 75px
 </style>
