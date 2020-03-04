@@ -30,6 +30,7 @@ import {Viewport} from "pixi-viewport";
 import {flatbuffers} from "flatbuffers";
 import {WalBuffers} from "@/flatbuffers/log_generated";
 import {CommandsBuffer} from "@/flatbuffers/command_generated";
+import {InitBuffers} from "@/flatbuffers/init_data_generated";
 import * as Wal from "@/lib/wal/wal";
 
 const worldWide = 30000;
@@ -89,8 +90,7 @@ export default class GameCanvas extends Vue {
     {
       command: CommandsBuffer.Command.Wal,
       fn(this: GameCanvas, buf: flatbuffers.ByteBuffer) {
-        const wal = WalBuffers.Log.getRoot(buf);
-        let gameHistoryChunk = this.walParser.parseWal(wal);
+        let gameHistoryChunk = this.walParser.parseWal(WalBuffers.Log.getRoot(buf));
         // console.log(gameHistoryChunk);
         if (!currTimeId) {
           // use time shift for more smooth prediction
@@ -101,6 +101,12 @@ export default class GameCanvas extends Vue {
         this.gameHistory.timeIds.push(...gameHistoryChunk.timeIds);
         this.lastTimeId = gameHistoryChunk.timeIds[gameHistoryChunk.timeIds.length - 1];
         // console.log(gameHistory);
+      },
+    },
+    {
+      command: CommandsBuffer.Command.Init,
+      fn(this: GameCanvas, buf: flatbuffers.ByteBuffer) {
+        const initBuf = InitBuffers.Init.getRoot(buf);
       },
     },
   ];
