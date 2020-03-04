@@ -95,6 +95,7 @@ function objectPredictionsByVelocity(
 
 export class Parser {
   objectsCache: ObjectsSnapshotsMap = new Map();
+  objectsUsedPool: Map<number, boolean> = new Map();
   parse(buf: flatbuffers.ByteBuffer): GameHistory {
     const wal: WalBuffers.Log = WalBuffers.Log.getRoot(buf);
     const timeIdsCount = wal.timeIdsLength();
@@ -123,13 +124,8 @@ export class Parser {
           continue;
         }
 
-        let objectFromCache: ObjectSnapshotUnion | undefined;
-        objectFromCache = this.objectsCache.get(objectLog.id());
-
         let objSnapshot = Parser.parseObjectSnapshot(objectLog, objectLog.id(), timeLog);
-        if (objectFromCache) {
-          Parser.extendObjectSnapshotByCached(objSnapshot, objectFromCache);
-        }
+        this.extendByCacheIfExists(objectLog, objSnapshot);
 
         let newObject: ObjectSnapshotUnion;
         if (objectLog.objectType() === WalBuffers.ObjectType.player) {
@@ -138,7 +134,19 @@ export class Parser {
           newObject = Parser.parseGenericObject(objSnapshot);
         }
 
-        this.objectsCache.set(objectLog.id(), newObject);
+        if (newObject.obj.isDelete) {
+          this.objectsCache.delete(objectLog.id());
+          this.objectsUsedPool.delete(objectLog.id());
+        } else {
+          this.objectsCache.set(objectLog.id(), newObject);
+          this.objectsUsedPool.set(objectLog.id(), true);
+        }
+        if (newObject.obj.deleteOtherIds.length > 0) {
+          for (let deleteOtherId of newObject.obj.deleteOtherIds) {
+            this.objectsCache.delete(deleteOtherId);
+            this.objectsUsedPool.delete(deleteOtherId);
+          }
+        }
 
         if (!isDefault(timeLog.velocityUntilTimeId())) {
           objectPredictionsByVelocity(timeIdsCount, timeIds, timeLog, objectLog, history);
@@ -146,8 +154,48 @@ export class Parser {
         Parser.upsertObjectToHistory(history.get(timeLog.timeId())!.objects, newObject);
       }
     }
+
+    // если на сервере в рамках чанка не происходит никакого изменения объекта и это не новый объект -
+    // в wal'е этого объекта не будет. но из-за специфики перемотки нам необходимо доставать эти объекты из кэша
+    for (let [key, value] of this.objectsUsedPool) {
+      if (!value) {
+        let objectFromCache: ObjectSnapshotUnion | undefined = this.objectsCache.get(key);
+        if (!objectFromCache) {
+          console.error("Inconsistency for objectsUsedPool and objectsCache for " + key);
+          continue;
+        }
+        // необходимо проставить объект из кэша в каждую timeId запись этого чанка хистори
+        for (let timeId of timeIds) {
+          history.get(timeId)!.objects.set(key, objectFromCache);
+        }
+      }
+      this.objectsUsedPool.set(key, false);
+    }
     return {timeToStart: wal.currTimeId(), timeIds: timeIds, moments: history};
   }
+
+  private extendByCacheIfExists(objectLog: WalBuffers.ObjectLog, objSnapshot: ObjSnapshot) {
+    let objectFromCache: ObjectSnapshotUnion | undefined = this.objectsCache.get(objectLog.id());
+    if (!objectFromCache) {
+      return;
+    }
+    if (isDefault(objSnapshot.x)) {
+      objSnapshot.x = objectFromCache.obj.x;
+    }
+    if (isDefault(objSnapshot.y)) {
+      objSnapshot.y = objectFromCache.obj.y;
+    }
+    if (isDefault(objSnapshot.angle)) {
+      objSnapshot.angle = objectFromCache.obj.angle;
+    }
+    if (isDefault(objSnapshot.velocityLen)) {
+      objSnapshot.velocityLen = objectFromCache.obj.velocityLen;
+    }
+    if (isDefault(objSnapshot.velocityRotation)) {
+      objSnapshot.velocityRotation = objectFromCache.obj.velocityRotation;
+    }
+  }
+
   private static parseObjectSnapshot(
     objectLog: WalBuffers.ObjectLog,
     id: number,
@@ -167,24 +215,6 @@ export class Parser {
       explode: timeLog.explode(),
       deleteOtherIds: deleteOtherIds,
     };
-  }
-
-  private static extendObjectSnapshotByCached(newObject: ObjSnapshot, objectFromCache: ObjectSnapshotUnion): void {
-    if (isDefault(newObject.x)) {
-      newObject.x = objectFromCache.obj.x;
-    }
-    if (isDefault(newObject.y)) {
-      newObject.y = objectFromCache.obj.y;
-    }
-    if (isDefault(newObject.angle)) {
-      newObject.angle = objectFromCache.obj.angle;
-    }
-    if (isDefault(newObject.velocityLen)) {
-      newObject.velocityLen = objectFromCache.obj.velocityLen;
-    }
-    if (isDefault(newObject.velocityRotation)) {
-      newObject.velocityRotation = objectFromCache.obj.velocityRotation;
-    }
   }
 
   private static parseMechObject(timeLog: WalBuffers.TimeLog, objSnapshot: ObjSnapshot): MechSnapshot {
