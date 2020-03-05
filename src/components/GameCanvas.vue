@@ -36,6 +36,8 @@ import {WalBuffers} from "@/flatbuffers/log_generated";
 import {CommandsBuffer} from "@/flatbuffers/command_generated";
 import * as Wal from "@/lib/wal";
 import * as Init from "@/lib/init";
+import "pixi-tiledmap";
+import {TiledMap} from "TiledMap";
 
 const worldWide = 30000;
 const xShift = 10000;
@@ -131,6 +133,7 @@ export default class GameCanvas extends Vue {
     this.viewportSetup();
     this.app.loader
       .add("/images/spritesheet.json")
+      .add("/tiled/firstmap.tmx")
       .load((loader: PIXI.Loader, resources: Partial<Record<string, PIXI.LoaderResource>>) => {
         this.$store.commit("newRandomUser");
         this.wsConnect(this.$store.state.userId);
@@ -139,8 +142,10 @@ export default class GameCanvas extends Vue {
         } else {
           throw Error("Can't load spritesheet");
         }
-        this.app.stage.addChild(this.viewport);
-        this.viewport.addChild(this.mapSetup());
+        const tilemap = new TiledMap(loader, "/tiled/firstmap.tmx");
+        // this.app.stage.addChild(this.viewport);
+        this.viewport.addChild(tilemap);
+        // this.viewport.addChild(this.mapSetup());
         this.viewport.addChild(this.mechSetup(xShift, yShift));
         this.app.stage.addChild(this.timerSetup());
         this.app.ticker.add(() => this.gameLoop());
