@@ -2,21 +2,21 @@
   <div class="game-root">
     <CodeEditor class="game-editor" />
     <Console class="game-console" />
-    <GameCanvas class="game-canvas" />
+    <GameEngine class="game-canvas" />
   </div>
 </template>
 
 <script>
 // @ is an alias to /src
 import CodeEditor from "@/components/CodeEditor.vue";
-import GameCanvas from "@/components/GameCanvas.vue";
+import GameEngine from "@/components/GameEngine.vue";
 import Console from "@/components/Console.vue";
 
 export default {
-  name: "game",
+  name: "gameWindow",
   components: {
+    GameEngine,
     CodeEditor,
-    GameCanvas,
     Console,
   },
 };

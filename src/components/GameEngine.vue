@@ -67,7 +67,7 @@ PIXI.settings.SCALE_MODE = PIXI.SCALE_MODES.NEAREST;
 @Component({
   components: {HistoryTimeLine},
 })
-export default class GameCanvas extends Vue {
+export default class GameEngine extends Vue {
   $refs!: {pixiContainer: HTMLDivElement};
   app = new PIXI.Application({
     width: screenWidth,
@@ -97,7 +97,7 @@ export default class GameCanvas extends Vue {
   wsBuffers = [
     {
       command: CommandsBuffer.Command.Wal,
-      fn(this: GameCanvas, buf: flatbuffers.ByteBuffer) {
+      fn(this: GameEngine, buf: flatbuffers.ByteBuffer) {
         let gameHistoryChunk = this.walParser.parse(buf);
         // console.log(gameHistoryChunk);
         if (!currTimeId) {
@@ -113,7 +113,7 @@ export default class GameCanvas extends Vue {
     },
     {
       command: CommandsBuffer.Command.Init,
-      fn(this: GameCanvas, buf: flatbuffers.ByteBuffer) {
+      fn(this: GameEngine, buf: flatbuffers.ByteBuffer) {
         const initData = new Init.Parser().parse(buf);
 
         let timeLeft = initData.timer.value;

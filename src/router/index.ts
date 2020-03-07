@@ -1,13 +1,13 @@
 import Vue from "vue";
 import VueRouter from "vue-router";
-import Game from "../views/Game.vue";
+import Game from "../views/GameWindow.vue";
 
 Vue.use(VueRouter);
 
 const routes = [
   {
     path: "/",
-    name: "game",
+    name: "gameWindow",
     component: Game,
   },
 ];
