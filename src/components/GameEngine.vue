@@ -29,7 +29,7 @@ import {Component, Vue} from "vue-property-decorator";
 import HistoryTimeLine from "@/components/HistoryTimeLine.vue";
 
 import * as PIXI from "pixi.js";
-import {Viewport} from "pixi-viewport";
+import GraphicsEngine from "@/lib/graphics";
 
 import {flatbuffers} from "flatbuffers";
 import {WalBuffers} from "@/flatbuffers/log_generated";
@@ -37,11 +37,8 @@ import {CommandsBuffer} from "@/flatbuffers/command_generated";
 import * as Wal from "@/lib/wal";
 import * as Init from "@/lib/init";
 
-const worldWide = 30000;
 const xShift = 10000;
 const yShift = 10000;
-const screenWidth = 600;
-const screenHeight = 600;
 const timeShiftForPrediction = 1500;
 
 let prevNow = new Date();
@@ -69,18 +66,7 @@ PIXI.settings.SCALE_MODE = PIXI.SCALE_MODES.NEAREST;
 })
 export default class GameEngine extends Vue {
   $refs!: {pixiContainer: HTMLDivElement};
-  app = new PIXI.Application({
-    width: screenWidth,
-    height: screenHeight,
-    backgroundColor: 0xffffff,
-  });
-  viewport = new Viewport({
-    screenWidth: screenWidth,
-    screenHeight: screenHeight,
-    worldWidth: worldWide,
-    worldHeight: worldWide,
-    interaction: this.app.renderer.plugins.interaction,
-  });
+  app = new GraphicsEngine();
   objects: MapGameSpriteObj = new Map();
   mech?: PIXI.Container = undefined;
   mechBase?: PIXI.Sprite = undefined;
@@ -127,59 +113,14 @@ export default class GameEngine extends Vue {
     },
   ];
   mounted() {
-    this.$refs.pixiContainer.appendChild(this.app.view);
-    this.viewportSetup();
-    this.app.loader
-      .add("/images/spritesheet.json")
-      .load((loader: PIXI.Loader, resources: Partial<Record<string, PIXI.LoaderResource>>) => {
-        this.$store.commit("newRandomUser");
-        this.wsConnect(this.$store.state.userId);
-        if (resources["/images/spritesheet.json"]!.spritesheet) {
-          sheet = resources["/images/spritesheet.json"]!.spritesheet;
-        } else {
-          throw Error("Can't load spritesheet");
-        }
-        this.app.stage.addChild(this.viewport);
-        this.viewport.addChild(this.mapSetup());
-        this.viewport.addChild(this.mechSetup(xShift, yShift));
-        this.app.stage.addChild(this.timerSetup());
-        this.app.ticker.add(() => this.gameLoop());
-      });
-  }
-  get userId(): number {
-    return this.$store.state.userId;
-  }
+    this.$store.commit("newRandomUser");
+    this.wsConnect(this.$store.state.userId);
 
-  timerSetup(): PIXI.Text {
-    this.timerText = new PIXI.Text("Time left: ...", {
-      fontFamily: "Arial",
-      fontSize: 16,
-      fill: 0xffffff,
+    this.app.bootstrap(this.$refs.pixiContainer, this.gameLoop, (sh: PIXI.Spritesheet) => {
+      sheet = sh;
+      this.app.viewport.addChild(this.mechSetup(xShift, yShift));
+      this.timerText = this.app.timerSetup();
     });
-    this.timerText.x = 10;
-    this.timerText.y = screenHeight - 70;
-    return this.timerText;
-  }
-
-  viewportSetup(): void {
-    this.viewport
-      .clampZoom({
-        minWidth: 300,
-        maxWidth: worldWide,
-      })
-      .zoom(1000)
-      // .zoom(1)
-      .moveCenter(xShift, yShift)
-      .drag()
-      .pinch()
-      .wheel()
-      .decelerate();
-  }
-
-  mapSetup(): PIXI.TilingSprite {
-    const terra = new PIXI.TilingSprite(sheet.textures["Sand.png"], worldWide, worldWide);
-    terra.anchor.set(0);
-    return terra;
   }
 
   mechSetup(x: number, y: number): PIXI.Container {
@@ -247,7 +188,7 @@ export default class GameEngine extends Vue {
     this.drawCollisionCircleForObj(obj, 100);
 
     this.objects.set(id, obj);
-    this.viewport.addChild(obj);
+    this.app.viewport.addChild(obj);
 
     return obj;
   }
@@ -287,7 +228,7 @@ export default class GameEngine extends Vue {
     };
     explosion.animationSpeed = 0.167;
     explosion.play();
-    this.viewport.addChild(explosion);
+    this.app.viewport.addChild(explosion);
   }
 
   gameLoop(): void {
@@ -327,7 +268,7 @@ export default class GameEngine extends Vue {
     }
     this.mech.x += this.mech.vx * dt;
     this.mech.y += this.mech.vy * dt;
-    this.viewport.follow(this.mech, {
+    this.app.viewport.follow(this.mech, {
       acceleration: 0.8,
       speed: 300,
     });
