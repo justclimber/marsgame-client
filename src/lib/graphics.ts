@@ -34,10 +34,6 @@ export default class GraphicsEngine {
   //   beforeAdd: new PIXI.Runner("beforeAdd", 1)
   // };
 
-  get view() {
-    return this.renderer.view;
-  }
-
   render() {
     this.renderer.render(this.stage);
   }
