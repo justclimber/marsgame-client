@@ -36,7 +36,9 @@ import {WalBuffers} from "@/flatbuffers/log_generated";
 import {CommandsBuffer} from "@/flatbuffers/command_generated";
 import * as Wal from "@/lib/wal";
 import * as Init from "@/lib/init";
+import {TileLayer} from "@/lib/init";
 
+const tileSize = 64;
 const worldWide = 30000;
 const xShift = 10000;
 const yShift = 10000;
@@ -47,6 +49,7 @@ const timeShiftForPrediction = 1500;
 let prevNow = new Date();
 let currTimeId: number = 0;
 let sheet: PIXI.Spritesheet;
+let terra: PIXI.Spritesheet;
 
 function getRandomInt(min: number, max: number) {
   return Math.floor(Math.random() * Math.floor(max)) + min;
@@ -72,7 +75,6 @@ export default class GameCanvas extends Vue {
   app = new PIXI.Application({
     width: screenWidth,
     height: screenHeight,
-    backgroundColor: 0xffffff,
   });
   viewport = new Viewport({
     screenWidth: screenWidth,
@@ -94,6 +96,7 @@ export default class GameCanvas extends Vue {
   lastTimeId: number = 0;
   playSpeedMultiplicator: number = 1;
   gameHistory: Wal.GameHistory = {timeIds: [], moments: new Map(), timeToStart: 0};
+  worldMap: Init.WorldMap | undefined;
   wsBuffers = [
     {
       command: CommandsBuffer.Command.Wal,
@@ -115,7 +118,9 @@ export default class GameCanvas extends Vue {
       command: CommandsBuffer.Command.Init,
       fn(this: GameCanvas, buf: flatbuffers.ByteBuffer) {
         const initData = new Init.Parser().parse(buf);
-
+        this.worldMap = initData.worldMap;
+        this.viewport.addChild(this.mapSetup());
+        this.viewport.addChild(this.mechSetup(xShift, yShift));
         let timeLeft = initData.timer.value;
         let intervalId = setInterval(() => {
           this.timerText!.text = "Time left: " + timeLeft + " sec";
@@ -131,6 +136,7 @@ export default class GameCanvas extends Vue {
     this.viewportSetup();
     this.app.loader
       .add("/images/spritesheet.json")
+      .add("/images/terra.json")
       .load((loader: PIXI.Loader, resources: Partial<Record<string, PIXI.LoaderResource>>) => {
         this.$store.commit("newRandomUser");
         this.wsConnect(this.$store.state.userId);
@@ -139,9 +145,12 @@ export default class GameCanvas extends Vue {
         } else {
           throw Error("Can't load spritesheet");
         }
+        if (resources["/images/terra.json"]!.spritesheet) {
+          terra = resources["/images/terra.json"]!.spritesheet;
+        } else {
+          throw Error("Can't load spritesheet");
+        }
         this.app.stage.addChild(this.viewport);
-        this.viewport.addChild(this.mapSetup());
-        this.viewport.addChild(this.mechSetup(xShift, yShift));
         this.app.stage.addChild(this.timerSetup());
         this.app.ticker.add(() => this.gameLoop());
       });
@@ -176,10 +185,29 @@ export default class GameCanvas extends Vue {
       .decelerate();
   }
 
-  mapSetup(): PIXI.TilingSprite {
-    const terra = new PIXI.TilingSprite(sheet.textures["Sand.png"], worldWide, worldWide);
-    terra.anchor.set(0);
-    return terra;
+  mapSetup(): PIXI.Container {
+    const tileMap = new PIXI.Container();
+    if (!this.worldMap) {
+      return tileMap;
+    }
+    const mapWidth = this.worldMap.width;
+    let tilesCount = 0;
+    this.worldMap.tileLayers.forEach((layer: TileLayer) => {
+      for (let i = 0; i < layer.tileIds.length; i++) {
+        if (layer.tileIds[i] === 0) {
+          continue;
+        }
+        tilesCount++;
+        const tile = new PIXI.Sprite(terra.textures[`t${layer.tileIds[i]}.png`]);
+        tile.y = Math.ceil(i / mapWidth) * tileSize + yShift - 3000;
+        tile.x = (i % mapWidth) * tileSize + xShift - 3000;
+        tile.scale.x = 2;
+        tile.scale.y = 2;
+        tileMap.addChild(tile);
+      }
+    });
+    console.log("all tiles count:", tilesCount);
+    return tileMap;
   }
 
   mechSetup(x: number, y: number): PIXI.Container {
