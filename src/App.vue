@@ -30,6 +30,9 @@ body
   background main-bg
   color main-text-color
 
+*, *:before, *:after
+  box-sizing border-box
+
 html
   overflow hidden
 
@@ -51,6 +54,7 @@ button
     outline 3px solid active-element-color
   &.active
     background active-element-bg-color
+
 #app
   max-width 1800px
   overflow hidden

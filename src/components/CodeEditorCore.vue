@@ -198,7 +198,7 @@ export default class CodeEditorCore extends Vue {
   .source-code
     border 2px solid panels-border-color
     font-size codeEditor-font-size
-    width 96%
+    width 100%
     margin 0
     padding 0
     padding-left 27px
