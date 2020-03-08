@@ -48,7 +48,7 @@ export default class HistoryTimeLine extends Vue {
   chooserPopup: ChooserPopup = {
     show: false,
     left: 900,
-    top: 573,
+    top: 579,
     timeIdsSlice: [],
   };
   get currentBarStyle() {
@@ -117,7 +117,7 @@ export default class HistoryTimeLine extends Vue {
     font-size main-font-size
 .position-chooser-popup
   position absolute
-  width 592px
+  width 600px
   height 45px
   border 2px solid panels-border-color
   background main-bg
