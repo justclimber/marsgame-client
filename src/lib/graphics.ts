@@ -1,5 +1,6 @@
 import * as PIXI from "pixi.js";
 import {Viewport} from "pixi-viewport";
+import GraphicsResources from "@/lib/resources";
 
 export type GameSpriteObj = PIXI.Sprite | PIXI.AnimatedSprite | PIXI.Container;
 
@@ -9,8 +10,8 @@ export default class GraphicsEngine {
   xShift: number = 10000;
   yShift: number = 10000;
   worldWide = 30000;
-  sheet?: PIXI.Spritesheet;
   debug: boolean = false;
+  resources = new GraphicsResources();
 
   renderer = new PIXI.Renderer({
     width: this.screenWidth,
@@ -20,7 +21,6 @@ export default class GraphicsEngine {
 
   stage = new PIXI.Container();
   ticker = new PIXI.Ticker();
-  loader = new PIXI.Loader();
 
   viewport = new Viewport({
     screenWidth: this.screenWidth,
@@ -61,31 +61,35 @@ export default class GraphicsEngine {
       .decelerate();
   }
 
-  bootstrap(pixiContainer: HTMLDivElement, gameLoop: () => void, callback: (sheet: PIXI.Spritesheet) => void): void {
+  bootstrap(
+    pixiContainer: HTMLDivElement,
+    gameLoop: (delta: number) => void,
+    callback: (sheet: PIXI.Spritesheet) => void,
+  ): void {
     pixiContainer.appendChild(this.renderer.view);
     this.viewportSetup();
-    this.loader
-      .add("/images/spritesheet.json")
-      .load((loader: PIXI.Loader, resources: Partial<Record<string, PIXI.LoaderResource>>) => {
-        if (resources["/images/spritesheet.json"]!.spritesheet) {
-          this.sheet = resources["/images/spritesheet.json"]!.spritesheet;
-        } else {
-          throw Error("Can't load spritesheet");
-        }
+    this.resources
+      .load()
+      .then((spritesheet: PIXI.Spritesheet) => {
         this.stage.addChild(this.viewport);
         this.viewport.addChild(this.mapSetup());
-        callback(this.sheet);
-        this.ticker.add(() => gameLoop());
+        callback(spritesheet);
+        this.ticker.add(() => {
+          gameLoop(this.ticker.deltaMS);
+        });
         this.ticker.add(() => {
           this.render();
         }, PIXI.UPDATE_PRIORITY.LOW);
 
         this.ticker.start();
+      })
+      .catch(err => {
+        throw Error(err);
       });
   }
 
   mapSetup(): PIXI.TilingSprite {
-    const terra = new PIXI.TilingSprite(this.sheet!.textures["Sand.png"], this.worldWide, this.worldWide);
+    const terra = new PIXI.TilingSprite(this.resources.sheet!.textures["Sand.png"], this.worldWide, this.worldWide);
     terra.anchor.set(0);
     return terra;
   }
@@ -103,7 +107,7 @@ export default class GraphicsEngine {
   }
 
   makeExplosion(x: number = 0, y: number = 0): void {
-    const explosion = new PIXI.AnimatedSprite(this.sheet!.animations["e"]);
+    const explosion = new PIXI.AnimatedSprite(this.resources.sheet!.animations["e"]);
     explosion.x = x;
     explosion.y = y;
     explosion.loop = false;

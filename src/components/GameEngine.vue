@@ -197,11 +197,7 @@ export default class GameEngine extends Vue {
     this.objects = new Map();
   }
 
-  gameLoop(): void {
-    let now = new Date();
-    let timeDelta = now.getTime() - prevNow.getTime();
-    prevNow = now;
-
+  gameLoop(timeDelta: number): void {
     if (this.gameState == GameState.paused) {
       return;
     }
