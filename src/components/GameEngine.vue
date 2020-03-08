@@ -66,14 +66,13 @@ PIXI.settings.SCALE_MODE = PIXI.SCALE_MODES.NEAREST;
 })
 export default class GameEngine extends Vue {
   $refs!: {pixiContainer: HTMLDivElement};
-  app = new GraphicsEngine();
+  graphics = new GraphicsEngine();
   objects: MapGameSpriteObj = new Map();
   mech?: PIXI.Container = undefined;
   mechBase?: PIXI.Sprite = undefined;
   mechWeaponCannon?: PIXI.Sprite = undefined;
   timerText?: PIXI.Text = undefined;
   historyCursor: number = 0;
-  debug: boolean = false;
   walParser: Wal.Parser = new Wal.Parser();
   gameState: GameState = GameState.paused;
   currTimeIdByCursor: number = 0;
@@ -116,10 +115,10 @@ export default class GameEngine extends Vue {
     this.$store.commit("newRandomUser");
     this.wsConnect(this.$store.state.userId);
 
-    this.app.bootstrap(this.$refs.pixiContainer, this.gameLoop, (sh: PIXI.Spritesheet) => {
+    this.graphics.bootstrap(this.$refs.pixiContainer, this.gameLoop, (sh: PIXI.Spritesheet) => {
       sheet = sh;
-      this.app.viewport.addChild(this.mechSetup(xShift, yShift));
-      this.timerText = this.app.timerSetup();
+      this.graphics.viewport.addChild(this.mechSetup(xShift, yShift));
+      this.timerText = this.graphics.timerSetup();
     });
   }
 
@@ -146,8 +145,8 @@ export default class GameEngine extends Vue {
     this.mech.addChild(this.mechBase);
     this.mech.addChild(this.mechWeaponCannon);
 
-    this.drawBoundsForObj(this.mech);
-    this.drawCollisionCircleForObj(this.mech, 100);
+    this.graphics.drawBoundsForObj(this.mech);
+    this.graphics.drawCollisionCircleForObj(this.mech, 100);
     return this.mech;
   }
 
@@ -184,11 +183,11 @@ export default class GameEngine extends Vue {
     obj.x = x;
     obj.y = y;
 
-    this.drawBoundsForObj(obj);
-    this.drawCollisionCircleForObj(obj, 100);
+    this.graphics.drawBoundsForObj(obj);
+    this.graphics.drawCollisionCircleForObj(obj, 100);
 
     this.objects.set(id, obj);
-    this.app.viewport.addChild(obj);
+    this.graphics.viewport.addChild(obj);
 
     return obj;
   }
@@ -196,39 +195,6 @@ export default class GameEngine extends Vue {
   cleanMap(): void {
     this.objects.forEach((objects: GameSpriteObj) => objects.destroy());
     this.objects = new Map();
-  }
-
-  drawBoundsForObj(obj: GameSpriteObj): void {
-    if (!this.debug) {
-      return;
-    }
-    let spriteBound = new PIXI.Graphics();
-    spriteBound.lineStyle(4, 0xfeeb77, 1);
-    spriteBound.drawRect(0 - obj.width / 2, 0 - obj.height / 2, obj.width, obj.height);
-    obj.addChild(spriteBound);
-  }
-
-  drawCollisionCircleForObj(obj: GameSpriteObj, radius: number): void {
-    if (!this.debug) {
-      return;
-    }
-    let collisionCircle = new PIXI.Graphics();
-    collisionCircle.lineStyle(4, 0x00eb77, 1);
-    collisionCircle.drawCircle(0, 0, radius);
-    obj.addChild(collisionCircle);
-  }
-
-  explode(x: number = 0, y: number = 0): void {
-    const explosion = new PIXI.AnimatedSprite(sheet.animations["e"]);
-    explosion.x = x;
-    explosion.y = y;
-    explosion.loop = false;
-    explosion.onComplete = function() {
-      this.destroy();
-    };
-    explosion.animationSpeed = 0.167;
-    explosion.play();
-    this.app.viewport.addChild(explosion);
   }
 
   gameLoop(): void {
@@ -268,7 +234,7 @@ export default class GameEngine extends Vue {
     }
     this.mech.x += this.mech.vx * dt;
     this.mech.y += this.mech.vy * dt;
-    this.app.viewport.follow(this.mech, {
+    this.graphics.viewport.follow(this.mech, {
       acceleration: 0.8,
       speed: 300,
     });
@@ -311,7 +277,7 @@ export default class GameEngine extends Vue {
       object.vr = snapshot.obj.velocityRotation;
 
       if (snapshot.obj.explode) {
-        this.explode(object.x, object.y);
+        this.graphics.makeExplosion(object.x, object.y);
       }
       if (snapshot.obj.isDelete) {
         object.destroy();

@@ -1,6 +1,8 @@
 import * as PIXI from "pixi.js";
 import {Viewport} from "pixi-viewport";
 
+export type GameSpriteObj = PIXI.Sprite | PIXI.AnimatedSprite | PIXI.Container;
+
 export default class GraphicsEngine {
   screenWidth: number = 600;
   screenHeight: number = 600;
@@ -8,6 +10,7 @@ export default class GraphicsEngine {
   yShift: number = 10000;
   worldWide = 30000;
   sheet?: PIXI.Spritesheet;
+  debug: boolean = false;
 
   renderer = new PIXI.Renderer({
     width: this.screenWidth,
@@ -97,5 +100,38 @@ export default class GraphicsEngine {
     timerText.y = this.screenHeight - 70;
     this.stage.addChild(timerText);
     return timerText;
+  }
+
+  makeExplosion(x: number = 0, y: number = 0): void {
+    const explosion = new PIXI.AnimatedSprite(this.sheet!.animations["e"]);
+    explosion.x = x;
+    explosion.y = y;
+    explosion.loop = false;
+    explosion.onComplete = () => {
+      explosion.destroy();
+    };
+    explosion.animationSpeed = 0.167;
+    explosion.play();
+    this.viewport.addChild(explosion);
+  }
+
+  drawBoundsForObj(obj: GameSpriteObj): void {
+    if (!this.debug) {
+      return;
+    }
+    let spriteBound = new PIXI.Graphics();
+    spriteBound.lineStyle(4, 0xfeeb77, 1);
+    spriteBound.drawRect(0 - obj.width / 2, 0 - obj.height / 2, obj.width, obj.height);
+    obj.addChild(spriteBound);
+  }
+
+  drawCollisionCircleForObj(obj: GameSpriteObj, radius: number): void {
+    if (!this.debug) {
+      return;
+    }
+    let collisionCircle = new PIXI.Graphics();
+    collisionCircle.lineStyle(4, 0x00eb77, 1);
+    collisionCircle.drawCircle(0, 0, radius);
+    obj.addChild(collisionCircle);
   }
 }
