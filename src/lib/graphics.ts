@@ -61,19 +61,15 @@ export default class GraphicsEngine {
       .decelerate();
   }
 
-  bootstrap(
-    pixiContainer: HTMLDivElement,
-    gameLoop: (delta: number) => void,
-    callback: (sheet: PIXI.Spritesheet) => void,
-  ): void {
+  bootstrap(pixiContainer: HTMLDivElement, gameLoop: (delta: number) => void, callback: () => void): void {
     pixiContainer.appendChild(this.renderer.view);
     this.viewportSetup();
     this.resources
       .load()
-      .then((spritesheet: PIXI.Spritesheet) => {
+      .then(() => {
         this.stage.addChild(this.viewport);
         this.viewport.addChild(this.mapSetup());
-        callback(spritesheet);
+        callback();
         this.ticker.add(() => {
           gameLoop(this.ticker.deltaMS);
         });
@@ -89,9 +85,7 @@ export default class GraphicsEngine {
   }
 
   mapSetup(): PIXI.TilingSprite {
-    const terra = new PIXI.TilingSprite(this.resources.sheet!.textures["Sand.png"], this.worldWide, this.worldWide);
-    terra.anchor.set(0);
-    return terra;
+    return new PIXI.TilingSprite(this.resources.getTexture("terra"), this.worldWide, this.worldWide);
   }
 
   timerSetup(): PIXI.Text {
@@ -107,7 +101,7 @@ export default class GraphicsEngine {
   }
 
   makeExplosion(x: number = 0, y: number = 0): void {
-    const explosion = new PIXI.AnimatedSprite(this.resources.sheet!.animations["e"]);
+    const explosion = new PIXI.AnimatedSprite(this.resources.getTexture("explosion"));
     explosion.x = x;
     explosion.y = y;
     explosion.loop = false;

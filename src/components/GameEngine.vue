@@ -43,7 +43,6 @@ const timeShiftForPrediction = 1500;
 
 let prevNow = new Date();
 let currTimeId: number = 0;
-let sheet: PIXI.Spritesheet;
 
 function getRandomInt(min: number, max: number) {
   return Math.floor(Math.random() * Math.floor(max)) + min;
@@ -115,16 +114,15 @@ export default class GameEngine extends Vue {
     this.$store.commit("newRandomUser");
     this.wsConnect(this.$store.state.userId);
 
-    this.graphics.bootstrap(this.$refs.pixiContainer, this.gameLoop, (sh: PIXI.Spritesheet) => {
-      sheet = sh;
+    this.graphics.bootstrap(this.$refs.pixiContainer, this.gameLoop, () => {
       this.graphics.viewport.addChild(this.mechSetup(xShift, yShift));
       this.timerText = this.graphics.timerSetup();
     });
   }
 
   mechSetup(x: number, y: number): PIXI.Container {
-    this.mechBase = new PIXI.Sprite(sheet.textures["mech_base.png"]);
-    this.mechWeaponCannon = new PIXI.Sprite(sheet.textures["cannon.png"]);
+    this.mechBase = new PIXI.Sprite(this.graphics.resources.getTexture("mechBase"));
+    this.mechWeaponCannon = new PIXI.Sprite(this.graphics.resources.getTexture("mechCannon"));
 
     this.mechBase.anchor.set(0.5);
 
@@ -156,10 +154,10 @@ export default class GameEngine extends Vue {
     let missile: PIXI.AnimatedSprite;
     switch (type) {
       case WalBuffers.ObjectType.rock:
-        obj = new PIXI.Sprite(sheet.textures[`rock${getRandomInt(1, 3)}.png`]);
+        obj = new PIXI.Sprite(this.graphics.resources.getTexture(`rock${getRandomInt(1, 3)}`));
         break;
       case WalBuffers.ObjectType.xelon:
-        xelon = new PIXI.AnimatedSprite(sheet.animations["k"]);
+        xelon = new PIXI.AnimatedSprite(this.graphics.resources.getTexture("xelon"));
         xelon.animationSpeed = 0.167;
         xelon.play();
         obj = xelon;
@@ -167,11 +165,11 @@ export default class GameEngine extends Vue {
       case WalBuffers.ObjectType.enemy_mech:
         obj = new PIXI.Container();
         obj.pivot.set(0.5);
-        obj.addChild(new PIXI.Sprite(sheet.textures[`enemy_base.png`]));
-        obj.addChild(new PIXI.Sprite(sheet.textures[`enemy_cannon.png`]));
+        obj.addChild(new PIXI.Sprite(this.graphics.resources.getTexture("enemyBase")));
+        obj.addChild(new PIXI.Sprite(this.graphics.resources.getTexture("enemyCannon")));
         break;
       case WalBuffers.ObjectType.missile:
-        missile = new PIXI.AnimatedSprite(sheet.animations["m"]);
+        missile = new PIXI.AnimatedSprite(this.graphics.resources.getTexture("missile"));
         missile.animationSpeed = 0.167;
         missile.play();
         obj = missile;
