@@ -36,6 +36,8 @@ import {WalBuffers} from "@/flatbuffers/log_generated";
 import {CommandsBuffer} from "@/flatbuffers/command_generated";
 import * as Wal from "@/lib/wal";
 import * as Init from "@/lib/init";
+import EntityManager from "@/lib/entity/entityManager";
+import Entity from "@/lib/entity/entity";
 
 const xShift = 10000;
 const yShift = 10000;
@@ -66,6 +68,7 @@ PIXI.settings.SCALE_MODE = PIXI.SCALE_MODES.NEAREST;
 export default class GameEngine extends Vue {
   $refs!: {pixiContainer: HTMLDivElement};
   graphics = new GraphicsEngine();
+  em: EntityManager = new EntityManager();
   objects: MapGameSpriteObj = new Map();
   mech?: PIXI.Container = undefined;
   mechBase?: PIXI.Sprite = undefined;
@@ -121,6 +124,11 @@ export default class GameEngine extends Vue {
   }
 
   mechSetup(x: number, y: number): PIXI.Container {
+    const mech = this.em.createMech(this.$store.state.userId, x, y, [
+      this.graphics.resources.getTexture("mechBase"),
+      this.graphics.resources.getTexture("mechCannon"),
+    ]);
+    this.graphics.addPlayer(mech);
     this.mechBase = new PIXI.Sprite(this.graphics.resources.getTexture("mechBase"));
     this.mechWeaponCannon = new PIXI.Sprite(this.graphics.resources.getTexture("mechCannon"));
 
@@ -152,23 +160,31 @@ export default class GameEngine extends Vue {
     let obj: GameSpriteObj;
     let xelon: PIXI.AnimatedSprite;
     let missile: PIXI.AnimatedSprite;
+    let entity: Entity | undefined = undefined;
     switch (type) {
       case WalBuffers.ObjectType.rock:
         obj = new PIXI.Sprite(this.graphics.resources.getTexture(`rock${getRandomInt(1, 3)}`));
+        entity = this.em.createRock(id, x, y, this.graphics.resources.getTexture(`rock${getRandomInt(1, 3)}`));
         break;
       case WalBuffers.ObjectType.xelon:
+        entity = this.em.createXelon(id, x, y, this.graphics.resources.getTexture("xelon"));
         xelon = new PIXI.AnimatedSprite(this.graphics.resources.getTexture("xelon"));
         xelon.animationSpeed = 0.167;
         xelon.play();
         obj = xelon;
         break;
       case WalBuffers.ObjectType.enemy_mech:
+        entity = this.em.createMech(id, x, y, [
+          this.graphics.resources.getTexture("enemyBase"),
+          this.graphics.resources.getTexture("enemyCannon"),
+        ]);
         obj = new PIXI.Container();
         obj.pivot.set(0.5);
         obj.addChild(new PIXI.Sprite(this.graphics.resources.getTexture("enemyBase")));
         obj.addChild(new PIXI.Sprite(this.graphics.resources.getTexture("enemyCannon")));
         break;
       case WalBuffers.ObjectType.missile:
+        entity = this.em.createMissile(id, x, y, this.graphics.resources.getTexture("missile"));
         missile = new PIXI.AnimatedSprite(this.graphics.resources.getTexture("missile"));
         missile.animationSpeed = 0.167;
         missile.play();
@@ -178,6 +194,7 @@ export default class GameEngine extends Vue {
         throw new Error("Unsupported object type: " + type);
     }
 
+    this.graphics.addEntity(entity);
     obj.x = x;
     obj.y = y;
 

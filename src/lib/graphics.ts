@@ -1,6 +1,8 @@
 import * as PIXI from "pixi.js";
 import {Viewport} from "pixi-viewport";
 import GraphicsResources from "@/lib/resources";
+import Entity from "@/lib/entity/entity";
+import {Components} from "@/lib/component/components";
 
 export type GameSpriteObj = PIXI.Sprite | PIXI.AnimatedSprite | PIXI.Container;
 
@@ -29,6 +31,9 @@ export default class GraphicsEngine {
     worldHeight: this.worldWide,
     interaction: this.renderer.plugins.interaction,
   });
+
+  entities: Map<number, Entity> = new Map();
+  player?: Entity;
 
   // Application components
   // runners = {
@@ -131,5 +136,14 @@ export default class GraphicsEngine {
     collisionCircle.lineStyle(4, 0x00eb77, 1);
     collisionCircle.drawCircle(0, 0, radius);
     obj.addChild(collisionCircle);
+  }
+
+  addEntity(entity: Entity): void {
+    this.entities.set(entity.id, entity);
+    this.viewport.addChild(entity.components.get(Components.Renderable).sprite);
+  }
+  addPlayer(entity: Entity): void {
+    this.player = entity;
+    this.viewport.addChild(entity.components.get(Components.Renderable).sprite);
   }
 }
