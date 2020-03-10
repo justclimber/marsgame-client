@@ -3,6 +3,8 @@ import Movable from "@/lib/component/movable";
 import {Components} from "@/lib/component/components";
 import Renderable, {RenderableType} from "@/lib/component/renderable";
 import WithCannon from "@/lib/component/withCannon";
+import * as PIXI from "pixi.js";
+import Textable from "@/lib/component/textable";
 
 export default class EntityManager {
   entities: Map<number, Entity> = new Map();
@@ -19,10 +21,25 @@ export default class EntityManager {
     return this.createMovableSimple(id, x, y, texture);
   }
 
+  createText(id: number, x: number, y: number, text: string): Entity {
+    const entity = new Entity(id);
+    let textObj = new PIXI.Text(text, {
+      fontFamily: "Arial",
+      fontSize: 16,
+      fill: 0x000000,
+    });
+    textObj.x = x;
+    textObj.y = y;
+    entity.components.set(Components.Textable, new Textable(textObj, text));
+
+    this.entities.set(id, entity);
+    return entity;
+  }
+
   createMech(id: number, x: number, y: number, textures: any): Entity {
     const entity = new Entity(id);
     const movableComponent = new Movable(x, y, 0);
-    const renderableComponent = new Renderable(RenderableType.Mech, textures);
+    const renderableComponent = new Renderable(RenderableType.Mech, movableComponent, textures);
     const withCannon = new WithCannon(0, 0);
     entity.components.set(Components.Movable, movableComponent);
     entity.components.set(Components.Renderable, renderableComponent);
@@ -35,7 +52,7 @@ export default class EntityManager {
   private createMovableAnimated(id: number, x: number, y: number, texture: Array<any>) {
     const entity = new Entity(id);
     const movableComponent = new Movable(x, y, 0);
-    const renderableComponent = new Renderable(RenderableType.Animated, [texture]);
+    const renderableComponent = new Renderable(RenderableType.Animated, movableComponent, [texture]);
     entity.components.set(Components.Movable, movableComponent);
     entity.components.set(Components.Renderable, renderableComponent);
 
@@ -46,7 +63,7 @@ export default class EntityManager {
   private createMovableSimple(id: number, x: number, y: number, texture: any) {
     const entity = new Entity(id);
     const movableComponent = new Movable(x, y, 0);
-    const renderableComponent = new Renderable(RenderableType.Simple, [texture]);
+    const renderableComponent = new Renderable(RenderableType.Simple, movableComponent, [texture]);
     entity.components.set(Components.Movable, movableComponent);
     entity.components.set(Components.Renderable, renderableComponent);
 

@@ -1,4 +1,5 @@
 import * as PIXI from "pixi.js";
+import Movable from "@/lib/component/movable";
 
 export type GameSpriteObj = PIXI.Sprite | PIXI.AnimatedSprite | PIXI.Container;
 export enum RenderableType {
@@ -10,8 +11,10 @@ export enum RenderableType {
 export default class Renderable {
   sprite?: GameSpriteObj;
   type: RenderableType = 1;
+  movable?: Movable;
 
-  constructor(type: RenderableType, textures: any) {
+  constructor(type: RenderableType, movable: Movable, textures: any) {
+    this.movable = movable;
     this.type = type;
     switch (type) {
       case RenderableType.Animated: {
@@ -31,7 +34,7 @@ export default class Renderable {
         const container = new PIXI.Container();
         container.pivot.set(0.5);
         // смещаем башню немного, потому что она не по центру меха
-        mechCannon.x = -10;
+        mechCannon.x = -3;
         container.addChild(mechBase);
         container.addChild(mechCannon);
         this.sprite = container;
