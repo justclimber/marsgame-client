@@ -76,7 +76,6 @@ export default class GraphicsEngine {
     this.resources
       .load()
       .then(() => {
-        // this.viewportOld.addChild(this.mapSetup());
         callback();
         this.ticker.add(() => {
           gameLoop(this.ticker.deltaMS);
@@ -175,11 +174,4 @@ export default class GraphicsEngine {
       this.stage.addChild(text);
     }
   }
-
-  // Application components
-  // runners = {
-  //   init: new PIXI.Runner("init", 0),
-  //   load: new PIXI.Runner("load", 0),
-  //   beforeAdd: new PIXI.Runner("beforeAdd", 1)
-  // };
 }
