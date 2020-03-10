@@ -6,35 +6,39 @@ import Renderable from "@/lib/component/renderable";
 import WithCannon from "@/lib/component/withCannon";
 import Viewport from "@/lib/viewport";
 import Textable from "@/lib/component/textable";
+import {TileLayer, WorldMap} from "@/lib/init";
 
 PIXI.utils.skipHello();
 PIXI.settings.SCALE_MODE = PIXI.SCALE_MODES.NEAREST;
+
+const tileSize = 32;
 
 export default class GraphicsEngine {
   screenWidth: number = 600;
   screenHeight: number = 600;
   xShift: number = 10000;
   yShift: number = 10000;
-  worldWide = 30000;
-  debug: boolean = true;
+  debug: boolean = false;
+  worldMap?: WorldMap = undefined;
   resources = new GraphicsResources();
 
   renderer = new PIXI.Renderer({
     width: this.screenWidth,
     height: this.screenHeight,
-    backgroundColor: 0xffffff,
+    backgroundColor: 0x000000,
   });
 
   stage = new PIXI.Container();
   ticker = new PIXI.Ticker();
-  viewport = new Viewport(this.xShift, this.yShift, this.screenWidth, this.screenHeight);
+  viewport = new Viewport(this.xShift + 50, this.yShift + 50, this.screenWidth - 50, this.screenHeight - 50);
 
   entities: Map<number, Entity> = new Map();
   player?: Entity;
 
   render() {
     this.preRenderCalculations();
-    this.renderer.render(this.stage);
+    this.renderWoldMap();
+    this.renderer.render(this.stage, undefined, false);
   }
 
   preRenderCalculations(): void {
@@ -88,8 +92,36 @@ export default class GraphicsEngine {
       });
   }
 
-  mapSetup(): PIXI.TilingSprite {
-    return new PIXI.TilingSprite(this.resources.getTexture("terra"), this.worldWide, this.worldWide);
+  mapSetup(worldMap: WorldMap): void {
+    this.worldMap = worldMap;
+  }
+
+  renderWoldMap(): void {
+    if (!this.worldMap) {
+      return;
+    }
+    const tileMap = new PIXI.Container();
+    const mapWidth = this.worldMap.width;
+    let tilesCount = 0;
+    this.worldMap.tileLayers.forEach((layer: TileLayer) => {
+      for (let i = 0; i < layer.tileIds.length; i++) {
+        if (layer.tileIds[i] === 0) {
+          continue;
+        }
+        const y = Math.ceil(i / mapWidth) * tileSize + this.yShift - 1000;
+        const x = (i % mapWidth) * tileSize + this.xShift - 1000;
+        if (this.viewport.isOutside(x, y)) {
+          continue;
+        }
+        tilesCount++;
+        const tile = new PIXI.Sprite(this.resources.terraSheet!.textures[`t${layer.tileIds[i]}.png`]);
+        tile.x = x - this.viewport.x;
+        tile.y = y - this.viewport.y;
+        tileMap.addChild(tile);
+      }
+    });
+    this.renderer.render(tileMap);
+    tileMap.destroy({children: true});
   }
 
   makeExplosion(x: number = 0, y: number = 0): void {

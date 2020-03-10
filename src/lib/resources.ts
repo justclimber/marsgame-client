@@ -2,6 +2,7 @@ import * as PIXI from "pixi.js";
 
 export default class GraphicsResources {
   sheet?: PIXI.Spritesheet;
+  terraSheet?: PIXI.Spritesheet;
   loader = new PIXI.Loader();
   resources?: Partial<Record<string, PIXI.LoaderResource>>;
   textures: Map<string, any> = new Map<string, any>();
@@ -10,6 +11,7 @@ export default class GraphicsResources {
     return new Promise<PIXI.Spritesheet>((resolve, reject) => {
       this.loader
         .add("/images/spritesheet.json")
+        .add("/images/terra.json")
         .load((loader: PIXI.Loader, resources: Partial<Record<string, PIXI.LoaderResource>>) => {
           if (resources["/images/spritesheet.json"]!.spritesheet) {
             this.sheet = resources["/images/spritesheet.json"]!.spritesheet;
@@ -18,6 +20,11 @@ export default class GraphicsResources {
             resolve(this.sheet);
           } else {
             reject("Can't load spritesheet");
+          }
+          if (resources["/images/terra.json"]!.spritesheet) {
+            this.terraSheet = resources["/images/terra.json"]!.spritesheet;
+          } else {
+            throw Error("Can't load spritesheet");
           }
         });
     });

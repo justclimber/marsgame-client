@@ -93,7 +93,7 @@ export default class GameEngine extends Vue {
       command: CommandsBuffer.Command.Init,
       fn(this: GameEngine, buf: flatbuffers.ByteBuffer) {
         const initData = new Init.Parser().parse(buf);
-
+        this.graphics.mapSetup(initData.worldMap);
         let timeLeft = initData.timer.value;
         let intervalId = setInterval(() => {
           (this.em.entities.get(timerTextId)!.components.get(Components.Textable) as Textable).setText(
