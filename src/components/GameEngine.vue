@@ -27,10 +27,7 @@
 <script lang="ts">
 import {Component, Vue} from "vue-property-decorator";
 import HistoryTimeLine from "@/components/HistoryTimeLine.vue";
-
-import * as PIXI from "pixi.js";
 import GraphicsEngine from "@/lib/graphics";
-
 import {flatbuffers} from "flatbuffers";
 import {WalBuffers} from "@/flatbuffers/log_generated";
 import {CommandsBuffer} from "@/flatbuffers/command_generated";
@@ -38,10 +35,16 @@ import * as Wal from "@/lib/wal";
 import * as Init from "@/lib/init";
 import EntityManager from "@/lib/entity/entityManager";
 import Entity from "@/lib/entity/entity";
+import {Components} from "@/lib/component/components";
+import WithCannon from "@/lib/component/withCannon";
+import Movable from "@/lib/component/movable";
+import Renderable from "@/lib/component/renderable";
+import Textable from "@/lib/component/textable";
 
 const xShift = 10000;
 const yShift = 10000;
 const timeShiftForPrediction = 1500;
+const timerTextId = 99999;
 
 let prevNow = new Date();
 let currTimeId: number = 0;
@@ -50,17 +53,10 @@ function getRandomInt(min: number, max: number) {
   return Math.floor(Math.random() * Math.floor(max)) + min;
 }
 
-type GameSpriteObj = PIXI.Sprite | PIXI.AnimatedSprite | PIXI.Container;
-
-type MapGameSpriteObj = Map<number, GameSpriteObj>;
-
 enum GameState {
   paused = 0,
   play = 1,
 }
-
-PIXI.utils.skipHello();
-PIXI.settings.SCALE_MODE = PIXI.SCALE_MODES.NEAREST;
 
 @Component({
   components: {HistoryTimeLine},
@@ -69,11 +65,6 @@ export default class GameEngine extends Vue {
   $refs!: {pixiContainer: HTMLDivElement};
   graphics = new GraphicsEngine();
   em: EntityManager = new EntityManager();
-  objects: MapGameSpriteObj = new Map();
-  mech?: PIXI.Container = undefined;
-  mechBase?: PIXI.Sprite = undefined;
-  mechWeaponCannon?: PIXI.Sprite = undefined;
-  timerText?: PIXI.Text = undefined;
   historyCursor: number = 0;
   walParser: Wal.Parser = new Wal.Parser();
   gameState: GameState = GameState.paused;
@@ -105,7 +96,9 @@ export default class GameEngine extends Vue {
 
         let timeLeft = initData.timer.value;
         let intervalId = setInterval(() => {
-          this.timerText!.text = "Time left: " + timeLeft + " sec";
+          (this.em.entities.get(timerTextId)!.components.get(Components.Textable) as Textable).setText(
+            "Time left: " + timeLeft + " sec",
+          );
           if (timeLeft-- === 0) {
             clearInterval(intervalId);
           }
@@ -113,103 +106,71 @@ export default class GameEngine extends Vue {
       },
     },
   ];
+
   mounted() {
     this.$store.commit("newRandomUser");
     this.wsConnect(this.$store.state.userId);
 
     this.graphics.bootstrap(this.$refs.pixiContainer, this.gameLoop, () => {
-      this.graphics.viewport.addChild(this.mechSetup(xShift, yShift));
-      this.timerText = this.graphics.timerSetup();
+      this.mechSetup(xShift, yShift);
+      this.timerSetup();
     });
   }
 
-  mechSetup(x: number, y: number): PIXI.Container {
+  mechSetup(x: number, y: number): void {
     const mech = this.em.createMech(this.$store.state.userId, x, y, [
       this.graphics.resources.getTexture("mechBase"),
       this.graphics.resources.getTexture("mechCannon"),
     ]);
     this.graphics.addPlayer(mech);
-    this.mechBase = new PIXI.Sprite(this.graphics.resources.getTexture("mechBase"));
-    this.mechWeaponCannon = new PIXI.Sprite(this.graphics.resources.getTexture("mechCannon"));
+    this.graphics.viewport.centerTo(x, y);
 
-    this.mechBase.anchor.set(0.5);
-
-    this.mech = new PIXI.Container();
-    this.mech.pivot.set(0.5);
-    this.mech.x = x;
-    this.mech.y = y;
-    this.mech.vx = 0;
-    this.mech.vy = 0;
-    this.mech.vr = 0;
-    this.mech.rotation = 0;
-
-    this.mechWeaponCannon.vr = 0;
-    this.mechWeaponCannon.rotation = 0;
-    // смещаем башню немного, потому что она не по центру меха
-    this.mechWeaponCannon.x = -10;
-
-    this.mech.addChild(this.mechBase);
-    this.mech.addChild(this.mechWeaponCannon);
-
-    this.graphics.drawBoundsForObj(this.mech);
-    this.graphics.drawCollisionCircleForObj(this.mech, 100);
-    return this.mech;
+    this.graphics.drawBoundsForObj(mech);
+    this.graphics.drawCollisionCircleForObj(mech, 25);
   }
 
-  newMapObj(id: number, type: WalBuffers.ObjectType, x: number = 0, y: number = 0): GameSpriteObj {
-    let obj: GameSpriteObj;
-    let xelon: PIXI.AnimatedSprite;
-    let missile: PIXI.AnimatedSprite;
+  timerSetup(): void {
+    const entity = this.em.createText(timerTextId, 10, this.graphics.screenWidth - 70, "Time left: ...");
+    this.em.entities.set(timerTextId, entity);
+    this.graphics.addText(entity);
+  }
+
+  newMapObj(id: number, type: WalBuffers.ObjectType, x: number = 0, y: number = 0): Entity {
     let entity: Entity | undefined = undefined;
     switch (type) {
       case WalBuffers.ObjectType.rock:
-        obj = new PIXI.Sprite(this.graphics.resources.getTexture(`rock${getRandomInt(1, 3)}`));
         entity = this.em.createRock(id, x, y, this.graphics.resources.getTexture(`rock${getRandomInt(1, 3)}`));
         break;
       case WalBuffers.ObjectType.xelon:
         entity = this.em.createXelon(id, x, y, this.graphics.resources.getTexture("xelon"));
-        xelon = new PIXI.AnimatedSprite(this.graphics.resources.getTexture("xelon"));
-        xelon.animationSpeed = 0.167;
-        xelon.play();
-        obj = xelon;
         break;
       case WalBuffers.ObjectType.enemy_mech:
         entity = this.em.createMech(id, x, y, [
           this.graphics.resources.getTexture("enemyBase"),
           this.graphics.resources.getTexture("enemyCannon"),
         ]);
-        obj = new PIXI.Container();
-        obj.pivot.set(0.5);
-        obj.addChild(new PIXI.Sprite(this.graphics.resources.getTexture("enemyBase")));
-        obj.addChild(new PIXI.Sprite(this.graphics.resources.getTexture("enemyCannon")));
         break;
       case WalBuffers.ObjectType.missile:
         entity = this.em.createMissile(id, x, y, this.graphics.resources.getTexture("missile"));
-        missile = new PIXI.AnimatedSprite(this.graphics.resources.getTexture("missile"));
-        missile.animationSpeed = 0.167;
-        missile.play();
-        obj = missile;
         break;
       default:
         throw new Error("Unsupported object type: " + type);
     }
 
     this.graphics.addEntity(entity);
-    obj.x = x;
-    obj.y = y;
+    this.em.entities.set(entity.id, entity);
 
-    this.graphics.drawBoundsForObj(obj);
-    this.graphics.drawCollisionCircleForObj(obj, 100);
+    this.graphics.drawBoundsForObj(entity);
+    this.graphics.drawCollisionCircleForObj(entity, 20);
 
-    this.objects.set(id, obj);
-    this.graphics.viewport.addChild(obj);
-
-    return obj;
+    return entity;
   }
 
   cleanMap(): void {
-    this.objects.forEach((objects: GameSpriteObj) => objects.destroy());
-    this.objects = new Map();
+    this.em.entities.forEach((obj: Entity) => {
+      (obj.components.get(Components.Renderable) as Renderable).sprite!.destroy();
+    });
+    this.em.entities = new Map();
   }
 
   gameLoop(timeDelta: number): void {
@@ -234,23 +195,26 @@ export default class GameEngine extends Vue {
   }
 
   doObjectsMovements(dt: number): void {
-    for (let m of this.objects.values()) {
-      m.x += m.vx * dt;
-      m.y += m.vy * dt;
-      m.rotation += m.vr * dt;
+    let player: Entity | undefined = undefined;
+    for (let entity of this.em.entities.values()) {
+      const movable = entity.components.get(Components.Movable) as Movable;
+      if (!movable) {
+        continue;
+      }
+      movable.x += movable.velocityX * dt;
+      movable.y += movable.velocityY * dt;
+      movable.angle += movable.velocityRotation * dt;
+      if (entity.id == this.$store.state.userId) {
+        player = entity;
+      }
     }
 
-    if (!this.mech || !this.mechWeaponCannon) {
+    if (!player) {
       return;
     }
-    this.mech.x += this.mech.vx * dt;
-    this.mech.y += this.mech.vy * dt;
-    this.graphics.viewport.follow(this.mech, {
-      acceleration: 0.8,
-      speed: 300,
-    });
-    this.mech.rotation += this.mech.vr * dt;
-    // this.mechWeaponCannon.rotation += this.mechWeaponCannon.vr;
+    const movable = player.components.get(Components.Movable) as Movable;
+    this.graphics.viewport.centerTo(movable.x, movable.y);
+    // @todo: rotate cannon with velocityRotation
   }
 
   gameHistoryPlayByCursor(cursor: number) {
@@ -259,51 +223,51 @@ export default class GameEngine extends Vue {
   }
 
   playHistoryObject(snapshot: Wal.ObjectSnapshotUnion): void {
-    let object: GameSpriteObj | undefined;
+    let object: Entity | undefined;
     if (snapshot.obj.deleteOtherIds) {
       this.deleteOthers(snapshot);
     }
+    object = this.em.entities.get(snapshot.obj.id);
+    if (!object) {
+      object = this.newMapObj(snapshot.obj.id, snapshot.obj.objectType, snapshot.obj.x, snapshot.obj.y);
+    }
+    const movable = object.components.get(Components.Movable) as Movable;
+    const renderable = object.components.get(Components.Renderable) as Renderable;
 
     if (snapshot.obj.objectType === WalBuffers.ObjectType.player) {
-      if (!this.mech || !this.mechWeaponCannon) {
-        return;
-      }
-      object = this.mech;
-      this.mechWeaponCannon.rotation = (snapshot as Wal.MechSnapshot).cannonAngle;
-      this.mechWeaponCannon.vr = (snapshot as Wal.MechSnapshot).cannonRotation;
-    } else {
-      object = this.objects.get(snapshot.obj.id);
-      if (!object) {
-        object = this.newMapObj(snapshot.obj.id, snapshot.obj.objectType, snapshot.obj.x, snapshot.obj.y);
+      const withCannon = object.components.get(Components.WithCannon) as WithCannon;
+      withCannon.angle = (snapshot as Wal.MechSnapshot).cannonAngle;
+      withCannon.velocityRotation = (snapshot as Wal.MechSnapshot).cannonRotation;
+    }
+
+    if (movable) {
+      movable.x = snapshot.obj.x;
+      movable.y = snapshot.obj.y;
+      movable.angle = snapshot.obj.angle;
+
+      movable.velocityX = snapshot.obj.velocityLen * Math.cos(snapshot.obj.angle);
+      movable.velocityY = snapshot.obj.velocityLen * Math.sin(snapshot.obj.angle);
+      movable.velocityRotation = snapshot.obj.velocityRotation;
+
+      if (snapshot.obj.explode) {
+        this.graphics.makeExplosion(movable.x, movable.y);
       }
     }
 
-    if (object) {
-      object.x = snapshot.obj.x;
-      object.y = snapshot.obj.y;
-      object.rotation = snapshot.obj.angle;
-
-      object.vx = snapshot.obj.velocityLen * Math.cos(snapshot.obj.angle);
-      object.vy = snapshot.obj.velocityLen * Math.sin(snapshot.obj.angle);
-      object.vr = snapshot.obj.velocityRotation;
-
-      if (snapshot.obj.explode) {
-        this.graphics.makeExplosion(object.x, object.y);
-      }
-      if (snapshot.obj.isDelete) {
-        object.destroy();
-        this.objects.delete(snapshot.obj.id);
-        object = undefined;
-      }
+    if (snapshot.obj.isDelete) {
+      renderable.sprite!.destroy();
+      this.em.entities.delete(snapshot.obj.id);
+      this.graphics.entities.delete(snapshot.obj.id);
     }
   }
 
   deleteOthers(snapshot: Wal.ObjectSnapshotUnion): void {
     snapshot.obj.deleteOtherIds.forEach((did: number) => {
-      const obj = this.objects.get(did);
+      const obj = this.em.entities.get(did);
       if (obj) {
-        obj.destroy();
-        this.objects.delete(did);
+        (obj.components.get(Components.Renderable) as Renderable).sprite!.destroy();
+        this.em.entities.delete(did);
+        this.graphics.entities.delete(did);
       }
     }, this);
   }

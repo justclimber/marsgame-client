@@ -1,10 +1,14 @@
 import * as PIXI from "pixi.js";
-import {Viewport} from "pixi-viewport";
 import GraphicsResources from "@/lib/resources";
 import Entity from "@/lib/entity/entity";
 import {Components} from "@/lib/component/components";
+import Renderable from "@/lib/component/renderable";
+import WithCannon from "@/lib/component/withCannon";
+import Viewport from "@/lib/viewport";
+import Textable from "@/lib/component/textable";
 
-export type GameSpriteObj = PIXI.Sprite | PIXI.AnimatedSprite | PIXI.Container;
+PIXI.utils.skipHello();
+PIXI.settings.SCALE_MODE = PIXI.SCALE_MODES.NEAREST;
 
 export default class GraphicsEngine {
   screenWidth: number = 600;
@@ -12,7 +16,7 @@ export default class GraphicsEngine {
   xShift: number = 10000;
   yShift: number = 10000;
   worldWide = 30000;
-  debug: boolean = false;
+  debug: boolean = true;
   resources = new GraphicsResources();
 
   renderer = new PIXI.Renderer({
@@ -23,27 +27,39 @@ export default class GraphicsEngine {
 
   stage = new PIXI.Container();
   ticker = new PIXI.Ticker();
-
-  viewport = new Viewport({
-    screenWidth: this.screenWidth,
-    screenHeight: this.screenHeight,
-    worldWidth: this.worldWide,
-    worldHeight: this.worldWide,
-    interaction: this.renderer.plugins.interaction,
-  });
+  viewport = new Viewport(this.xShift, this.yShift, this.screenWidth, this.screenHeight);
 
   entities: Map<number, Entity> = new Map();
   player?: Entity;
 
-  // Application components
-  // runners = {
-  //   init: new PIXI.Runner("init", 0),
-  //   load: new PIXI.Runner("load", 0),
-  //   beforeAdd: new PIXI.Runner("beforeAdd", 1)
-  // };
-
   render() {
+    this.preRenderCalculations();
     this.renderer.render(this.stage);
+  }
+
+  preRenderCalculations(): void {
+    for (let [id, obj] of this.entities) {
+      const renderable = obj.components.get(Components.Renderable) as Renderable;
+      if (!renderable) {
+        continue;
+      }
+      if (this.viewport.isOutside(renderable.movable!.x, renderable.movable!.y)) {
+        renderable.sprite!.renderable = false;
+        continue;
+      } else {
+        renderable.sprite!.renderable = true;
+      }
+      renderable.sprite!.x = renderable.movable!.x - this.viewport.x;
+      renderable.sprite!.y = renderable.movable!.y - this.viewport.y;
+      renderable.sprite!.rotation = renderable.movable!.angle;
+    }
+
+    if (!this.player) {
+      return;
+    }
+    const cannon = this.player.components.get(Components.WithCannon) as WithCannon;
+    const renderable = this.player.components.get(Components.Renderable) as Renderable;
+    renderable!.sprite!.children[1].rotation = cannon.angle;
   }
 
   destroy() {
@@ -51,29 +67,12 @@ export default class GraphicsEngine {
     this.ticker.destroy();
   }
 
-  viewportSetup(): void {
-    this.viewport
-      .clampZoom({
-        minWidth: 300,
-        maxWidth: this.worldWide,
-      })
-      .zoom(1000)
-      // .zoom(1)
-      .moveCenter(this.xShift, this.yShift)
-      .drag()
-      .pinch()
-      .wheel()
-      .decelerate();
-  }
-
   bootstrap(pixiContainer: HTMLDivElement, gameLoop: (delta: number) => void, callback: () => void): void {
     pixiContainer.appendChild(this.renderer.view);
-    this.viewportSetup();
     this.resources
       .load()
       .then(() => {
-        this.stage.addChild(this.viewport);
-        this.viewport.addChild(this.mapSetup());
+        // this.viewportOld.addChild(this.mapSetup());
         callback();
         this.ticker.add(() => {
           gameLoop(this.ticker.deltaMS);
@@ -93,18 +92,6 @@ export default class GraphicsEngine {
     return new PIXI.TilingSprite(this.resources.getTexture("terra"), this.worldWide, this.worldWide);
   }
 
-  timerSetup(): PIXI.Text {
-    let timerText = new PIXI.Text("Time left: ...", {
-      fontFamily: "Arial",
-      fontSize: 16,
-      fill: 0xffffff,
-    });
-    timerText.x = 10;
-    timerText.y = this.screenHeight - 70;
-    this.stage.addChild(timerText);
-    return timerText;
-  }
-
   makeExplosion(x: number = 0, y: number = 0): void {
     const explosion = new PIXI.AnimatedSprite(this.resources.getTexture("explosion"));
     explosion.x = x;
@@ -115,35 +102,52 @@ export default class GraphicsEngine {
     };
     explosion.animationSpeed = 0.167;
     explosion.play();
-    this.viewport.addChild(explosion);
+    this.stage.addChild(explosion);
   }
 
-  drawBoundsForObj(obj: GameSpriteObj): void {
+  drawBoundsForObj(obj: Entity): void {
     if (!this.debug) {
       return;
     }
     let spriteBound = new PIXI.Graphics();
-    spriteBound.lineStyle(4, 0xfeeb77, 1);
-    spriteBound.drawRect(0 - obj.width / 2, 0 - obj.height / 2, obj.width, obj.height);
-    obj.addChild(spriteBound);
+    const boundObj = (obj.components.get(Components.Renderable) as Renderable).sprite;
+    spriteBound.lineStyle(2, 0xfeeb77, 1);
+    spriteBound.drawRect(0 - boundObj!.width / 2, 0 - boundObj!.height / 2, boundObj!.width, boundObj!.height);
+    boundObj!.addChild(spriteBound);
   }
 
-  drawCollisionCircleForObj(obj: GameSpriteObj, radius: number): void {
+  drawCollisionCircleForObj(obj: Entity, radius: number): void {
     if (!this.debug) {
       return;
     }
     let collisionCircle = new PIXI.Graphics();
-    collisionCircle.lineStyle(4, 0x00eb77, 1);
+    const boundObj = (obj.components.get(Components.Renderable) as Renderable).sprite;
+    collisionCircle.lineStyle(2, 0x00eb77, 1);
     collisionCircle.drawCircle(0, 0, radius);
-    obj.addChild(collisionCircle);
+    boundObj!.addChild(collisionCircle);
   }
 
   addEntity(entity: Entity): void {
     this.entities.set(entity.id, entity);
-    this.viewport.addChild(entity.components.get(Components.Renderable).sprite);
+    this.stage.addChild(entity.components.get(Components.Renderable).sprite);
   }
+
   addPlayer(entity: Entity): void {
     this.player = entity;
-    this.viewport.addChild(entity.components.get(Components.Renderable).sprite);
+    this.entities.set(entity.id, entity);
+    this.stage.addChild(entity.components.get(Components.Renderable).sprite);
   }
+  addText(entity: Entity): void {
+    const text = (entity.components.get(Components.Textable) as Textable)!.textObj;
+    if (text) {
+      this.stage.addChild(text);
+    }
+  }
+
+  // Application components
+  // runners = {
+  //   init: new PIXI.Runner("init", 0),
+  //   load: new PIXI.Runner("load", 0),
+  //   beforeAdd: new PIXI.Runner("beforeAdd", 1)
+  // };
 }
