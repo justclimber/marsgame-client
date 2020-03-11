@@ -135,7 +135,6 @@ export default class GraphicsEngine {
     };
     this.stage.addChild(entity.components.get(Components.Renderable).sprite);
     this.em.entities.set(id, entity);
-    console.log(entity);
   }
 
   drawBoundsForObj(obj: Entity): void {
