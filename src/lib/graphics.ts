@@ -1,4 +1,5 @@
-import * as PIXI from "pixi.js";
+import "@/lib/pixi";
+import "pixi-tilemap";
 import GraphicsResources from "@/lib/resources";
 import Entity from "@/lib/entity/entity";
 import {Components} from "@/lib/component/components";
@@ -24,6 +25,7 @@ export default class GraphicsEngine {
   worldMap?: WorldMap = undefined;
   resources = new GraphicsResources();
   em: EntityManager = new EntityManager();
+  tileMap?: PIXI.tilemap.CompositeRectTileLayer;
 
   renderer = new PIXI.Renderer({
     width: this.screenWidth,
@@ -42,6 +44,8 @@ export default class GraphicsEngine {
     this.resources
       .load()
       .then(() => {
+        this.tileMap = new PIXI.tilemap.CompositeRectTileLayer(0, this.resources.terraSheet!.textures);
+        this.stage.addChild(this.tileMap);
         callback();
         this.ticker.add(() => {
           gameLoop(this.ticker.deltaMS);
@@ -64,7 +68,7 @@ export default class GraphicsEngine {
   render() {
     this.preRenderCalculations();
     this.renderWoldMap();
-    this.renderer.render(this.stage, undefined, false);
+    this.renderer.render(this.stage);
   }
 
   preRenderCalculations(): void {
@@ -93,10 +97,11 @@ export default class GraphicsEngine {
   }
 
   renderWoldMap(): void {
-    if (!this.worldMap) {
+    if (!this.worldMap || !this.tileMap) {
       return;
     }
-    const tileMap = new PIXI.Container();
+
+    this.tileMap.clear();
     const mapWidth = this.worldMap.width;
     let tilesCount = 0;
     this.worldMap.tileLayers.forEach((layer: TileLayer) => {
@@ -110,14 +115,13 @@ export default class GraphicsEngine {
           continue;
         }
         tilesCount++;
-        const tile = new PIXI.Sprite(this.resources.terraSheet!.textures[`t${layer.tileIds[i]}.png`]);
-        tile.x = x - this.viewport.x + this.viewport.gap;
-        tile.y = y - this.viewport.y + this.viewport.gap;
-        tileMap.addChild(tile);
+        this.tileMap!.addFrame(
+          `t${layer.tileIds[i]}.png`,
+          x - this.viewport.x + this.viewport.gap,
+          y - this.viewport.y + this.viewport.gap,
+        );
       }
     });
-    this.renderer.render(tileMap);
-    tileMap.destroy({children: true});
   }
 
   makeExplosion(x: number, y: number): void {

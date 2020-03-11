@@ -10,7 +10,7 @@
   "dependencies": {
     "@types/flatbuffers": "^1.10.0",
     "flatbuffers": "^1.11.0",
-    "pixi-viewport": "^4.5.0",
+    "pixi-tilemap": "github:pixijs/pixi-tilemap",
     "pixi.js": "^5.2.0",
     "vue": "^2.6.10",
     "vue-class-component": "^7.0.2",
