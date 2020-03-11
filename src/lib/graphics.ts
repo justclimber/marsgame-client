@@ -161,12 +161,16 @@ export default class GraphicsEngine {
   addEntity(entity: Entity): void {
     this.entities.set(entity.id, entity);
     this.stage.addChild(entity.components.get(Components.Renderable).sprite);
+    this.drawBoundsForObj(entity);
+    this.drawCollisionCircleForObj(entity, 20);
   }
 
   addPlayer(entity: Entity): void {
     this.player = entity;
     this.entities.set(entity.id, entity);
     this.stage.addChild(entity.components.get(Components.Renderable).sprite);
+    this.drawBoundsForObj(entity);
+    this.drawCollisionCircleForObj(entity, 25);
   }
   addText(entity: Entity): void {
     const text = (entity.components.get(Components.Textable) as Textable)!.textObj;

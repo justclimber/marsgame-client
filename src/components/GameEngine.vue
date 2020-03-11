@@ -124,9 +124,6 @@ export default class GameEngine extends Vue {
     ]);
     this.graphics.addPlayer(mech);
     this.graphics.viewport.centerTo(x, y);
-
-    this.graphics.drawBoundsForObj(mech);
-    this.graphics.drawCollisionCircleForObj(mech, 25);
   }
 
   timerSetup(): void {
@@ -159,9 +156,6 @@ export default class GameEngine extends Vue {
 
     this.graphics.addEntity(entity);
     this.em.entities.set(entity.id, entity);
-
-    this.graphics.drawBoundsForObj(entity);
-    this.graphics.drawCollisionCircleForObj(entity, 20);
 
     return entity;
   }
