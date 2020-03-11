@@ -121,17 +121,21 @@ export default class GraphicsEngine {
   }
 
   makeExplosion(x: number, y: number): void {
-    const id = 987;
+    const id = this.em.getNewId();
     const entity = new Entity(id);
     const movable = new Movable(x, y, 0);
     const renderable = new Renderable(RenderableType.Animated, movable, [this.resources.getTexture("explosion")]);
     entity.components.set(Components.Renderable, renderable);
     entity.components.set(Components.Movable, movable);
-    // (renderable.sprite! as PIXI.AnimatedSprite).onComplete = () => {
-    //   renderable.sprite!.destroy();
-    //   this.entities.delete(id);
-    // };
+    const animatedSprite = renderable.sprite! as PIXI.AnimatedSprite;
+    animatedSprite.loop = false;
+    animatedSprite.onComplete = () => {
+      renderable.sprite!.destroy();
+      this.em.entities.delete(id);
+    };
+    this.stage.addChild(entity.components.get(Components.Renderable).sprite);
     this.em.entities.set(id, entity);
+    console.log(entity);
   }
 
   drawBoundsForObj(obj: Entity): void {
