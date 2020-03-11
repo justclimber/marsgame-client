@@ -28,7 +28,7 @@
 import {Component, Vue} from "vue-property-decorator";
 import HistoryTimeLine from "@/components/HistoryTimeLine.vue";
 import GraphicsEngine from "@/lib/graphics";
-import {flatbuffers} from "flatbuffers";
+import flatbuffers from "flatbuffers";
 import {WalBuffers} from "@/flatbuffers/log_generated";
 import {CommandsBuffer} from "@/flatbuffers/command_generated";
 import * as Wal from "@/lib/wal";
@@ -75,7 +75,7 @@ export default class GameEngine extends Vue {
   wsBuffers = [
     {
       command: CommandsBuffer.Command.Wal,
-      fn(this: GameEngine, buf: flatbuffers.ByteBuffer) {
+      fn(this: GameEngine, buf: flatbuffers.flatbuffers.ByteBuffer) {
         let gameHistoryChunk = this.walParser.parse(buf);
         // console.log(gameHistoryChunk);
         if (!currTimeId) {
@@ -91,7 +91,7 @@ export default class GameEngine extends Vue {
     },
     {
       command: CommandsBuffer.Command.Init,
-      fn(this: GameEngine, buf: flatbuffers.ByteBuffer) {
+      fn(this: GameEngine, buf: flatbuffers.flatbuffers.ByteBuffer) {
         const initData = new Init.Parser().parse(buf);
         this.graphics.mapSetup(initData.worldMap);
         let timeLeft = initData.timer.value;
