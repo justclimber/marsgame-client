@@ -2,11 +2,13 @@ import * as PIXI from "pixi.js";
 import GraphicsResources from "@/lib/resources";
 import Entity from "@/lib/entity/entity";
 import {Components} from "@/lib/component/components";
-import Renderable from "@/lib/component/renderable";
+import Renderable, {RenderableType} from "@/lib/component/renderable";
 import WithCannon from "@/lib/component/withCannon";
 import Viewport from "@/lib/viewport";
 import Textable from "@/lib/component/textable";
 import {TileLayer, WorldMap} from "@/lib/init";
+import Movable from "@/lib/component/movable";
+import EntityManager from "@/lib/entity/entityManager";
 
 PIXI.utils.skipHello();
 PIXI.settings.SCALE_MODE = PIXI.SCALE_MODES.NEAREST;
@@ -21,6 +23,7 @@ export default class GraphicsEngine {
   debug: boolean = false;
   worldMap?: WorldMap = undefined;
   resources = new GraphicsResources();
+  em: EntityManager = new EntityManager();
 
   renderer = new PIXI.Renderer({
     width: this.screenWidth,
@@ -30,46 +33,9 @@ export default class GraphicsEngine {
 
   stage = new PIXI.Container();
   ticker = new PIXI.Ticker();
-  viewport = new Viewport(this.xShift + 50, this.yShift + 50, this.screenWidth - 50, this.screenHeight - 50);
+  viewport = new Viewport(this.xShift, this.yShift, this.screenWidth, this.screenHeight);
 
-  entities: Map<number, Entity> = new Map();
   player?: Entity;
-
-  render() {
-    this.preRenderCalculations();
-    this.renderWoldMap();
-    this.renderer.render(this.stage, undefined, false);
-  }
-
-  preRenderCalculations(): void {
-    for (let [id, obj] of this.entities) {
-      const renderable = obj.components.get(Components.Renderable) as Renderable;
-      if (!renderable) {
-        continue;
-      }
-      if (this.viewport.isOutside(renderable.movable!.x, renderable.movable!.y)) {
-        renderable.sprite!.renderable = false;
-        continue;
-      } else {
-        renderable.sprite!.renderable = true;
-      }
-      renderable.sprite!.x = renderable.movable!.x - this.viewport.x;
-      renderable.sprite!.y = renderable.movable!.y - this.viewport.y;
-      renderable.sprite!.rotation = renderable.movable!.angle;
-    }
-
-    if (!this.player) {
-      return;
-    }
-    const cannon = this.player.components.get(Components.WithCannon) as WithCannon;
-    const renderable = this.player.components.get(Components.Renderable) as Renderable;
-    renderable!.sprite!.children[1].rotation = cannon.angle;
-  }
-
-  destroy() {
-    this.renderer.destroy();
-    this.ticker.destroy();
-  }
 
   bootstrap(pixiContainer: HTMLDivElement, gameLoop: (delta: number) => void, callback: () => void): void {
     pixiContainer.appendChild(this.renderer.view);
@@ -95,6 +61,37 @@ export default class GraphicsEngine {
     this.worldMap = worldMap;
   }
 
+  render() {
+    this.preRenderCalculations();
+    this.renderWoldMap();
+    this.renderer.render(this.stage, undefined, false);
+  }
+
+  preRenderCalculations(): void {
+    for (let [id, obj] of this.em.entities) {
+      const renderable = obj.components.get(Components.Renderable) as Renderable;
+      if (!renderable) {
+        continue;
+      }
+      if (this.viewport.isOutside(renderable.movable!.x, renderable.movable!.y)) {
+        renderable.sprite!.renderable = false;
+        continue;
+      } else {
+        renderable.sprite!.renderable = true;
+      }
+      renderable.sprite!.x = renderable.movable!.x - this.viewport.x + this.viewport.gap;
+      renderable.sprite!.y = renderable.movable!.y - this.viewport.y + this.viewport.gap;
+      renderable.sprite!.rotation = renderable.movable!.angle;
+    }
+
+    if (!this.player) {
+      return;
+    }
+    const cannon = this.player.components.get(Components.WithCannon) as WithCannon;
+    const renderable = this.player.components.get(Components.Renderable) as Renderable;
+    renderable!.sprite!.children[1].rotation = cannon.angle;
+  }
+
   renderWoldMap(): void {
     if (!this.worldMap) {
       return;
@@ -114,8 +111,8 @@ export default class GraphicsEngine {
         }
         tilesCount++;
         const tile = new PIXI.Sprite(this.resources.terraSheet!.textures[`t${layer.tileIds[i]}.png`]);
-        tile.x = x - this.viewport.x;
-        tile.y = y - this.viewport.y;
+        tile.x = x - this.viewport.x + this.viewport.gap;
+        tile.y = y - this.viewport.y + this.viewport.gap;
         tileMap.addChild(tile);
       }
     });
@@ -123,17 +120,18 @@ export default class GraphicsEngine {
     tileMap.destroy({children: true});
   }
 
-  makeExplosion(x: number = 0, y: number = 0): void {
-    const explosion = new PIXI.AnimatedSprite(this.resources.getTexture("explosion"));
-    explosion.x = x;
-    explosion.y = y;
-    explosion.loop = false;
-    explosion.onComplete = () => {
-      explosion.destroy();
-    };
-    explosion.animationSpeed = 0.167;
-    explosion.play();
-    this.stage.addChild(explosion);
+  makeExplosion(x: number, y: number): void {
+    const id = 987;
+    const entity = new Entity(id);
+    const movable = new Movable(x, y, 0);
+    const renderable = new Renderable(RenderableType.Animated, movable, [this.resources.getTexture("explosion")]);
+    entity.components.set(Components.Renderable, renderable);
+    entity.components.set(Components.Movable, movable);
+    // (renderable.sprite! as PIXI.AnimatedSprite).onComplete = () => {
+    //   renderable.sprite!.destroy();
+    //   this.entities.delete(id);
+    // };
+    this.em.entities.set(id, entity);
   }
 
   drawBoundsForObj(obj: Entity): void {
@@ -159,7 +157,7 @@ export default class GraphicsEngine {
   }
 
   addEntity(entity: Entity): void {
-    this.entities.set(entity.id, entity);
+    this.em.entities.set(entity.id, entity);
     this.stage.addChild(entity.components.get(Components.Renderable).sprite);
     this.drawBoundsForObj(entity);
     this.drawCollisionCircleForObj(entity, 20);
@@ -167,15 +165,29 @@ export default class GraphicsEngine {
 
   addPlayer(entity: Entity): void {
     this.player = entity;
-    this.entities.set(entity.id, entity);
+    this.em.entities.set(entity.id, entity);
     this.stage.addChild(entity.components.get(Components.Renderable).sprite);
     this.drawBoundsForObj(entity);
     this.drawCollisionCircleForObj(entity, 25);
   }
+
   addText(entity: Entity): void {
     const text = (entity.components.get(Components.Textable) as Textable)!.textObj;
     if (text) {
       this.stage.addChild(text);
     }
+  }
+
+  timerSetup(): number {
+    const timerTextId = this.em.getNewId();
+    const entity = this.em.createText(timerTextId, 10, this.screenWidth - 70, "Time left: ...");
+    this.em.entities.set(timerTextId, entity);
+    this.addText(entity);
+    return timerTextId;
+  }
+
+  destroy() {
+    this.renderer.destroy();
+    this.ticker.destroy();
   }
 }

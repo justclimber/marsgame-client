@@ -8,6 +8,11 @@ import Textable from "@/lib/component/textable";
 
 export default class EntityManager {
   entities: Map<number, Entity> = new Map();
+  lastId: number = 1000000;
+
+  getNewId(): number {
+    return ++this.lastId;
+  }
 
   createMissile(id: number, x: number, y: number, texture: any): Entity {
     return this.createMovableAnimated(id, x, y, texture);

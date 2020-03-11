@@ -44,7 +44,6 @@ import Textable from "@/lib/component/textable";
 const xShift = 10000;
 const yShift = 10000;
 const timeShiftForPrediction = 1500;
-const timerTextId = 99999;
 
 let prevNow = new Date();
 let currTimeId: number = 0;
@@ -70,6 +69,7 @@ export default class GameEngine extends Vue {
   gameState: GameState = GameState.paused;
   currTimeIdByCursor: number = 0;
   lastTimeId: number = 0;
+  timerTextId: number = 0;
   playSpeedMultiplicator: number = 1;
   gameHistory: Wal.GameHistory = {timeIds: [], moments: new Map(), timeToStart: 0};
   wsBuffers = [
@@ -96,7 +96,7 @@ export default class GameEngine extends Vue {
         this.graphics.mapSetup(initData.worldMap);
         let timeLeft = initData.timer.value;
         let intervalId = setInterval(() => {
-          (this.em.entities.get(timerTextId)!.components.get(Components.Textable) as Textable).setText(
+          (this.em.entities.get(this.timerTextId)!.components.get(Components.Textable) as Textable).setText(
             "Time left: " + timeLeft + " sec",
           );
           if (timeLeft-- === 0) {
@@ -112,8 +112,9 @@ export default class GameEngine extends Vue {
     this.wsConnect(this.$store.state.userId);
 
     this.graphics.bootstrap(this.$refs.pixiContainer, this.gameLoop, () => {
+      this.graphics.em = this.em;
       this.mechSetup(xShift, yShift);
-      this.timerSetup();
+      this.timerTextId = this.graphics.timerSetup();
     });
   }
 
@@ -124,12 +125,6 @@ export default class GameEngine extends Vue {
     ]);
     this.graphics.addPlayer(mech);
     this.graphics.viewport.centerTo(x, y);
-  }
-
-  timerSetup(): void {
-    const entity = this.em.createText(timerTextId, 10, this.graphics.screenWidth - 70, "Time left: ...");
-    this.em.entities.set(timerTextId, entity);
-    this.graphics.addText(entity);
   }
 
   newMapObj(id: number, type: WalBuffers.ObjectType, x: number = 0, y: number = 0): Entity {
@@ -155,7 +150,6 @@ export default class GameEngine extends Vue {
     }
 
     this.graphics.addEntity(entity);
-    this.em.entities.set(entity.id, entity);
 
     return entity;
   }
@@ -251,7 +245,6 @@ export default class GameEngine extends Vue {
     if (snapshot.obj.isDelete) {
       renderable.sprite!.destroy();
       this.em.entities.delete(snapshot.obj.id);
-      this.graphics.entities.delete(snapshot.obj.id);
     }
   }
 
@@ -261,7 +254,6 @@ export default class GameEngine extends Vue {
       if (obj) {
         (obj.components.get(Components.Renderable) as Renderable).sprite!.destroy();
         this.em.entities.delete(did);
-        this.graphics.entities.delete(did);
       }
     }, this);
   }
