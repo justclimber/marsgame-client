@@ -39,26 +39,21 @@ export default class GraphicsEngine {
 
   player?: Entity;
 
-  bootstrap(pixiContainer: HTMLDivElement, gameLoop: (delta: number) => void, callback: () => void): void {
+  async bootstrap(pixiContainer: HTMLDivElement, gameLoop: (delta: number) => void, em: EntityManager): Promise<any> {
+    this.em = em;
     pixiContainer.appendChild(this.renderer.view);
-    this.resources
-      .load()
-      .then(() => {
-        this.tileMap = new PIXI.tilemap.CompositeRectTileLayer(0, this.resources.terraSheet!.textures);
-        this.stage.addChild(this.tileMap);
-        callback();
-        this.ticker.add(() => {
-          gameLoop(this.ticker.deltaMS);
-        });
-        this.ticker.add(() => {
-          this.render();
-        }, PIXI.UPDATE_PRIORITY.LOW);
+    await this.resources.load();
 
-        this.ticker.start();
-      })
-      .catch(err => {
-        throw Error(err);
-      });
+    this.tileMap = new PIXI.tilemap.CompositeRectTileLayer(0, this.resources.terraSheet!.textures);
+    this.stage.addChild(this.tileMap);
+    this.ticker.add(() => {
+      gameLoop(this.ticker.deltaMS);
+    });
+    this.ticker.add(() => {
+      this.render();
+    }, PIXI.UPDATE_PRIORITY.LOW);
+
+    this.ticker.start();
   }
 
   mapSetup(worldMap: WorldMap): void {
@@ -72,6 +67,7 @@ export default class GraphicsEngine {
   }
 
   preRenderCalculations(): void {
+    this.centerViewportOnPlayer();
     for (let [id, obj] of this.em.entities) {
       const renderable = obj.components.get(Components.Renderable) as Renderable;
       if (!renderable) {
@@ -170,19 +166,37 @@ export default class GraphicsEngine {
     this.drawCollisionCircleForObj(entity, 20);
   }
 
-  addPlayer(entity: Entity): void {
-    this.player = entity;
-    this.em.entities.set(entity.id, entity);
-    this.stage.addChild(entity.components.get(Components.Renderable).sprite);
-    this.drawBoundsForObj(entity);
-    this.drawCollisionCircleForObj(entity, 25);
-  }
-
   addText(entity: Entity): void {
     const text = (entity.components.get(Components.Textable) as Textable)!.textObj;
     if (text) {
       this.stage.addChild(text);
     }
+  }
+
+  mechSetup(id: number, x: number, y: number): Entity {
+    const entity = this.em.createMech(id, x, y, [
+      this.resources.getTexture("mechBase"),
+      this.resources.getTexture("mechCannon"),
+    ]);
+    this.em.entities.set(entity.id, entity);
+    this.stage.addChild(entity.components.get(Components.Renderable).sprite);
+    this.drawBoundsForObj(entity);
+    this.drawCollisionCircleForObj(entity, 25);
+    return entity;
+  }
+
+  playerSetup(id: number, x: number, y: number): void {
+    this.player = this.mechSetup(id, x, y);
+    this.viewport.centerTo(x, y);
+  }
+
+  centerViewportOnPlayer(): void {
+    if (!this.player) {
+      return;
+    }
+
+    const movable = this.player.components.get(Components.Movable) as Movable;
+    this.viewport.centerTo(movable.x, movable.y);
   }
 
   timerSetup(): number {

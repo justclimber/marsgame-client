@@ -10,6 +10,16 @@ export default class EntityManager {
   entities: Map<number, Entity> = new Map();
   lastId: number = 1000000;
 
+  reset(): void {
+    this.entities.forEach((obj: Entity) => {
+      const renderable = obj.components.get(Components.Renderable) as Renderable;
+      if (renderable) {
+        renderable.sprite!.destroy();
+      }
+    });
+    this.entities.clear();
+  }
+
   getNewId(): number {
     return ++this.lastId;
   }

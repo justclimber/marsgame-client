@@ -108,23 +108,18 @@ export default class GameEngine extends Vue {
   ];
 
   mounted() {
-    this.$store.commit("newRandomUser");
-    this.wsConnect(this.$store.state.userId);
-
-    this.graphics.bootstrap(this.$refs.pixiContainer, this.gameLoop, () => {
-      this.graphics.em = this.em;
-      this.mechSetup(xShift, yShift);
-      this.timerTextId = this.graphics.timerSetup();
-    });
+    this.bootstrap();
   }
 
-  mechSetup(x: number, y: number): void {
-    const mech = this.em.createMech(this.$store.state.userId, x, y, [
-      this.graphics.resources.getTexture("mechBase"),
-      this.graphics.resources.getTexture("mechCannon"),
-    ]);
-    this.graphics.addPlayer(mech);
-    this.graphics.viewport.centerTo(x, y);
+  async bootstrap(): Promise<any> {
+    this.$store.commit("newRandomUser");
+    const userId = this.$store.state.userId;
+    this.wsConnect(userId);
+
+    await this.graphics.bootstrap(this.$refs.pixiContainer, this.gameLoop, this.em);
+
+    this.graphics.playerSetup(userId, xShift, yShift);
+    this.timerTextId = this.graphics.timerSetup();
   }
 
   newMapObj(id: number, type: WalBuffers.ObjectType, x: number = 0, y: number = 0): Entity {
@@ -152,13 +147,6 @@ export default class GameEngine extends Vue {
     this.graphics.addEntity(entity);
 
     return entity;
-  }
-
-  cleanMap(): void {
-    this.em.entities.forEach((obj: Entity) => {
-      (obj.components.get(Components.Renderable) as Renderable).sprite!.destroy();
-    });
-    this.em.entities = new Map();
   }
 
   gameLoop(timeDelta: number): void {
@@ -196,13 +184,6 @@ export default class GameEngine extends Vue {
         player = entity;
       }
     }
-
-    if (!player) {
-      return;
-    }
-    const movable = player.components.get(Components.Movable) as Movable;
-    this.graphics.viewport.centerTo(movable.x, movable.y);
-    // @todo: rotate cannon with velocityRotation
   }
 
   gameHistoryPlayByCursor(cursor: number) {
@@ -257,11 +238,13 @@ export default class GameEngine extends Vue {
       }
     }, this);
   }
+
   saveGame(): void {
     localStorage.setItem("gameHistory", JSON.stringify(this.gameHistory));
     this.$store.commit("addConsoleInfo", "Game saved");
     console.log(this.gameHistory);
   }
+
   loadGame(): void {
     const raw = localStorage.getItem("gameHistory");
     this.gameState = GameState.paused;
@@ -271,18 +254,19 @@ export default class GameEngine extends Vue {
       this.historyCursor = 0;
       this.currTimeIdByCursor = this.gameHistory.timeIds[0];
       this.lastTimeId = this.gameHistory.timeIds[this.gameHistory.timeIds.length - 1];
-      this.cleanMap();
+      this.em.reset();
       prevNow = new Date();
       this.gameState = GameState.play;
     }
     this.$store.commit("addConsoleInfo", "Game loaded");
   }
+
   chooseTimeId(timeId: number): void {
     this.gameState = GameState.paused;
     const timeIdsCount = this.gameHistory.timeIds.length;
     for (let i = 0; i < timeIdsCount; i++) {
       if (this.gameHistory.timeIds[i] === timeId) {
-        this.cleanMap();
+        this.em.reset();
         this.historyCursor = i;
         currTimeId = timeId;
         prevNow = new Date();
@@ -292,11 +276,13 @@ export default class GameEngine extends Vue {
     }
     throw Error("Wrong timeId to choose: " + timeId);
   }
+
   pickSiblingTimeId(interval: number): void {
     if (this.historyCursor + interval <= this.gameHistory.timeIds.length && this.historyCursor + interval >= 0) {
       this.chooseTimeId(this.gameHistory.timeIds[this.historyCursor + interval]);
     }
   }
+
   playerButton(code: string): void {
     switch (code) {
       case "prevMore":
