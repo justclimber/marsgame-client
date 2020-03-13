@@ -41,8 +41,6 @@ import Movable from "@/lib/component/movable";
 import Renderable from "@/lib/component/renderable";
 import Textable from "@/lib/component/textable";
 
-const xShift = 10000;
-const yShift = 10000;
 const timeShiftForPrediction = 1500;
 
 let prevNow = new Date();
@@ -77,7 +75,6 @@ export default class GameEngine extends Vue {
       command: CommandsBuffer.Command.Wal,
       fn(this: GameEngine, buf: flatbuffers.flatbuffers.ByteBuffer) {
         let gameHistoryChunk = this.walParser.parse(buf);
-        // console.log(gameHistoryChunk);
         if (!currTimeId) {
           // use time shift for more smooth prediction
           currTimeId = gameHistoryChunk.timeToStart - timeShiftForPrediction;
@@ -86,7 +83,6 @@ export default class GameEngine extends Vue {
         this.gameHistory.moments = new Map([...this.gameHistory.moments, ...gameHistoryChunk.moments]);
         this.gameHistory.timeIds.push(...gameHistoryChunk.timeIds);
         this.lastTimeId = gameHistoryChunk.timeIds[gameHistoryChunk.timeIds.length - 1];
-        // console.log(gameHistory);
       },
     },
     {
@@ -118,11 +114,11 @@ export default class GameEngine extends Vue {
 
     await this.graphics.bootstrap(this.$refs.pixiContainer, this.gameLoop, this.em);
 
-    this.graphics.playerSetup(userId, xShift, yShift);
+    this.graphics.playerSetup(userId, 0, 0);
     this.timerTextId = this.graphics.timerSetup();
   }
 
-  newMapObj(id: number, type: WalBuffers.ObjectType, x: number = 0, y: number = 0): Entity {
+  createObj(id: number, type: WalBuffers.ObjectType, x: number = 0, y: number = 0): Entity {
     let entity: Entity | undefined = undefined;
     switch (type) {
       case WalBuffers.ObjectType.rock:
@@ -201,7 +197,7 @@ export default class GameEngine extends Vue {
     }
     object = this.em.entities.get(snapshot.obj.id);
     if (!object) {
-      object = this.newMapObj(snapshot.obj.id, snapshot.obj.objectType, snapshot.obj.x, snapshot.obj.y);
+      object = this.createObj(snapshot.obj.id, snapshot.obj.objectType, snapshot.obj.x, snapshot.obj.y);
     }
     const movable = object.components.get(Components.Movable) as Movable;
     const renderable = object.components.get(Components.Renderable) as Renderable;
@@ -258,6 +254,7 @@ export default class GameEngine extends Vue {
       this.currTimeIdByCursor = this.gameHistory.timeIds[0];
       this.lastTimeId = this.gameHistory.timeIds[this.gameHistory.timeIds.length - 1];
       this.em.reset();
+      this.graphics.playerSetup(this.$store.state.userId, 0, 0);
       prevNow = new Date();
       this.gameState = GameState.play;
     }
