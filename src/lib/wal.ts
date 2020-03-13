@@ -42,57 +42,6 @@ function isDefault(value: number) {
   return value === 99999999;
 }
 
-function objectPredictionsByVelocity(
-  timeIdsCount: number,
-  timeIds: number[],
-  timeLog: WalBuffers.TimeLog,
-  objectLog: WalBuffers.ObjectLog,
-  history: Map<number, GameHistoryMoment>,
-) {
-  let x: number = timeLog.x();
-  let y: number = timeLog.y();
-  let angle: number = timeLog.angle();
-  const velocityLen = timeLog.velocityLen();
-  const velocityRotation = timeLog.velocityRotation();
-
-  for (let t = 0; t < timeIdsCount; t++) {
-    if (timeIds[t] <= timeLog.timeId()) {
-      continue;
-    }
-    let timeDelta = (timeIds[t] - timeIds[t - 1]) / 1000;
-    let objectInHistory = history.get(timeIds[t])!.objects.get(objectLog.id());
-
-    x = x + velocityLen * Math.cos(angle) * timeDelta;
-    y = y + velocityLen * Math.sin(angle) * timeDelta;
-    angle = angle + velocityRotation;
-
-    if (objectInHistory) {
-      objectInHistory.obj.x = x;
-      objectInHistory.obj.y = y;
-      objectInHistory.obj.angle = angle;
-    } else {
-      let historyObjectPrediction: ObjectSnapshotUnion = {
-        obj: {
-          id: objectLog.id(),
-          objectType: objectLog.objectType(),
-          x: x,
-          y: y,
-          angle: angle,
-          velocityLen: velocityLen,
-          velocityRotation: velocityRotation,
-          isDelete: false,
-          explode: false,
-          deleteOtherIds: [],
-        },
-      };
-      history.get(timeIds[t])!.objects.set(objectLog.id(), historyObjectPrediction);
-    }
-    if (timeIds[t] === timeLog.velocityUntilTimeId()) {
-      break;
-    }
-  }
-}
-
 export class Parser {
   objectsCache: ObjectsSnapshotsMap = new Map();
   objectsUsedPool: Map<number, boolean> = new Map();
@@ -125,7 +74,6 @@ export class Parser {
         }
 
         let objSnapshot = Parser.parseObjectSnapshot(objectLog, objectLog.id(), timeLog);
-        this.extendByCacheIfExists(objectLog, objSnapshot);
 
         let newObject: ObjectSnapshotUnion;
         if (objectLog.objectType() === WalBuffers.ObjectType.player) {
@@ -149,9 +97,38 @@ export class Parser {
         }
 
         if (!isDefault(timeLog.velocityUntilTimeId())) {
-          objectPredictionsByVelocity(timeIdsCount, timeIds, timeLog, objectLog, history);
+          Parser.objectPredictionsByVelocity(timeIdsCount, timeIds, timeLog, objectLog, history);
         }
-        Parser.upsertObjectToHistory(history.get(timeLog.timeId())!.objects, newObject);
+        let existedObject = history.get(timeLog.timeId())!.objects.get(newObject.obj.id);
+        if (existedObject) {
+          if (!isDefault(newObject.obj.x)) {
+            existedObject.obj.x = newObject.obj.x;
+          }
+          if (!isDefault(newObject.obj.y)) {
+            existedObject.obj.y = newObject.obj.y;
+          }
+          if (!isDefault(newObject.obj.angle)) {
+            existedObject.obj.angle = newObject.obj.angle;
+          }
+          if (!isDefault(newObject.obj.velocityLen)) {
+            existedObject.obj.velocityLen = newObject.obj.velocityLen;
+          }
+          if (!isDefault(newObject.obj.velocityRotation)) {
+            existedObject.obj.velocityRotation = newObject.obj.velocityRotation;
+          }
+          if (newObject.obj.isDelete) {
+            existedObject.obj.isDelete = newObject.obj.isDelete;
+          }
+          if (newObject.obj.explode) {
+            existedObject.obj.explode = newObject.obj.explode;
+          }
+          if (newObject.obj.deleteOtherIds) {
+            existedObject.obj.deleteOtherIds = newObject.obj.deleteOtherIds;
+          }
+        } else {
+          this.extendByCacheIfExists(objectLog, newObject.obj);
+          history.get(timeLog.timeId())!.objects.set(newObject.obj.id, newObject);
+        }
       }
     }
 
@@ -229,19 +206,54 @@ export class Parser {
     return {obj: objSnapshot};
   }
 
-  private static upsertObjectToHistory(objects: ObjectsSnapshotsMap, newObject: ObjectSnapshotUnion): void {
-    let obj = objects.get(newObject.obj.id);
-    if (obj) {
-      obj.obj.x = newObject.obj.x;
-      obj.obj.y = newObject.obj.y;
-      obj.obj.angle = newObject.obj.angle;
-      obj.obj.velocityLen = newObject.obj.velocityLen;
-      obj.obj.velocityRotation = newObject.obj.velocityRotation;
-      obj.obj.isDelete = newObject.obj.isDelete;
-      obj.obj.explode = newObject.obj.explode;
-      obj.obj.deleteOtherIds = newObject.obj.deleteOtherIds;
-    } else {
-      objects.set(newObject.obj.id, newObject);
+  private static objectPredictionsByVelocity(
+    timeIdsCount: number,
+    timeIds: number[],
+    timeLog: WalBuffers.TimeLog,
+    objectLog: WalBuffers.ObjectLog,
+    history: Map<number, GameHistoryMoment>,
+  ) {
+    let x: number = timeLog.x();
+    let y: number = timeLog.y();
+    let angle: number = timeLog.angle();
+    const velocityLen = timeLog.velocityLen();
+    const velocityRotation = timeLog.velocityRotation();
+
+    for (let t = 0; t < timeIdsCount; t++) {
+      if (timeIds[t] <= timeLog.timeId()) {
+        continue;
+      }
+      let timeDelta = (timeIds[t] - timeIds[t - 1]) / 1000;
+      let objectInHistory = history.get(timeIds[t])!.objects.get(objectLog.id());
+
+      x = x + velocityLen * Math.cos(angle) * timeDelta;
+      y = y + velocityLen * Math.sin(angle) * timeDelta;
+      angle = angle + velocityRotation;
+
+      if (objectInHistory) {
+        objectInHistory.obj.x = x;
+        objectInHistory.obj.y = y;
+        objectInHistory.obj.angle = angle;
+      } else {
+        let historyObjectPrediction: ObjectSnapshotUnion = {
+          obj: {
+            id: objectLog.id(),
+            objectType: objectLog.objectType(),
+            x: x,
+            y: y,
+            angle: angle,
+            velocityLen: velocityLen,
+            velocityRotation: velocityRotation,
+            isDelete: false,
+            explode: false,
+            deleteOtherIds: [],
+          },
+        };
+        history.get(timeIds[t])!.objects.set(objectLog.id(), historyObjectPrediction);
+      }
+      if (timeIds[t] === timeLog.velocityUntilTimeId()) {
+        break;
+      }
     }
   }
 }
