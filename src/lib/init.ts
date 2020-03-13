@@ -39,7 +39,6 @@ export class Parser {
       }
       layers[i] = {tileIds: tileIdsArray};
     }
-    console.log(layers);
 
     return {
       timer: {

@@ -128,6 +128,9 @@ export default class GameEngine extends Vue {
       case WalBuffers.ObjectType.rock:
         entity = this.em.createRock(id, x, y, this.graphics.resources.getTexture(`rock${getRandomInt(1, 3)}`));
         break;
+      case WalBuffers.ObjectType.spore:
+        entity = this.em.createSpore(id, x, y, this.graphics.resources.getTexture("spore"));
+        break;
       case WalBuffers.ObjectType.xelon:
         entity = this.em.createXelon(id, x, y, this.graphics.resources.getTexture("xelon"));
         break;

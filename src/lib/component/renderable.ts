@@ -19,7 +19,7 @@ export default class Renderable {
     switch (type) {
       case RenderableType.Animated: {
         const sprite = new PIXI.AnimatedSprite(textures[0]);
-        sprite.animationSpeed = 0.167;
+        sprite.animationSpeed = 0.1;
         sprite.play();
         this.sprite = sprite;
         break;

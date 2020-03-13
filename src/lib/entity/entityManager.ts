@@ -8,7 +8,7 @@ import Textable from "@/lib/component/textable";
 
 export default class EntityManager {
   entities: Map<number, Entity> = new Map();
-  lastId: number = 1000000;
+  lastId: number = 10000000;
 
   reset(): void {
     this.entities.forEach((obj: Entity) => {
@@ -29,6 +29,10 @@ export default class EntityManager {
   }
 
   createXelon(id: number, x: number, y: number, texture: any): Entity {
+    return this.createMovableAnimated(id, x, y, texture);
+  }
+
+  createSpore(id: number, x: number, y: number, texture: any): Entity {
     return this.createMovableAnimated(id, x, y, texture);
   }
 

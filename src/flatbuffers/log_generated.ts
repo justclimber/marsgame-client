@@ -9,7 +9,8 @@ export enum ObjectType{
   enemy_mech= 1,
   rock= 2,
   xelon= 3,
-  missile= 4
+  missile= 4,
+  spore= 5
 }};
 
 /**

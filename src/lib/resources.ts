@@ -46,5 +46,6 @@ export default class GraphicsResources {
     this.textures.set("missile", this!.sheet!.animations["m"]);
     this.textures.set("xelon", this!.sheet!.animations["k"]);
     this.textures.set("explosion", this!.sheet!.animations["e"]);
+    this.textures.set("spore", this!.sheet!.animations["hive4"]);
   }
 }

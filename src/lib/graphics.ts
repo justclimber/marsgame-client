@@ -12,15 +12,13 @@ import Movable from "@/lib/component/movable";
 import EntityManager from "@/lib/entity/entityManager";
 
 PIXI.utils.skipHello();
-PIXI.settings.SCALE_MODE = PIXI.SCALE_MODES.NEAREST;
+// PIXI.settings.SCALE_MODE = PIXI.SCALE_MODES.NEAREST;
 
 const tileSize = 32;
 
 export default class GraphicsEngine {
   screenWidth: number = 600;
   screenHeight: number = 600;
-  xShift: number = 10000;
-  yShift: number = 10000;
   debug: boolean = false;
   worldMap?: WorldMap = undefined;
   resources = new GraphicsResources();
@@ -35,7 +33,7 @@ export default class GraphicsEngine {
 
   stage = new PIXI.Container();
   ticker = new PIXI.Ticker();
-  viewport = new Viewport(this.xShift, this.yShift, this.screenWidth, this.screenHeight);
+  viewport = new Viewport(0, 0, this.screenWidth, this.screenHeight);
 
   player?: Entity;
 
@@ -105,8 +103,8 @@ export default class GraphicsEngine {
         if (layer.tileIds[i] === 0) {
           continue;
         }
-        const y = Math.ceil(i / mapWidth) * tileSize + this.yShift - 1000;
-        const x = (i % mapWidth) * tileSize + this.xShift - 1000;
+        const y = Math.ceil(i / mapWidth) * tileSize;
+        const x = (i % mapWidth) * tileSize;
         if (this.viewport.isOutside(x, y)) {
           continue;
         }
