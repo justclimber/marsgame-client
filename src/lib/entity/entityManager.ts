@@ -18,6 +18,7 @@ export default class EntityManager {
       }
     });
     this.entities.clear();
+    this.lastId = 10000000;
   }
 
   getNewId(): number {

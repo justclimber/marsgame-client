@@ -43,7 +43,6 @@ import Textable from "@/lib/component/textable";
 
 const timeShiftForPrediction = 1500;
 
-let prevNow = new Date();
 let currTimeId: number = 0;
 
 function getRandomInt(min: number, max: number) {
@@ -116,7 +115,7 @@ export default class GameEngine extends Vue {
 
     await this.graphics.bootstrap(this.$refs.pixiContainer, this.gameLoop, this.em);
 
-    this.graphics.playerSetup(userId, 0, 0, this.objectsMeta!.get(WalBuffers.ObjectType.player)!.collisionRadius);
+    this.playerSetup();
     this.timerTextId = this.graphics.timerSetup();
   }
 
@@ -247,24 +246,32 @@ export default class GameEngine extends Vue {
 
   loadGame(): void {
     const raw = localStorage.getItem("gameHistory");
-    this.gameState = GameState.paused;
-    if (raw) {
-      this.gameHistory = JSON.parse(raw, Map.fromJSON);
-      currTimeId = 1;
-      this.historyCursor = 0;
-      this.currTimeIdByCursor = this.gameHistory.timeIds[0];
-      this.lastTimeId = this.gameHistory.timeIds[this.gameHistory.timeIds.length - 1];
-      this.em.reset();
-      this.graphics.playerSetup(
-        this.$store.state.userId,
-        0,
-        0,
-        this.objectsMeta!.get(WalBuffers.ObjectType.player)!.collisionRadius,
-      );
-      prevNow = new Date();
-      this.gameState = GameState.play;
+    if (!raw) {
+      this.$store.commit("addConsoleInfo", "Game load failed: couldn't parse map info from localstorage");
+      return;
     }
+    this.gameHistory = JSON.parse(raw, Map.fromJSON);
+
+    this.gameState = GameState.paused;
+    this.historyCursor = 0;
+    currTimeId = this.gameHistory.timeIds[0];
+    this.currTimeIdByCursor = this.gameHistory.timeIds[0];
+    this.lastTimeId = this.gameHistory.timeIds[this.gameHistory.timeIds.length - 1];
+    this.em.reset();
+    this.playerSetup();
+    this.timerTextId = this.graphics.timerSetup();
+    this.gameHistoryPlayByCursor(this.historyCursor++);
+    this.gameState = GameState.play;
     this.$store.commit("addConsoleInfo", "Game loaded");
+  }
+
+  playerSetup(): void {
+    this.graphics.playerSetup(
+      this.$store.state.userId,
+      0,
+      0,
+      this.objectsMeta!.get(WalBuffers.ObjectType.player)!.collisionRadius,
+    );
   }
 
   chooseTimeId(timeId: number): void {
@@ -273,9 +280,10 @@ export default class GameEngine extends Vue {
     for (let i = 0; i < timeIdsCount; i++) {
       if (this.gameHistory.timeIds[i] === timeId) {
         this.em.reset();
+        this.playerSetup();
+        this.timerTextId = this.graphics.timerSetup();
         this.historyCursor = i;
         currTimeId = timeId;
-        prevNow = new Date();
         this.gameHistoryPlayByCursor(this.historyCursor++);
         return;
       }
