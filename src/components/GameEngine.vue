@@ -70,6 +70,7 @@ export default class GameEngine extends Vue {
   timerTextId: number = 0;
   playSpeedMultiplicator: number = 1;
   gameHistory: Wal.GameHistory = {timeIds: [], moments: new Map(), timeToStart: 0};
+  objectsMeta?: Init.ObjectsMeta;
   wsBuffers = [
     {
       command: CommandsBuffer.Command.Wal,
@@ -90,6 +91,7 @@ export default class GameEngine extends Vue {
       fn(this: GameEngine, buf: flatbuffers.flatbuffers.ByteBuffer) {
         const initData = new Init.Parser().parse(buf);
         this.graphics.mapSetup(initData.worldMap);
+        this.objectsMeta = initData.objectsMeta;
         let timeLeft = initData.timer.value;
         let intervalId = setInterval(() => {
           (this.em.entities.get(this.timerTextId)!.components.get(Components.Textable) as Textable).setText(
@@ -114,7 +116,7 @@ export default class GameEngine extends Vue {
 
     await this.graphics.bootstrap(this.$refs.pixiContainer, this.gameLoop, this.em);
 
-    this.graphics.playerSetup(userId, 0, 0);
+    this.graphics.playerSetup(userId, 0, 0, this.objectsMeta!.get(WalBuffers.ObjectType.player)!.collisionRadius);
     this.timerTextId = this.graphics.timerSetup();
   }
 
@@ -142,8 +144,7 @@ export default class GameEngine extends Vue {
       default:
         throw new Error("Unsupported object type: " + type);
     }
-
-    this.graphics.addEntity(entity);
+    this.graphics.addEntity(entity, this.objectsMeta!.get(type)!.collisionRadius);
 
     return entity;
   }
@@ -254,7 +255,12 @@ export default class GameEngine extends Vue {
       this.currTimeIdByCursor = this.gameHistory.timeIds[0];
       this.lastTimeId = this.gameHistory.timeIds[this.gameHistory.timeIds.length - 1];
       this.em.reset();
-      this.graphics.playerSetup(this.$store.state.userId, 0, 0);
+      this.graphics.playerSetup(
+        this.$store.state.userId,
+        0,
+        0,
+        this.objectsMeta!.get(WalBuffers.ObjectType.player)!.collisionRadius,
+      );
       prevNow = new Date();
       this.gameState = GameState.play;
     }

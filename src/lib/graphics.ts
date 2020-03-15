@@ -17,9 +17,9 @@ PIXI.utils.skipHello();
 const tileSize = 32;
 
 export default class GraphicsEngine {
+  debug: boolean = true;
   screenWidth: number = 600;
   screenHeight: number = 600;
-  debug: boolean = false;
   worldMap?: WorldMap = undefined;
   resources = new GraphicsResources();
   em: EntityManager = new EntityManager();
@@ -157,11 +157,11 @@ export default class GraphicsEngine {
     boundObj!.addChild(collisionCircle);
   }
 
-  addEntity(entity: Entity): void {
+  addEntity(entity: Entity, collisionRadius: number): void {
     this.em.entities.set(entity.id, entity);
     this.stage.addChild(entity.components.get(Components.Renderable).sprite);
     this.drawBoundsForObj(entity);
-    this.drawCollisionCircleForObj(entity, 20);
+    this.drawCollisionCircleForObj(entity, collisionRadius);
   }
 
   addText(entity: Entity): void {
@@ -171,7 +171,7 @@ export default class GraphicsEngine {
     }
   }
 
-  mechSetup(id: number, x: number, y: number): Entity {
+  mechSetup(id: number, x: number, y: number, collisionRadius: number): Entity {
     const entity = this.em.createMech(id, x, y, [
       this.resources.getTexture("mechBase"),
       this.resources.getTexture("mechCannon"),
@@ -179,12 +179,12 @@ export default class GraphicsEngine {
     this.em.entities.set(entity.id, entity);
     this.stage.addChild(entity.components.get(Components.Renderable).sprite);
     this.drawBoundsForObj(entity);
-    this.drawCollisionCircleForObj(entity, 25);
+    this.drawCollisionCircleForObj(entity, collisionRadius);
     return entity;
   }
 
-  playerSetup(id: number, x: number, y: number): void {
-    this.player = this.mechSetup(id, x, y);
+  playerSetup(id: number, x: number, y: number, collisionRadius: number): void {
+    this.player = this.mechSetup(id, x, y, collisionRadius);
     this.viewport.centerTo(x, y);
   }
 
