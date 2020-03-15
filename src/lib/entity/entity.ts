@@ -7,4 +7,9 @@ export default class Entity {
   constructor(id: number) {
     this.id = id;
   }
+  destroy(): void {
+    for (let [i, component] of this.components) {
+      component.destroy();
+    }
+  }
 }

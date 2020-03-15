@@ -42,4 +42,7 @@ export default class Renderable {
       }
     }
   }
+  destroy(): void {
+    this.sprite!.destroy({children: true});
+  }
 }

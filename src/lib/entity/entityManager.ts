@@ -11,14 +11,24 @@ export default class EntityManager {
   lastId: number = 10000000;
 
   reset(): void {
-    this.entities.forEach((obj: Entity) => {
-      const renderable = obj.components.get(Components.Renderable) as Renderable;
-      if (renderable) {
-        renderable.sprite!.destroy();
-      }
-    });
+    this.entities.forEach((obj: Entity) => obj.destroy());
     this.entities.clear();
     this.lastId = 10000000;
+  }
+
+  destroyEntity(entity: Entity): void {
+    entity.destroy();
+    this.entities.delete(entity.id);
+  }
+
+  destroyEntitiesByIds(entityIds: number[]): void {
+    entityIds.forEach((id: number) => {
+      const entity = this.entities.get(id);
+      if (!entity) {
+        return;
+      }
+      this.destroyEntity(entity);
+    }, this);
   }
 
   getNewId(): number {

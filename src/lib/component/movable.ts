@@ -11,4 +11,5 @@ export default class Movable {
     this.y = y;
     this.angle = angle;
   }
+  destroy(): void {}
 }

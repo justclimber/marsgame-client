@@ -13,4 +13,7 @@ export default class Textable {
     this.text = text;
     this.textObj!.text = text;
   }
+  destroy(): void {
+    this.textObj!.destroy();
+  }
 }

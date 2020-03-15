@@ -6,4 +6,5 @@ export default class WithCannon {
     this.angle = angle;
     this.velocityRotation = velocityRotation;
   }
+  destroy(): void {}
 }

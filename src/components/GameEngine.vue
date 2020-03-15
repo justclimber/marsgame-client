@@ -30,7 +30,6 @@ import Entity from "@/lib/entity/entity";
 import {Components} from "@/lib/component/components";
 import WithCannon from "@/lib/component/withCannon";
 import Movable from "@/lib/component/movable";
-import Renderable from "@/lib/component/renderable";
 import Textable from "@/lib/component/textable";
 
 const timeShiftForPrediction = 1500;
@@ -185,14 +184,13 @@ export default class GameEngine extends Vue {
   playHistoryObject(snapshot: Wal.ObjectSnapshotUnion): void {
     let object: Entity | undefined;
     if (snapshot.obj.deleteOtherIds) {
-      this.deleteOthers(snapshot);
+      this.em.destroyEntitiesByIds(snapshot.obj.deleteOtherIds);
     }
     object = this.em.entities.get(snapshot.obj.id);
     if (!object) {
       object = this.createObj(snapshot.obj.id, snapshot.obj.objectType, snapshot.obj.x, snapshot.obj.y);
     }
     const movable = object.components.get(Components.Movable) as Movable;
-    const renderable = object.components.get(Components.Renderable) as Renderable;
 
     if (snapshot.obj.objectType === WalBuffers.ObjectType.player) {
       const withCannon = object.components.get(Components.WithCannon) as WithCannon;
@@ -215,19 +213,8 @@ export default class GameEngine extends Vue {
     }
 
     if (snapshot.obj.isDelete) {
-      renderable.sprite!.destroy();
-      this.em.entities.delete(snapshot.obj.id);
+      this.em.destroyEntity(object);
     }
-  }
-
-  deleteOthers(snapshot: Wal.ObjectSnapshotUnion): void {
-    snapshot.obj.deleteOtherIds.forEach((did: number) => {
-      const obj = this.em.entities.get(did);
-      if (obj) {
-        (obj.components.get(Components.Renderable) as Renderable).sprite!.destroy();
-        this.em.entities.delete(did);
-      }
-    }, this);
   }
 
   onPlayState(state: GameState): void {
