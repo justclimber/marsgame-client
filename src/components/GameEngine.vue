@@ -2,25 +2,17 @@
   <div>
     <div ref="pixiContainer"></div>
     <HistoryTimeLine
+      :cursor="historyCursor"
       :current-pos="currTimeIdByCursor"
       :total-pos="lastTimeId"
       :time-ids="gameHistory.timeIds"
+      :play-speed-multiplicator="playSpeedMultiplicator"
       @choose-time-id="chooseTimeId"
+      @play-state="onPlayState"
+      @play-speed="onPlaySpeed"
+      @load-game="loadGame"
+      @save-game="saveGame"
     />
-    <div class="controls">
-      <button @click="saveGame" class="big-icon">💾</button>
-      <button @click="loadGame" class="big-icon">&#128193;</button>
-      <button class="spacer1" @click="playerButton('prevMore')">&#171;</button>
-      <button @click="playerButton('prev')">&#8249;</button>
-      <button @click="playerButton('stop')">■</button>
-      <button @click="playerButton('play')">▶</button>
-      <button @click="playerButton('next')">&#8250;</button>
-      <button @click="playerButton('nextMore')">&#187;</button>
-      <span class="spacer2">Speed:</span>
-      <button @click="playerSpeedChange(1)" :class="{active: playSpeedMultiplicator === 1}">x1</button>
-      <button @click="playerSpeedChange(2)" :class="{active: playSpeedMultiplicator === 2}">x2</button>
-      <button @click="playerSpeedChange(3)" :class="{active: playSpeedMultiplicator === 3}">x3</button>
-    </div>
   </div>
 </template>
 
@@ -238,6 +230,14 @@ export default class GameEngine extends Vue {
     }, this);
   }
 
+  onPlayState(state: GameState): void {
+    this.gameState = state;
+  }
+
+  onPlaySpeed(speed: number): void {
+    this.playSpeedMultiplicator = speed;
+  }
+
   saveGame(): void {
     localStorage.setItem("gameHistory", JSON.stringify(this.gameHistory));
     this.$store.commit("addConsoleInfo", "Game saved");
@@ -290,39 +290,6 @@ export default class GameEngine extends Vue {
     }
     throw Error("Wrong timeId to choose: " + timeId);
   }
-
-  pickSiblingTimeId(interval: number): void {
-    if (this.historyCursor + interval <= this.gameHistory.timeIds.length && this.historyCursor + interval >= 0) {
-      this.chooseTimeId(this.gameHistory.timeIds[this.historyCursor + interval]);
-    }
-  }
-
-  playerButton(code: string): void {
-    switch (code) {
-      case "prevMore":
-        this.pickSiblingTimeId(-5);
-        break;
-      case "prev":
-        this.pickSiblingTimeId(-1);
-        break;
-      case "stop":
-        this.gameState = GameState.paused;
-        break;
-      case "play":
-        this.gameState = GameState.play;
-        break;
-      case "next":
-        this.pickSiblingTimeId(1);
-        break;
-      case "nextMore":
-        this.pickSiblingTimeId(5);
-        break;
-    }
-  }
-
-  playerSpeedChange(speed: number): void {
-    this.playSpeedMultiplicator = speed;
-  }
 }
 
 // little magic for serializing to localStorage and back
@@ -333,14 +300,4 @@ Map.fromJSON = function(key: any, value: any) {
   return value instanceof Array && value[0] == "window.Map" ? new Map(value[1]) : value;
 };
 </script>
-
-<style scoped lang="stylus">
-.controls
-  font-size 12px
-  .big-icon
-    font-size 10px
-.spacer1
-  margin-left 130px
-.spacer2
-  margin-left 75px
-</style>
+<style scoped lang="stylus"></style>

@@ -24,6 +24,20 @@
         <div class="time-bar" @click="chooseTimeId(timeId)" :class="{active: timeId === currentPos}">&nbsp;</div>
       </div>
     </div>
+    <div class="controls">
+      <button @click="$emit('save-game')" class="big-icon">💾</button>
+      <button @click="$emit('load-game')" class="big-icon">&#128193;</button>
+      <button class="spacer1" @click="playerButton('prevMore')">&#171;</button>
+      <button @click="playerButton('prev')">&#8249;</button>
+      <button @click="playerButton('stop')">■</button>
+      <button @click="playerButton('play')">▶</button>
+      <button @click="playerButton('next')">&#8250;</button>
+      <button @click="playerButton('nextMore')">&#187;</button>
+      <span class="spacer2">Speed:</span>
+      <button @click="$emit('play-speed', 1)" :class="{active: playSpeedMultiplicator === 1}">x1</button>
+      <button @click="$emit('play-speed', 2)" :class="{active: playSpeedMultiplicator === 2}">x2</button>
+      <button @click="$emit('play-speed', 3)" :class="{active: playSpeedMultiplicator === 3}">x3</button>
+    </div>
   </div>
 </template>
 
@@ -36,8 +50,14 @@ interface ChooserPopup {
   top: number;
   timeIdsSlice: number[];
 }
+enum GameState {
+  paused = 0,
+  play = 1,
+}
 @Component
 export default class HistoryTimeLine extends Vue {
+  @Prop(Number) readonly cursor: number | undefined;
+  @Prop(Number) readonly playSpeedMultiplicator: number | undefined;
   @Prop(Number) readonly currentPos: number | undefined;
   @Prop(Number) readonly totalPos: number | undefined;
   @Prop(Array) readonly timeIds: number[] | undefined;
@@ -94,6 +114,38 @@ export default class HistoryTimeLine extends Vue {
     this.chooserPopup.left = this.$refs.timeline.offsetLeft;
     this.chooserPopup.show = true;
   }
+  pickSiblingTimeId(interval: number): void {
+    if (
+      this.cursor &&
+      this.timeIds &&
+      this.cursor + interval - 1 <= this.timeIds.length &&
+      this.cursor + interval - 1 >= 0
+    ) {
+      this.chooseTimeId(this.timeIds[this.cursor + interval - 1]);
+    }
+  }
+  playerButton(code: string): void {
+    switch (code) {
+      case "prevMore":
+        this.pickSiblingTimeId(-5);
+        break;
+      case "prev":
+        this.pickSiblingTimeId(-1);
+        break;
+      case "stop":
+        this.$emit("play-state", GameState.paused);
+        break;
+      case "play":
+        this.$emit("play-state", GameState.play);
+        break;
+      case "next":
+        this.pickSiblingTimeId(1);
+        break;
+      case "nextMore":
+        this.pickSiblingTimeId(5);
+        break;
+    }
+  }
 }
 </script>
 
@@ -142,4 +194,12 @@ export default class HistoryTimeLine extends Vue {
       cursor pointer
       &.active
         background active-element-color
+.controls
+  font-size 12px
+  .big-icon
+    font-size 10px
+.spacer1
+  margin-left 130px
+.spacer2
+  margin-left 75px
 </style>
