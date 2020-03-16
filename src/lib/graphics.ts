@@ -17,7 +17,7 @@ PIXI.utils.skipHello();
 const tileSize = 32;
 
 export default class GraphicsEngine {
-  debug: boolean = true;
+  debug: boolean = false;
   screenWidth: number = 600;
   screenHeight: number = 600;
   worldMap?: WorldMap = undefined;
@@ -67,7 +67,7 @@ export default class GraphicsEngine {
   preRenderCalculations(): void {
     this.centerViewportOnPlayer();
     for (let [id, obj] of this.em.entities) {
-      const renderable = obj.components.get(Components.Renderable) as Renderable;
+      const renderable = this.em.getRenderableOnEntity(obj);
       if (!renderable) {
         continue;
       }

@@ -79,6 +79,22 @@ export default class EntityManager {
     return entity;
   }
 
+  getMovableOnEntity(entity: Entity): Movable | null {
+    const movable = entity.components.get(Components.Movable) as Movable;
+    if (!movable) {
+      return null;
+    }
+    return movable;
+  }
+
+  getRenderableOnEntity(entity: Entity): Renderable | null {
+    const renderable = entity.components.get(Components.Renderable) as Renderable;
+    if (!renderable) {
+      return null;
+    }
+    return renderable;
+  }
+
   private createMovableAnimated(id: number, x: number, y: number, texture: Array<any>) {
     const entity = new Entity(id);
     const movableComponent = new Movable(x, y, 0);

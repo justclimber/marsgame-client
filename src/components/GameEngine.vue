@@ -163,7 +163,7 @@ export default class GameEngine extends Vue {
   doObjectsMovements(dt: number): void {
     let player: Entity | undefined = undefined;
     for (let entity of this.em.entities.values()) {
-      const movable = entity.components.get(Components.Movable) as Movable;
+      const movable = this.em.getMovableOnEntity(entity);
       if (!movable) {
         continue;
       }
