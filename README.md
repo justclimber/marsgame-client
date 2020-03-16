@@ -1,29 +1,20 @@
 # marsgame-client
 
-Клиент игры Marsgame.
-Игра для програмистов
+Игра для програмистов. Необходимо программировать меха, чтобы он выполнял задания.
+
+Это браузерный клиент игры. Сервер [тут](https://github.com/justclimber/marsgame)
 
 ![скриншот](https://github.com/justclimber/marsgame-client/blob/master/docs/images/screenshot1.png?raw=true)
 
-## Project setup
+## Установка
 ```
 npm install
 ```
 
-### Compiles and hot-reloads for development
+### Запуск
 ```
 npm run serve
 ```
+Затем запускаем сервер `go run main.go` в папке с сервером
 
-### Compiles and minifies for production
-```
-npm run build
-```
-
-### Lints and fixes files
-```
-npm run lint
-```
-
-### Customize configuration
-See [Configuration Reference](https://cli.vuejs.org/config/).
+И заходим по http://localhost:8080/
